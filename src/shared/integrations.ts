@@ -2,10 +2,10 @@
 // the spots the plan in layout.ts leaves free: two on the walls, three on the floor against them.
 // Kept here, beside layout.ts, so the server's pathfinding (nav.ts) can walk around them too.
 import { FLOOR } from './layout.js';
-import type { ComposioToolkit } from './protocol/composio.js';
+import type { ComposioStationToolkit } from './protocol/composio.js';
 
 export interface StationSpot {
-  toolkit: ComposioToolkit;
+  toolkit: ComposioStationToolkit;
   /** Where its middle stands (or hangs), and the way it faces (0 is +z). */
   x: number;
   y: number;

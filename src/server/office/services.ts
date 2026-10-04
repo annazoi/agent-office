@@ -11,6 +11,8 @@ import { Ledger } from '../usage.js';
 import { PlanLimitsReader } from '../limits.js';
 import { Webhook } from '../webhook.js';
 import { ComposioHub } from '../composio.js';
+import { ComposioGitHub } from '../github-composio.js';
+import { postgresStore } from '../store.js';
 import { Machine } from '../machine.js';
 import type { Floor } from '../floor.js';
 import { Sky } from '../sky.js';
@@ -112,7 +114,11 @@ export function createServices(ctx: Ctx): BuildingServices {
     (id, connections) => {
       for (const c of clients.values()) if (c.accountId === id && !c.out) ctx.sendTo(c, { t: 'composio.connections', connections });
     },
+    undefined,
+    cfg.databaseUrl ? postgresStore(cfg.databaseUrl) : undefined,
   );
+  // Without the GitHub CLI, the elevator lists and clones repositories through the person's own GitHub on Composio.
+  ctx.building.repoSource = new ComposioGitHub(composio);
   if (cfg.composioKey !== undefined) {
     void composio.setKey(cfg.composioKey, 'the command line', cfg.composioToolkits).then((err) => {
       if (err) console.error(`agent-office: --composio-key: ${err}`);

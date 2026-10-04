@@ -10,6 +10,10 @@ import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { COMPOSIO_TOOLKITS, isComposioToolkit, type ComposioConnection, type ComposioConnections, type ComposioState, type ComposioToolkit } from '../shared/protocol.js';
 import type { ComposioForWorkers, ComposioMcp } from './composio-mcp.js';
+import type { RowStore } from './store.js';
+
+/** The row the office's key lives under when --database-url / DATABASE_URL is set. */
+const STORE_KEY = 'composio';
 
 const TIMEOUT_MS = 20_000;
 /** Composio project keys look like "ak_…"; anything printable and keylike is accepted, the API decides. */
@@ -63,6 +67,10 @@ export class ComposioHub implements ComposioForWorkers {
   /** Each account's endpoint once its session exists, and whether it has connected anything, for the workers (see mcpCached). */
   private endpoints = new Map<string, ComposioMcp>();
   private connected = new Set<string>();
+  /** Which toolkits each account has connected, as of its last look (see connectedTo). */
+  private connectedToolkits = new Map<string, Set<ComposioToolkit>>();
+
+  private store?: RowStore;
 
   constructor(
     dataDir: string,
@@ -70,9 +78,30 @@ export class ComposioHub implements ComposioForWorkers {
     /** Tells one account its connections changed. */
     private onConnections: (accountId: string, connections: ComposioConnections) => void,
     private load: SdkLoader = loadComposioSdk,
+    store?: RowStore,
   ) {
     this.path = path.join(dataDir, 'composio.json');
-    this.restore();
+    this.store = store;
+    if (store) {
+      // Loads in the background: `state()` starts out unconfigured for the moment it takes, then
+      // `onState` pushes the real thing, the same way it does for every other change.
+      void this.restoreFromStore();
+    } else {
+      this.restore();
+    }
+  }
+
+  private async restoreFromStore(): Promise<void> {
+    try {
+      const s = await this.store!.read<Partial<Saved>>(STORE_KEY);
+      if (s && typeof s.apiKey === 'string' && KEY_RE.test(s.apiKey)) {
+        const toolkits = Array.isArray(s.toolkits) ? COMPOSIO_TOOLKITS.filter((t) => s.toolkits!.includes(t)) : [...COMPOSIO_TOOLKITS];
+        this.saved = { apiKey: s.apiKey, toolkits, by: typeof s.by === 'string' ? s.by : '?', at: typeof s.at === 'number' ? s.at : Date.now() };
+        this.onState(this.state());
+      }
+    } catch (err) {
+      console.error(`agent-office: couldn't read the Composio key from the database: ${(err as Error).message}`);
+    }
   }
 
   state(): ComposioState {
@@ -159,6 +188,7 @@ export class ComposioHub implements ComposioForWorkers {
     }
     if (Object.values(toolkits).includes('connected')) this.connected.add(accountId);
     else this.connected.delete(accountId);
+    this.connectedToolkits.set(accountId, new Set((Object.keys(toolkits) as ComposioToolkit[]).filter((t) => toolkits[t] === 'connected')));
     return { toolkits };
   }
 
@@ -195,6 +225,11 @@ export class ComposioHub implements ComposioForWorkers {
     if (this.blocked(accountId) || !this.toolkits.length) return undefined;
     const session = await this.session(accountId);
     return { type: session.mcp.type, url: session.mcp.url, headers: session.mcp.headers ?? {} };
+  }
+
+  /** Whether the account had `toolkit` connected when it last asked for its connections (a look that costs nothing). */
+  connectedTo(accountId: string, toolkit: ComposioToolkit): boolean {
+    return this.connectedToolkits.get(accountId)?.has(toolkit) ?? false;
   }
 
   /**
@@ -271,6 +306,7 @@ export class ComposioHub implements ComposioForWorkers {
     this.sessions.clear();
     this.endpoints.clear();
     this.connected.clear();
+    this.connectedToolkits.clear();
     this.sdk = undefined;
     this.sdkKey = undefined;
   }
@@ -284,6 +320,12 @@ export class ComposioHub implements ComposioForWorkers {
   }
 
   private persist() {
+    if (this.store) {
+      this.store.write(STORE_KEY, this.saved ?? {}).catch((err) => {
+        console.error(`agent-office: couldn't save the Composio key to the database: ${(err as Error).message}`);
+      });
+      return;
+    }
     try {
       writeFileSync(this.path, JSON.stringify(this.saved ?? {}, null, 2), { mode: 0o600 });
     } catch {

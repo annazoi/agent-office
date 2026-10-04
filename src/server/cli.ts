@@ -1,5 +1,7 @@
 import os from 'node:os';
 import path from 'node:path';
+// A .env file next to the project (DATABASE_URL and the like), if there is one; never required.
+import 'dotenv/config';
 import { loadConfig, ensureSelfSigned } from './config.js';
 import { startServer } from './server.js';
 import { tildify } from './building.js';
@@ -12,7 +14,7 @@ if (argv[0] === 'prune') {
 }
 if (argv[0] === 'accounts') {
   const { accountsCommand } = await import('./accounts.js');
-  process.exit(accountsCommand(argv.slice(1)));
+  process.exit(await accountsCommand(argv.slice(1)));
 }
 if (argv[0] === 'setup') {
   const { setupCommand } = await import('./setup.js');

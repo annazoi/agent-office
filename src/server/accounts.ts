@@ -1,8 +1,16 @@
 import { createHash, randomBytes, scrypt, timingSafeEqual } from 'node:crypto';
 import { existsSync, readFileSync, renameSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
+import 'dotenv/config';
 import { officeHome } from './config.js';
+import { postgresStore, type RowStore } from './store.js';
 import type { AccountInvite, AccountRole, AccountsState } from '../shared/protocol.js';
+
+/** The row accounts live under when --database-url / DATABASE_URL is set. */
+const STORE_KEY = 'accounts';
+/** How often a database-backed office re-reads the row, so `agent-office accounts` (a separate
+ * process) is picked up while the office runs, the same way a file edit always was. */
+const POLL_MS = 4000;
 
 export const NAME_MAX = 24;
 export const PASSWORD_MIN = 8;
@@ -48,9 +56,10 @@ function hash(password: string, salt: Buffer): Promise<Buffer> {
 const digest = (s: string) => createHash('sha256').update(s).digest();
 
 /**
- * Everyone's own sign-in, in .agent-office/accounts.json: named accounts made from single-use
- * invite links, and whether the shared office password still works alongside them.
- * `agent-office accounts` edits the same file while the office runs, so it's re-read when it changes.
+ * Everyone's own sign-in, in .agent-office/accounts.json (or a database row with --database-url):
+ * named accounts made from single-use invite links, and whether the shared office password still
+ * works alongside them. `agent-office accounts` edits the same place while the office runs, so it's
+ * re-read when it changes.
  */
 export class Accounts {
   private data: Saved = { accounts: [], invites: [] };
@@ -58,10 +67,48 @@ export class Accounts {
   private stamp = '';
   /** The file is there but couldn't be read: never write over it, or everyone's accounts are gone. */
   private unreadable = false;
+  private store?: RowStore;
+  /** Resolves once the first load (file or database) has landed; the CLI awaits it before it reads or writes. */
+  private loaded: Promise<void>;
+  /** The most recent write, so the CLI can wait for its own change to land before the process exits. */
+  private pending: Promise<void> = Promise.resolve();
 
-  constructor(dataDir: string) {
+  constructor(dataDir: string, store?: RowStore) {
     this.file = path.join(dataDir, 'accounts.json');
-    this.sync();
+    this.store = store;
+    if (store) {
+      this.loaded = this.loadFromStore();
+      setInterval(() => void this.loadFromStore(), POLL_MS).unref();
+    } else {
+      this.sync();
+      this.loaded = Promise.resolve();
+    }
+  }
+
+  /** Resolves once the first read from the database has landed (a no-op on the file). */
+  whenReady(): Promise<void> {
+    return this.loaded;
+  }
+
+  /** Resolves once this instance's most recent write has landed in the database (a no-op on the file). */
+  flush(): Promise<void> {
+    return this.pending;
+  }
+
+  private async loadFromStore(): Promise<void> {
+    try {
+      const saved = await this.store!.read<Partial<Saved>>(STORE_KEY);
+      this.data = {
+        accounts: Array.isArray(saved?.accounts) ? saved.accounts.filter((a) => a && typeof a.id === 'string' && typeof a.hash === 'string') : [],
+        invites: Array.isArray(saved?.invites) ? saved.invites.filter((v) => v && typeof v.token === 'string') : [],
+        ...(saved?.sharedPassword === false ? { sharedPassword: false } : {}),
+      };
+      this.unreadable = false;
+    } catch (err) {
+      // Keep whatever we had (likely nothing, on the first failed load); the database may just be
+      // unreachable for a moment. Logged, not thrown: a blip shouldn't take sign-in down.
+      console.error(`agent-office: couldn't read accounts from the database: ${(err as Error).message}`);
+    }
   }
 
   /** The accounts file, when it's there but broken (nothing is saved over it). */
@@ -230,8 +277,9 @@ export class Accounts {
     this.save();
   }
 
-  /** Re-reads the file when something else (the `accounts` command) changed it. */
+  /** Re-reads the file when something else (the `accounts` command) changed it. A no-op in database mode (see loadFromStore/POLL_MS). */
   private sync() {
+    if (this.store) return;
     let stamp = '';
     try {
       const st = statSync(this.file);
@@ -261,6 +309,12 @@ export class Accounts {
   }
 
   private save() {
+    if (this.store) {
+      this.pending = this.store.write(STORE_KEY, this.data).catch((err) => {
+        console.error(`agent-office: couldn't save accounts to the database: ${(err as Error).message}`);
+      });
+      return;
+    }
     if (this.unreadable) {
       console.error(`agent-office: not saving accounts over ${this.file}, which couldn't be read — fix or move it`);
       return;
@@ -305,7 +359,7 @@ Works while the office runs: it picks up the changes within seconds.
 const day = (t: number) => new Date(t).toISOString().slice(0, 16).replace('T', ' ');
 
 /** `agent-office accounts`: exits 0 when done, 1 when it couldn't, 2 for a usage error. */
-export function accountsCommand(argv: string[]): number {
+export async function accountsCommand(argv: string[]): Promise<number> {
   // An office started in this project keeps its accounts here; one started anywhere else, in its home.
   let dir = existsSync(path.join(process.cwd(), '.agent-office', 'config.json')) ? process.cwd() : officeHome();
   let admin = false;
@@ -329,7 +383,9 @@ export function accountsCommand(argv: string[]): number {
     console.error(`agent-office accounts: no office has run in ${dir} yet — start it once with \`agent-office\` there`);
     return 1;
   }
-  const accounts = new Accounts(dataDir);
+  const databaseUrl = process.env.DATABASE_URL || process.env.AGENT_OFFICE_DATABASE_URL;
+  const accounts = new Accounts(dataDir, databaseUrl ? postgresStore(databaseUrl) : undefined);
+  await accounts.whenReady();
   if (accounts.unreadableFile) return fail(`${accounts.unreadableFile} couldn't be read (see above) — fix or move it first`);
   const [cmd = 'list', arg, arg2] = args;
   switch (cmd) {
@@ -345,6 +401,7 @@ export function accountsCommand(argv: string[]): number {
         console.log(`\nOpen invites (${s.invites.length}):`);
         for (const v of s.invites) console.log(`  ${(v.name ?? '(they pick)').padEnd(NAME_MAX)}  ${v.role.padEnd(6)}  by ${v.createdBy}, until ${day(v.expiresAt)}  /join#${v.token}`);
       }
+      await accounts.flush();
       return 0;
     }
     case 'invite': {
@@ -352,6 +409,7 @@ export function accountsCommand(argv: string[]): number {
       if (typeof v === 'string') return fail(v);
       console.log(`Invite ${v.name ? `for ${v.name} ` : ''}(${v.role}), single use, valid for 7 days:\n\n  /join#${v.token}\n`);
       console.log(`Open it on the office's own address, e.g. http://localhost:4600/join#${v.token}`);
+      await accounts.flush();
       return 0;
     }
     case 'revoke':
@@ -362,11 +420,13 @@ export function accountsCommand(argv: string[]): number {
       if (cmd === 'revoke') {
         accounts.revoke(a.id);
         console.log(`Revoked ${a.name}'s account. They're signed out of the office within seconds.`);
+        await accounts.flush();
         return 0;
       }
       if (arg2 !== 'admin' && arg2 !== 'member') return usage('role takes admin or member');
       accounts.setRole(a.id, arg2);
       console.log(`${a.name} is ${arg2 === 'admin' ? 'an admin' : 'a member'} now.`);
+      await accounts.flush();
       return 0;
     }
     case 'password': {
@@ -376,6 +436,7 @@ export function accountsCommand(argv: string[]): number {
       }
       accounts.setSharedPassword(arg === 'on');
       console.log(arg === 'on' ? 'The shared office password works again.' : 'The shared office password no longer signs anyone in; people who used it are signed out within seconds.');
+      await accounts.flush();
       return 0;
     }
     default:

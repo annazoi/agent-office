@@ -34,7 +34,7 @@ function fakeSdk(answers: Record<string, unknown> = {}, connected: string[] = ['
     sessionId: `s-${uid}`,
     mcp: { type: 'http', url: `https://backend.composio.dev/api/v3/tool_router/session/s-${uid}/mcp`, headers: { 'x-api-key': KEY } },
     authorize: async (toolkit, options) => ({ id: 'ca_new', redirectUrl: `https://connect.composio.dev/link/${toolkit}?cb=${encodeURIComponent(options?.callbackUrl ?? '')}` }),
-    toolkits: async () => ({ items: ['linear', 'notion', 'slack', 'googlecalendar', 'gmail'].map((slug) => ({ slug, connection: connected.includes(slug) ? { isActive: true, connectedAccount: { id: `ca_${slug}`, status: 'ACTIVE' } } : slug === 'gmail' ? { isActive: false, connectedAccount: { id: 'ca_g', status: 'INITIATED' } } : undefined })) }),
+    toolkits: async () => ({ items: ['linear', 'notion', 'slack', 'googlecalendar', 'gmail', 'github'].map((slug) => ({ slug, connection: connected.includes(slug) ? { isActive: true, connectedAccount: { id: `ca_${slug}`, status: 'ACTIVE' } } : slug === 'gmail' ? { isActive: false, connectedAccount: { id: 'ca_g', status: 'INITIATED' } } : undefined })) }),
     execute: async (slug, args = {}) => {
       calls.push({ slug, args });
       const a = answers[slug];
@@ -72,7 +72,7 @@ test('the hub keeps the key to itself, checks it before saving, and tells browse
   const state = hub.state();
   assert.equal(state.configured, true);
   assert.equal(state.by, 'Sam');
-  assert.deepEqual(state.toolkits, ['linear', 'notion', 'slack', 'googlecalendar', 'gmail']);
+  assert.deepEqual(state.toolkits, ['linear', 'notion', 'slack', 'googlecalendar', 'gmail', 'github']);
   assert.ok(!JSON.stringify(state).includes(KEY), 'the state never carries the key');
   // On disk for the office's user alone, and read back by a fresh hub.
   const file = path.join(dir, 'composio.json');
@@ -110,7 +110,7 @@ test('each account is its own Composio user, with its own connections, link, and
   await hub.setKey(KEY, 'Sam');
   assert.deepEqual(await hub.connections(undefined), { toolkits: {}, blocked: hub.blocked(undefined) });
   const mine = await hub.connections('a1');
-  assert.deepEqual(mine, { toolkits: { linear: 'connected', notion: 'off', slack: 'off', googlecalendar: 'off', gmail: 'pending' } });
+  assert.deepEqual(mine, { toolkits: { linear: 'connected', notion: 'off', slack: 'off', googlecalendar: 'off', gmail: 'pending', github: 'off' } });
   assert.deepEqual(users, [composioUserId('a1')]);
   await hub.connections('a2');
   assert.deepEqual(users, ['ao-a1', 'ao-a2'], 'one session per account, made once');
@@ -239,7 +239,7 @@ test("the workers' MCP configs carry the endpoint, and never its header on a com
 });
 
 test('the wizard reads toolkit picks by number or name; the stations stand clear of each other', () => {
-  assert.deepEqual(parseToolkitPick(''), ['linear', 'notion', 'slack', 'googlecalendar', 'gmail']);
+  assert.deepEqual(parseToolkitPick(''), ['linear', 'notion', 'slack', 'googlecalendar', 'gmail', 'github']);
   assert.deepEqual(parseToolkitPick('1, 3'), ['linear', 'slack']);
   assert.deepEqual(parseToolkitPick('gmail linear'), ['linear', 'gmail']);
   assert.deepEqual(parseToolkitPick('google calendar'), ['googlecalendar']);
@@ -325,7 +325,7 @@ test('the routes run as the signed-in person, refuse the shared password, and te
     status = JSON.parse(r.body);
     assert.equal(status.office.configured, true);
     assert.ok(!r.body.includes(KEY), 'the key never reaches a browser');
-    assert.deepEqual(status.mine.toolkits, { linear: 'connected', notion: 'off', slack: 'off', googlecalendar: 'off', gmail: 'pending' });
+    assert.deepEqual(status.mine.toolkits, { linear: 'connected', notion: 'off', slack: 'off', googlecalendar: 'off', gmail: 'pending', github: 'off' });
 
     // The shared password has no account: it can see the office's state, and do nothing else.
     r = await request(port, 'GET', '/api/composio/status', undefined, o.shared);
@@ -375,4 +375,36 @@ test('the routes run as the signed-in person, refuse the shared password, and te
   } finally {
     o.close();
   }
+});
+
+test("GitHub through Composio: the elevator's repository list and lookup, for an account that connected it", async () => {
+  const { ComposioGitHub } = await import('../src/server/github-composio.js');
+  const dir = tmp('gh');
+  const page1 = Array.from({ length: 100 }, (_, i) => ({ full_name: `annazoi/repo-${i}`, private: i % 2 === 0, description: i ? `d${i}` : '', pushed_at: '2026-10-01T00:00:00Z' }));
+  const page2 = [{ full_name: 'annazoi/last', private: false }, { full_name: 'annazoi/repo-1', private: false }];
+  const calls: Record<string, unknown>[] = [];
+  const { sdk } = fakeSdk({}, ['github']);
+  const session = await sdk.create('x', { toolkits: [], mcp: true });
+  const execute = session.execute;
+  session.execute = async (slug, args = {}) => {
+    calls.push({ slug, ...args });
+    if (slug === 'GITHUB_LIST_REPOSITORIES_FOR_THE_AUTHENTICATED_USER') return { data: { repositories: args.page === 1 ? page1 : page2 }, error: null };
+    if (slug === 'GITHUB_GET_A_REPOSITORY') return args.repo === 'missing' ? { data: {}, error: 'Not Found' } : { data: { full_name: 'AgentSystemLabs/agent-office', size: 0 }, error: null };
+    return execute(slug, args);
+  };
+  sdk.create = async () => session;
+  const hub = new ComposioHub(dir, () => {}, () => {}, async () => sdk);
+  await hub.setKey(KEY, 'test');
+  const github = new ComposioGitHub(hub);
+  assert.equal(github.ready('a1'), false, "not before the account's connections were looked at");
+  await hub.connections('a1');
+  assert.equal(github.ready('a1'), true);
+  assert.equal(github.ready('a2'), false);
+  const repos = await github.list('a1');
+  assert.equal(repos.length, 101, 'two pages, the duplicate dropped');
+  assert.deepEqual(repos[0], { name: 'annazoi/repo-0', description: undefined, private: true, pushedAt: '2026-10-01T00:00:00Z' });
+  assert.deepEqual(calls.filter((c) => c.slug === 'GITHUB_LIST_REPOSITORIES_FOR_THE_AUTHENTICATED_USER').map((c) => c.page), [1, 2]);
+  assert.deepEqual(await github.view('a1', 'agentsystemlabs/agent-office'), { repo: 'AgentSystemLabs/agent-office', empty: true });
+  await assert.rejects(github.view('a1', 'annazoi/missing'), /Not Found/);
+  await assert.rejects(github.view('a1', 'nonsense'), /owner\/name/);
 });

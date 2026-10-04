@@ -1,7 +1,7 @@
 // What the five station panels share: the window frame with its tabs, the "connect first" gate, a
 // row list, and loading and error states, all from the office's own pieces (dom.ts, github/pieces.ts).
 import './integrations.css';
-import { COMPOSIO_TOOLKIT_META, type ComposioToolkit } from '../../../shared/protocol';
+import { COMPOSIO_TOOLKIT_META, type ComposioStationToolkit } from '../../../shared/protocol';
 import type { Net } from '../../net';
 import { store } from '../../state';
 import { h, openModal, toast, type Modal } from '../dom';
@@ -37,7 +37,7 @@ export interface Panel {
 }
 
 /** A station's window: a header with the toolkit's name and tabs, a body, a footer. */
-export function openPanel(toolkit: ComposioToolkit, opts: { width?: number; doing?: string } = {}): Panel {
+export function openPanel(toolkit: ComposioStationToolkit, opts: { width?: number; doing?: string } = {}): Panel {
   const meta = COMPOSIO_TOOLKIT_META[toolkit];
   const close = h('button.btn.close', { 'aria-label': 'Close' }, '✕');
   const nav = h('nav.gh-tabs.cx-tabs', { role: 'tablist' });
@@ -122,7 +122,7 @@ export function every(panel: Panel, ms: number, fn: () => void) {
  * Whether you can use this toolkit here, and if not, what the panel shows instead: a Connect button
  * when it's just you who hasn't connected yet, or why nobody can (no key, switched off, no account).
  */
-export function gate(toolkit: ComposioToolkit, panel: Panel, retry: () => void): HTMLElement | null {
+export function gate(toolkit: ComposioStationToolkit, panel: Panel, retry: () => void): HTMLElement | null {
   const { office, mine } = store.composio;
   const meta = COMPOSIO_TOOLKIT_META[toolkit];
   const note = (text: string, ...more: Node[]) => h('div.cx-gate', {}, h('p', {}, text), ...more);

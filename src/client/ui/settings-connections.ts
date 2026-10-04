@@ -68,7 +68,7 @@ export function connectionsSettings(net: Net, frame: Frame): { sections: HTMLEle
           'li',
           {},
           h('span.dot', { style: `background:${state === 'connected' ? 'var(--good)' : state === 'pending' ? 'var(--warn)' : '#adb5bd'}` }),
-          h('div.svc-main', {}, h('div.svc-title', {}, `${meta.icon} ${meta.label}`), h('div.svc-meta', {}, !shown ? 'switched off in this office' : state === 'connected' ? `connected · the ${meta.station}` : state === 'pending' ? 'connecting…' : 'not connected')),
+          h('div.svc-main', {}, h('div.svc-title', {}, `${meta.icon} ${meta.label}`), h('div.svc-meta', {}, !shown ? 'switched off in this office' : state === 'connected' ? (t === 'github' ? 'connected · the elevator lists and clones your repositories through it when gh is missing' : `connected · the ${meta.station}`) : state === 'pending' ? 'connecting…' : t === 'github' ? 'not connected · for the elevator where the GitHub CLI isn’t installed' : 'not connected')),
           btn,
         );
       }),

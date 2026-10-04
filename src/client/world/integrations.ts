@@ -4,7 +4,7 @@
 // connected that toolkit and grey until you have. Walk up and press E to open its panel (ui/integrations/).
 import * as THREE from 'three';
 import { CALENDAR_WALL, LINEAR_BOARD, MAILROOM, NOTION_SHELF, SLACK_TV, STATION_SPOTS, stationFootprint, type StationSpot } from '../../shared/integrations';
-import { COMPOSIO_TOOLKIT_META, type ComposioConnection, type ComposioToolkit } from '../../shared/protocol';
+import { COMPOSIO_TOOLKIT_META, type ComposioConnection, type ComposioStationToolkit, type ComposioToolkit } from '../../shared/protocol';
 import { wallFacing } from '../../shared/decor';
 import type { Ctx } from '../core/context';
 import { aside, hintTitle, key, onE } from '../core/hint';
@@ -32,7 +32,7 @@ declare module './types' {
   }
 }
 
-const KIND: Record<ComposioToolkit, 'linearboard' | 'notionshelf' | 'slacktv' | 'calendarwall' | 'mailroom'> = {
+const KIND: Record<ComposioStationToolkit, 'linearboard' | 'notionshelf' | 'slacktv' | 'calendarwall' | 'mailroom'> = {
   linear: 'linearboard',
   notion: 'notionshelf',
   slack: 'slacktv',
@@ -268,7 +268,7 @@ export function paintCalendarScreen(screen: THREE.Mesh<THREE.PlaneGeometry, THRE
 
 /** What the office keeps of the stations: each one's light and screen, by toolkit. */
 export interface IntegrationStations {
-  readonly models: ReadonlyMap<ComposioToolkit, StationModel>;
+  readonly models: ReadonlyMap<ComposioStationToolkit, StationModel>;
   /** Lights each station by whether you've connected it ('none' for a toolkit the office doesn't show). */
   setConnections(mine: Partial<Record<ComposioToolkit, ComposioConnection>>, shown: readonly ComposioToolkit[]): void;
   update(dt: number): void;
@@ -294,7 +294,7 @@ export const integrations: Fixture<'integrations'> = (site) => {
   const group = new THREE.Group();
   const colliders: Collider[] = [];
   const interactables: Interactable[] = [];
-  const models = new Map<ComposioToolkit, StationModel>();
+  const models = new Map<ComposioStationToolkit, StationModel>();
   for (const spot of STATION_SPOTS) {
     const m = buildStation(spot);
     m.group.position.set(spot.x, spot.y, spot.z);
@@ -332,21 +332,21 @@ export const integrations: Fixture<'integrations'> = (site) => {
 
 export interface IntegrationsDeps {
   /** Opens a station's panel (ui/integrations/). */
-  open(toolkit: ComposioToolkit): void;
+  open(toolkit: ComposioStationToolkit): void;
   /** A teammate's character, to float what they did over their head. */
   personOf(peerId: string): { say(text: string, seconds?: number): void } | undefined;
 }
 
 /** What the stations do: E opens the panel, and what anyone does through one floats over their head. */
 export function installIntegrations(ctx: Ctx, deps: IntegrationsDeps) {
-  const connection = (toolkit: ComposioToolkit): string => {
+  const connection = (toolkit: ComposioStationToolkit): string => {
     const { office, mine } = store.composio;
     if (!office.configured) return 'not set up yet';
     if (!office.toolkits.includes(toolkit)) return 'switched off';
     const c = mine.toolkits[toolkit];
     return c === 'connected' ? 'connected' : c === 'pending' ? 'connecting…' : 'not connected';
   };
-  const station = (toolkit: ComposioToolkit) => {
+  const station = (toolkit: ComposioStationToolkit) => {
     const meta = COMPOSIO_TOOLKIT_META[toolkit];
     return {
       reach: toolkit === 'slack' || toolkit === 'googlecalendar' ? 6 : 4,

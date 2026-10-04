@@ -1,11 +1,13 @@
-import { execFileSync, spawn } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 import { accessSync, constants, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { FLOOR_PALETTES, MAX_FLOORS, normalizeRepo, sameRepo } from '../shared/floors.js';
 import type { CloneProgress, ProjectsDirState, RepoChoice } from '../shared/protocol.js';
-import { CloneRun, dropLog, whyCloneFailed, type CloneEnd, type CloneRunOptions } from './clone.js';
+import { CloneRun, GH_MISSING, dropLog, whyCloneFailed, type CloneEnd, type CloneRunOptions } from './clone.js';
+import type { RepoSource } from './github-composio.js';
 import { gh } from './github.js';
+import { cloneHere, listRepos } from './repos.js';
 
 /** A floor as floors.json keeps it. */
 export interface FloorDef {
@@ -63,7 +65,6 @@ export interface BuildingOptions {
 
 /** How long the list of repositories `gh` can see is reused before it's asked again. */
 const REPOS_TTL_MS = 5 * 60_000;
-const MAX_REPOS = 1000;
 
 /**
  * The floors of the building, saved in <office>/.agent-office/floors.json: which projects there are,
@@ -83,7 +84,7 @@ export class Building {
   private logsDir: string;
   /** Hears when a clone gets further along. */
   private cloneChanged?: () => void;
-  private repoCache?: { at: number; repos: Promise<RepoChoice[]> };
+  private repoCache?: { at: number; repos: Promise<RepoChoice[]>; account?: string };
   /** The checkout the office was started in (see ensureLocal), and the repository it's a checkout of. */
   private local?: { dir: string; repo?: string };
   /** The floor that checkout is, while it is one. */
@@ -91,6 +92,12 @@ export class Building {
   private localFile: string;
   /** That checkout was taken off the building: a restart doesn't put it back. */
   private localOff?: LocalOff;
+
+  /**
+   * Where to ask about repositories when `gh` isn't installed: the person's own GitHub through
+   * Composio (github-composio.ts), set once the office's services are up. Cloning then runs git itself.
+   */
+  repoSource?: RepoSource;
 
   constructor(
     /** The office's own data folder; `gh` runs there, since the projects folder may not exist yet. */
@@ -305,7 +312,14 @@ export class Building {
       repo = normalizeRepo(view.nameWithOwner) ?? wanted;
       empty = view.isEmpty === true;
     } catch (err) {
-      return `Couldn't find ${wanted} on GitHub: ${(err as Error).message}`;
+      // No gh: the person's own GitHub through Composio, when they've connected it.
+      const viaComposio = this.fallback(err, account);
+      if (!viaComposio) return `Couldn't find ${wanted} on GitHub: ${(err as Error).message}`;
+      try {
+        ({ repo, empty } = await viaComposio.view(account!, wanted));
+      } catch (e) {
+        return `Couldn't find ${wanted} on GitHub (through Composio): ${(e as Error).message}`;
+      }
     }
     const key = repo.toLowerCase();
     if (this.defs.some((d) => sameRepo(d.repo, repo))) return `${repo} already has a floor`;
@@ -348,7 +362,11 @@ export class Building {
     } catch (err) {
       return `Couldn't make ${this.logsDir}: ${(err as Error).message}`;
     }
-    const run = await CloneRun.start(repo, dest, path.join(this.logsDir, `${repo.replace('/', '__')}.log`), { ...this.opts.clone, changed: () => this.cloneChanged?.() });
+    const log = path.join(this.logsDir, `${repo.replace('/', '__')}.log`);
+    const cloneOpts = { ...this.opts.clone, changed: () => this.cloneChanged?.() };
+    let run = await CloneRun.start(repo, dest, log, cloneOpts);
+    // No gh: git itself, over https (see CloneRun.start).
+    if (run === GH_MISSING && this.repoSource) run = await CloneRun.start(repo, dest, log, cloneOpts, 'git');
     if (typeof run === 'string') return run;
     p.run = run;
     this.saveClones();
@@ -368,12 +386,26 @@ export class Building {
     return [...this.cloning.values()].find((p) => p.def.id === id);
   }
 
-  /** Repositories the office's `gh` login can clone, most recently pushed first. */
-  async repos(refresh = false): Promise<RepoChoice[]> {
+  /** Whether a `gh` failure is one to fall back from (gh isn't installed), and where to, for this account. */
+  private fallback(err: unknown, account: string | undefined): RepoSource | undefined {
+    const msg = (err as Error)?.message ?? '';
+    if (!/not installed/i.test(msg) || !account || !this.repoSource?.ready(account)) return undefined;
+    return this.repoSource;
+  }
+
+  /**
+   * Repositories the office's `gh` login can clone, most recently pushed first; without gh, the
+   * ones `account`'s own GitHub sees through Composio (then the cache is that account's).
+   */
+  async repos(refresh = false, account?: string): Promise<RepoChoice[]> {
     const cached = this.repoCache;
-    if (cached && !refresh && Date.now() - cached.at < REPOS_TTL_MS) return cached.repos;
-    const repos = listRepos(this.dataDir);
-    this.repoCache = { at: Date.now(), repos };
+    if (cached && !refresh && Date.now() - cached.at < REPOS_TTL_MS && (cached.account ?? account) === account) return cached.repos;
+    const repos = listRepos(this.dataDir).catch((err: unknown) => {
+      const via = this.fallback(err, account);
+      if (!via) throw err;
+      return via.list(account!);
+    });
+    this.repoCache = { at: Date.now(), repos, account };
     // A failure is worth asking again next time, not keeping for five minutes.
     repos.catch(() => {
       if (this.repoCache?.repos === repos) this.repoCache = undefined;
@@ -540,48 +572,4 @@ function hasCommit(dir: string): boolean {
   } catch {
     return false;
   }
-}
-
-/** Clones `repo` to `dest` in this terminal: git shows its progress, and ssh or git can ask here. Resolves to an error, if any. */
-function cloneHere(repo: string, dest: string): Promise<string | undefined> {
-  return new Promise((resolve) => {
-    const child = spawn('gh', ['repo', 'clone', repo, dest], { cwd: path.dirname(dest), stdio: 'inherit' });
-    child.once('error', (err: NodeJS.ErrnoException) => resolve(err.code === 'ENOENT' ? "The GitHub CLI (gh) isn't installed on this machine" : `Couldn't run gh: ${err.message}`));
-    child.once('exit', (code, signal) => resolve(code === 0 ? undefined : `Couldn't clone ${repo}: gh ${signal ? `stopped (${signal})` : `failed (exit ${code})`}`));
-  });
-}
-
-async function listRepos(cwd: string): Promise<RepoChoice[]> {
-  const out = await gh(
-    [
-      'api',
-      '--paginate',
-      'user/repos?per_page=100&sort=pushed&affiliation=owner,collaborator,organization_member',
-      '--jq',
-      '.[] | {name: .full_name, description: (.description // ""), private: .private, pushedAt: .pushed_at}',
-    ],
-    cwd,
-    90_000,
-  );
-  const repos: RepoChoice[] = [];
-  const seen = new Set<string>();
-  for (const line of out.split('\n')) {
-    if (!line.trim()) continue;
-    try {
-      const r = JSON.parse(line) as { name?: unknown; description?: unknown; private?: unknown; pushedAt?: unknown };
-      const name = normalizeRepo(r.name);
-      if (!name || seen.has(name.toLowerCase())) continue;
-      seen.add(name.toLowerCase());
-      repos.push({
-        name,
-        description: typeof r.description === 'string' && r.description ? r.description.slice(0, 200) : undefined,
-        private: r.private === true,
-        pushedAt: typeof r.pushedAt === 'string' ? r.pushedAt : undefined,
-      });
-    } catch {
-      // not a line of ours
-    }
-    if (repos.length >= MAX_REPOS) break;
-  }
-  return repos.sort((a, b) => (b.pushedAt ?? '').localeCompare(a.pushedAt ?? ''));
 }

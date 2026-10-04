@@ -1,6 +1,7 @@
 node_modules
 dist
 .agent-office
+.env
 *.log
 .DS_Store
 pw.txt

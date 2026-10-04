@@ -24,7 +24,7 @@ import { openAsk } from './ui/ask';
 import { openMeeting, type MeetingPreset } from './ui/meeting';
 import { openSignIns } from './ui/signins';
 import { openIntegration } from './ui/integrations';
-import { COMPOSIO_TOOLKIT_META, type ComposioToolkit } from '../shared/protocol';
+import { COMPOSIO_STATION_TOOLKITS, COMPOSIO_TOOLKIT_META, isComposioStationToolkit } from '../shared/protocol';
 import { modelBadge, providerLabel } from './ui/provider';
 import { byUrgency, waitingInOrder, waitingLabel } from './nextup';
 import { askNotifyPermission, DesktopNotifier, notifyPermission, waitingOnSomeone } from './notify';
@@ -330,7 +330,7 @@ $('btn-tools').addEventListener('click', () => {
   const el = h('div.modal', { role: 'dialog', 'aria-label': 'Tools' }, h('header', {}, h('h2', {}, '🔌 Tools'), close), h('div.body', {}, list));
   const modal = openModal(el, { doing: '🔌 at the tools' });
   close.addEventListener('click', () => modal.close());
-  const toolkits = office.toolkits.length ? office.toolkits : (Object.keys(COMPOSIO_TOOLKIT_META) as ComposioToolkit[]);
+  const toolkits = office.toolkits.length ? office.toolkits.filter(isComposioStationToolkit) : COMPOSIO_STATION_TOOLKITS;
   for (const t of toolkits) {
     const meta = COMPOSIO_TOOLKIT_META[t];
     const state = !office.configured ? 'not set up' : mine.toolkits[t] === 'connected' ? 'connected' : 'not connected';

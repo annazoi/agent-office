@@ -76,7 +76,7 @@ export function describeComposioTool(tool: unknown): string | undefined {
   return verb ? `${verb} ${toolkit} ${what}…`.replace(/\s+/g, ' ') : `${toolkit}: ${words.join(' ')}…`;
 }
 
-const TOOLKIT_NAMES: Record<string, string> = { linear: 'Linear', notion: 'Notion', slack: 'Slack', googlecalendar: 'Calendar', gmail: 'Gmail' } satisfies Record<ComposioToolkit, string>;
+const TOOLKIT_NAMES: Record<string, string> = { linear: 'Linear', notion: 'Notion', slack: 'Slack', googlecalendar: 'Calendar', gmail: 'Gmail', github: 'GitHub' } satisfies Record<ComposioToolkit, string>;
 const VERBS: Record<string, string> = {
   create: 'Creating',
   update: 'Updating',

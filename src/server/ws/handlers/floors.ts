@@ -19,9 +19,9 @@ export const floorHandlers = {
     else ctx.goToFloor(c, floor, arrivalSpot(msg.at));
   },
   'floor.repos'(ctx, c, msg) {
-    void ctx.building.repos(msg.refresh === true).then(
+    void ctx.building.repos(msg.refresh === true, c.accountId).then(
       (repos) => ctx.sendTo(c, { t: 'floor.repos', repos }),
-      (err: Error) => ctx.sendTo(c, { t: 'floor.repos', repos: [], error: `Couldn't list your repositories with gh: ${err.message}` }),
+      (err: Error) => ctx.sendTo(c, { t: 'floor.repos', repos: [], error: `Couldn't list your repositories with gh: ${err.message}${/not installed/i.test(err.message) ? ' — install it, or connect your GitHub in ⚙️ Settings → Connections to go through Composio instead' : ''}` }),
     );
   },
   'floor.add'(ctx, c, msg) {

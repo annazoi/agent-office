@@ -29,7 +29,7 @@ export async function startServer(cfg: Config, opts: StartOptions = {}) {
   // running from the last office while the floors open.
   const ctx = {} as Ctx;
   Object.assign(ctx, messaging(ctx), floorHelpers(ctx), people(ctx), navigation(ctx), gates(ctx));
-  Object.assign(ctx, createCore(ctx, cfg, publicDir));
+  Object.assign(ctx, await createCore(ctx, cfg, publicDir));
   const { hookServer, hookPort } = await startHookServer(ctx);
   Object.assign(ctx, createServices(ctx));
   Object.assign(ctx, await openFloors(ctx, hookPort));

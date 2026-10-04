@@ -12,6 +12,9 @@ import type { CloneProgress } from '../shared/protocol.js';
 
 /** Signals go to the whole clone (gh, git, ssh, index-pack) as a process group, except on Windows. */
 const GROUPS = process.platform !== 'win32';
+/** What a missing GitHub CLI reads as, wherever it's looked for (the building falls back to git on it). */
+export const GH_MISSING = "The GitHub CLI (gh) isn't installed on the office's machine";
+
 /** How long git can go without a word before the clone is given up on as stuck. */
 export const STALL_MS = 3 * 60_000;
 const TAIL_BYTES = 16 * 1024;
@@ -96,8 +99,13 @@ export class CloneRun {
     this.timer = setInterval(() => this.tick(), opts.tickMs ?? 1000);
   }
 
-  /** Starts `gh repo clone repo dest`, writing to `log`. Resolves once it's running, or to why it couldn't start. */
-  static start(repo: string, dest: string, log: string, opts: CloneRunOptions = {}): Promise<CloneRun | string> {
+  /**
+   * Starts `gh repo clone repo dest`, writing to `log`. Resolves once it's running, or to why it
+   * couldn't start. Where gh isn't installed, `how: 'git'` clones with git itself over https, which
+   * reaches public repositories, and private ones only where git has a way in of its own (an ssh
+   * remote isn't tried; a credential helper or a token in git's config is).
+   */
+  static start(repo: string, dest: string, log: string, opts: CloneRunOptions = {}, how: 'gh' | 'git' = 'gh'): Promise<CloneRun | string> {
     let fd: number;
     try {
       fd = openSync(log, 'w', 0o600);
@@ -107,7 +115,8 @@ export class CloneRun {
     return new Promise((resolve) => {
       let child: ChildProcess;
       try {
-        child = spawn('gh', ['repo', 'clone', repo, dest, '--', '--progress'], {
+        const [file, args] = how === 'git' ? ['git', ['clone', '--progress', `https://github.com/${repo}.git`, dest]] : ['gh', ['repo', 'clone', repo, dest, '--', '--progress']];
+        child = spawn(file, args, {
           cwd: path.dirname(dest),
           detached: GROUPS,
           stdio: ['ignore', fd, fd],
@@ -118,7 +127,7 @@ export class CloneRun {
       } finally {
         closeSync(fd);
       }
-      child.once('error', (err: NodeJS.ErrnoException) => resolve(err.code === 'ENOENT' ? "The GitHub CLI (gh) isn't installed on the office's machine" : `Couldn't run gh: ${err.message}`));
+      child.once('error', (err: NodeJS.ErrnoException) => resolve(err.code === 'ENOENT' ? (how === 'git' ? "git isn't installed on the office's machine" : GH_MISSING) : `Couldn't run ${how}: ${err.message}`));
       child.once('spawn', () => {
         const run = new CloneRun(child.pid!, log, child, opts);
         child.once('exit', (code) => run.end(code));

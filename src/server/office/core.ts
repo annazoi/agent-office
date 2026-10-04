@@ -2,6 +2,7 @@ import path from 'node:path';
 import type { Config } from '../config.js';
 import { Auth } from '../auth.js';
 import { Accounts } from '../accounts.js';
+import { postgresStore } from '../store.js';
 import { providerCommand } from '../agents.js';
 import type { AgentProvider } from '../../shared/providers.js';
 import { createModelCatalogues } from '../models.js';
@@ -15,8 +16,9 @@ import type { Core, Ctx } from './context.js';
 import type { Client } from './client.js';
 
 /** The first of the office: accounts and sign-in, the people in it, chat, the arcade, and the building's floors. */
-export function createCore(ctx: Ctx, cfg: Config, publicDir: string): Core {
-  const accounts = new Accounts(cfg.dataDir);
+export async function createCore(ctx: Ctx, cfg: Config, publicDir: string): Promise<Core> {
+  const accounts = new Accounts(cfg.dataDir, cfg.databaseUrl ? postgresStore(cfg.databaseUrl) : undefined);
+  await accounts.whenReady();
   const auth = new Auth(cfg.verifier, cfg.salt, cfg.secret, accounts);
   const clients = new Map<string, Client>();
   // Kept on disk, so a restart doesn't wipe it.

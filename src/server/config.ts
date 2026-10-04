@@ -65,6 +65,8 @@ export interface Config {
   weather?: Weather;
   /** The sky keeps real time (a day a day), instead of a whole day and night every hour. */
   realTimeSky: boolean;
+  /** Accounts and the Composio key live here instead of their JSON files when set (--database-url / DATABASE_URL). */
+  databaseUrl?: string;
 }
 
 export interface RTCIceServerLike {
@@ -173,6 +175,12 @@ Options:
                           it's night there, instead of a day and night every hour
                           (⚙️ Settings can switch it)
                           (env AGENT_OFFICE_SKY_CLOCK=real)
+      --database-url <url>
+                          Keep accounts and the Composio key in this Postgres
+                          database (e.g. a Neon connection string) instead of
+                          their JSON files (env DATABASE_URL or
+                          AGENT_OFFICE_DATABASE_URL). A .env file in the
+                          project is loaded automatically if there is one
   -h, --help              Show this help
 
 Started in a terminal, the office opens in your browser already signed in, with
@@ -255,6 +263,7 @@ export function loadConfig(argv: string[]): Config {
   let city = process.env.AGENT_OFFICE_CITY || '';
   let weather = process.env.AGENT_OFFICE_WEATHER || '';
   let realTimeSky = process.env.AGENT_OFFICE_SKY_CLOCK === 'real';
+  let databaseUrl = process.env.DATABASE_URL || process.env.AGENT_OFFICE_DATABASE_URL || '';
   const iceServers: RTCIceServerLike[] = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }];
   // A container can't take --turn (deploy/container/compose.yaml), so the TURN servers come from the environment too.
   for (const url of (process.env.AGENT_OFFICE_TURN ?? '').split(/\s+/).filter(Boolean)) iceServers.push(parseTurn(url));
@@ -345,6 +354,9 @@ export function loadConfig(argv: string[]): Config {
         break;
       case '--real-time-sky':
         realTimeSky = true;
+        break;
+      case '--database-url':
+        databaseUrl = takeValue(argv, i++, a);
         break;
       default:
         if (a.startsWith('-')) {
@@ -485,6 +497,7 @@ export function loadConfig(argv: string[]): Config {
     city: city.trim() || undefined,
     weather: (weather as Weather) || undefined,
     realTimeSky,
+    databaseUrl: databaseUrl.trim() || undefined,
   };
 }
 

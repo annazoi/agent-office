@@ -1,5 +1,5 @@
 // The five stations' panels, one per toolkit, for the 3D office (E at a station) and the 2D view.
-import type { ComposioToolkit } from '../../../shared/protocol';
+import type { ComposioStationToolkit } from '../../../shared/protocol';
 import { openCalendar } from './calendar';
 import type { PanelDeps } from './common';
 import { openGmail } from './gmail';
@@ -9,7 +9,7 @@ import { openSlack } from './slack';
 
 export type { PanelDeps } from './common';
 
-export function openIntegration(toolkit: ComposioToolkit, deps: PanelDeps) {
+export function openIntegration(toolkit: ComposioStationToolkit, deps: PanelDeps) {
   switch (toolkit) {
     case 'linear':
       return openLinear(deps);

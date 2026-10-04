@@ -1,8 +1,15 @@
 // The Composio integrations: Linear, Notion, Slack, Google Calendar and Gmail as stations in the
 // office, each person connecting their own accounts (see src/server/composio.ts).
 
-/** The toolkits the office knows how to show, by Composio's slug for each. */
-export const COMPOSIO_TOOLKITS = ['linear', 'notion', 'slack', 'googlecalendar', 'gmail'] as const;
+/** The toolkits with a station in the office, by Composio's slug for each. */
+export const COMPOSIO_STATION_TOOLKITS = ['linear', 'notion', 'slack', 'googlecalendar', 'gmail'] as const;
+export type ComposioStationToolkit = (typeof COMPOSIO_STATION_TOOLKITS)[number];
+/**
+ * Every toolkit the office uses: the stations', and GitHub, which has no station of its own but
+ * stands in for the GitHub CLI in the elevator (listing and cloning your repositories) where `gh`
+ * isn't installed.
+ */
+export const COMPOSIO_TOOLKITS = [...COMPOSIO_STATION_TOOLKITS, 'github'] as const;
 export type ComposioToolkit = (typeof COMPOSIO_TOOLKITS)[number];
 
 export const COMPOSIO_TOOLKIT_META: Readonly<Record<ComposioToolkit, { label: string; icon: string; station: string }>> = {
@@ -11,7 +18,12 @@ export const COMPOSIO_TOOLKIT_META: Readonly<Record<ComposioToolkit, { label: st
   slack: { label: 'Slack', icon: '💬', station: 'Slack TV' },
   googlecalendar: { label: 'Google Calendar', icon: '📅', station: 'Calendar' },
   gmail: { label: 'Gmail', icon: '✉️', station: 'Mailroom' },
+  github: { label: 'GitHub', icon: '🐙', station: 'Elevator' },
 };
+
+export function isComposioStationToolkit(x: unknown): x is ComposioStationToolkit {
+  return typeof x === 'string' && (COMPOSIO_STATION_TOOLKITS as readonly string[]).includes(x);
+}
 
 export function isComposioToolkit(x: unknown): x is ComposioToolkit {
   return typeof x === 'string' && (COMPOSIO_TOOLKITS as readonly string[]).includes(x);
