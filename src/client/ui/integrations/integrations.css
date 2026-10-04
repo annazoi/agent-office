@@ -1,0 +1,45 @@
+/* The Composio stations' panels (ui/integrations/), on the office's own window frame and pieces. */
+.cx-panel .cx-body { display: flex; flex-direction: column; gap: 12px; max-height: min(70vh, 640px); overflow: auto; }
+.cx-panel .cx-tabs.hidden { display: none; }
+.cx-gate { display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; padding: 28px 18px; font-weight: 800; color: var(--muted); }
+.cx-gate p { margin: 0; max-width: 460px; }
+.cx-empty { text-align: center; padding: 18px; }
+.cx-field { display: flex; flex-direction: column; gap: 4px; font-weight: 800; font-size: 13px; }
+.cx-field > span { color: var(--muted); }
+.cx-form { display: flex; flex-direction: column; gap: 10px; }
+.cx-form .cx-row { display: flex; gap: 10px; align-items: flex-end; flex-wrap: wrap; }
+.cx-form .cx-row > .cx-field { flex: 1; min-width: 160px; }
+.cx-form .cx-actions { display: flex; gap: 8px; justify-content: flex-end; flex-wrap: wrap; }
+.cx-panel select { font: inherit; font-weight: 800; padding: 8px 10px; border: 3px solid var(--ink); border-radius: 12px; background: #fff; color: var(--ink); }
+.cx-search { display: flex; gap: 8px; }
+.cx-search input { flex: 1; }
+.cx-read { background: #fff; border: 3px solid var(--ink); border-radius: 14px; padding: 14px 18px; }
+.cx-read h3 { margin: 0 0 6px; }
+.cx-read .cx-meta { font-size: 12px; font-weight: 700; color: var(--muted); margin-bottom: 10px; }
+.cx-read .cx-text { white-space: pre-wrap; word-break: break-word; font-weight: 600; line-height: 1.45; }
+.cx-read .cx-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+.cx-chat { display: flex; flex-direction: column; gap: 6px; }
+.cx-msg { display: flex; gap: 10px; align-items: baseline; padding: 6px 10px; border-radius: 10px; background: #fff; border: 2px solid var(--ink); }
+.cx-msg .cx-who { font-weight: 900; flex: none; max-width: 140px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cx-msg .cx-text { flex: 1; font-weight: 600; white-space: pre-wrap; word-break: break-word; }
+.cx-msg .cx-ts { font-size: 11px; color: var(--muted); font-weight: 700; flex: none; }
+.cx-send { display: flex; gap: 8px; align-items: flex-end; }
+.cx-send textarea { flex: 1; min-height: 44px; }
+.cx-split { display: grid; grid-template-columns: 220px 1fr; gap: 12px; min-height: 240px; }
+.cx-split .svc-list { max-height: 420px; overflow: auto; }
+.cx-day { display: flex; flex-direction: column; gap: 6px; }
+.cx-day h4 { margin: 8px 0 2px; font-size: 13px; color: var(--muted); }
+.cx-day h4.today { color: var(--accent); }
+.cx-event { display: flex; gap: 12px; align-items: center; padding: 8px 12px; border: 3px solid var(--ink); border-radius: 12px; background: #fff; box-shadow: 0 3px 0 var(--ink); }
+.cx-event .cx-time { font-weight: 900; min-width: 90px; }
+.cx-event .cx-title { flex: 1; font-weight: 800; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.cx-event .cx-where { font-size: 12px; color: var(--muted); font-weight: 700; }
+.cx-event.now { border-color: var(--accent); background: var(--paper-2); }
+.cx-timeline { position: relative; border-left: 4px solid var(--ink); margin-left: 6px; padding-left: 12px; }
+.cx-pill { display: inline-block; font-size: 11px; font-weight: 900; border: 2px solid var(--ink); border-radius: 999px; padding: 0 8px; background: var(--paper-2); }
+.cx-pill.p1 { background: #ffd6e0; }
+.cx-pill.p2 { background: #ffe8d6; }
+.cx-small { font-size: 12px; color: var(--muted); font-weight: 700; }
+@media (max-width: 640px) {
+  .cx-split { grid-template-columns: 1fr; }
+}
