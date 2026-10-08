@@ -678,7 +678,7 @@ test('Codex workers preserve native approvals, follow authenticated root hooks, 
 });
 
 
-test('Grok workers isolate GROK_HOME, follow authenticated hooks, and resume their session', async (t) => {
+test('Grok workers run on the person\'s own GROK_HOME with no files of the office\'s, follow authenticated hooks, and resume their session', async (t) => {
   const f = fixture();
   isolateProviderEnvironment(f, t);
   const oldLog = process.env.FAKE_AGENT_LOG;
@@ -692,7 +692,8 @@ test('Grok workers isolate GROK_HOME, follow authenticated hooks, and resume the
   const calls = await waitFor(f.read, x => x.some(r => r.kind === 'grok'));
   const first = calls.find(r => r.kind === 'grok')!;
   const token = first.env.hookToken!;
-  assert.equal(worker.status, 'starting');
+  // Nothing waits on a hook of the office's: it's idle as soon as it runs.
+  assert.equal(worker.status, 'idle');
   assert.equal(worker.model, 'grok-4.6');
   assert.equal(worker.effort, 'high');
   assert.ok(first.args.includes('--no-alt-screen'));
@@ -704,7 +705,8 @@ test('Grok workers isolate GROK_HOME, follow authenticated hooks, and resume the
   assert.ok(first.args.includes('high'));
   assert.deepEqual(first.args.slice(-2), ['--', '- fix the login']);
   assert.equal(first.args.includes('--claude-only'), false);
-  assert.equal(first.env.grokHome, path.join(f.data, 'grok-home'));
+  assert.equal(first.env.grokHome, process.env.GROK_HOME);
+  assert.equal(existsSync(path.join(f.data, 'grok-home')), false, 'no hooks file of the office\'s');
   assert.equal(calls.some(r => r.kind === 'claude'), false);
   const sessionId = worker.sessionId!;
   assert.match(sessionId, /^[0-9a-f-]{36}$/i);
@@ -745,7 +747,7 @@ test('Grok workers isolate GROK_HOME, follow authenticated hooks, and resume the
 });
 
 
-test('Muse workers isolate XDG, follow authenticated hooks, resume by uuid, and paste a follow-up prompt', async (t) => {
+test('Muse workers run on the person\'s own XDG folders with no files of the office\'s, follow authenticated hooks, resume by uuid, and paste a follow-up prompt', async (t) => {
   const f = fixture();
   isolateProviderEnvironment(f, t);
   const oldLog = process.env.FAKE_AGENT_LOG;
@@ -763,7 +765,7 @@ test('Muse workers isolate XDG, follow authenticated hooks, resume by uuid, and 
   const calls = await waitFor(f.read, x => x.some(r => r.kind === 'muse'));
   const first = calls.find(r => r.kind === 'muse')!;
   const token = first.env.hookToken!;
-  assert.equal(worker.status, 'starting');
+  assert.equal(worker.status, 'idle');
   assert.equal(worker.model, 'muse-spark-1.3-contributor');
   assert.equal(worker.effort, 'high');
   assert.equal(worker.sessionId, undefined);
@@ -776,9 +778,8 @@ test('Muse workers isolate XDG, follow authenticated hooks, resume by uuid, and 
   assert.equal(first.args.includes('resume'), false);
   assert.equal(first.args.includes('--yolo'), false);
   assert.equal(first.args.includes('--claude-only'), false);
-  assert.equal(first.env.xdgConfig, path.join(f.data, 'muse-home', 'config'));
-  assert.equal(first.env.xdgData, path.join(f.data, 'muse-home', 'share'));
-  assert.equal(first.env.xdgState, path.join(f.data, 'muse-home', 'state'));
+  assert.equal(first.env.xdgConfig, process.env.XDG_CONFIG_HOME);
+  assert.equal(existsSync(path.join(f.data, 'muse-home')), false, 'no settings.json of the office\'s');
   assert.equal(calls.some(r => r.kind === 'claude'), false);
   const sessionId = 'muse-root';
   const hook = (event: string, extra = {}) => workers.handleMuseHook(worker.id, token, event, { session_id: sessionId, ...extra });
@@ -833,7 +834,7 @@ test('Muse workers isolate XDG, follow authenticated hooks, resume by uuid, and 
 });
 
 
-test('Cursor workers keep their hooks in their folder, follow them, and resume their chat with a follow-up prompt', async (t) => {
+test('Cursor workers get no hooks file in their folder, follow hooks of their own, and resume their chat with a follow-up prompt', async (t) => {
   const f = fixture();
   isolateProviderEnvironment(f, t);
   const oldLog = process.env.FAKE_AGENT_LOG;
@@ -844,7 +845,6 @@ test('Cursor workers keep their hooks in their folder, follow them, and resume t
     f.close();
   });
   const hooksFile = path.join(f.root, '.cursor', 'hooks.json');
-  const entries = () => (existsSync(hooksFile) ? (JSON.parse(readFileSync(hooksFile, 'utf8')) as { hooks: Record<string, { command: string }[]> }).hooks : undefined);
   const book = ledger(f.data);
   const workers = new WorkerManager(f.root, f.data, f.claude, ['--claude-only'], { url: 'http://127.0.0.1:1', token: '' }, events([]), book);
   t.after(() => workers.shutdown());
@@ -862,10 +862,8 @@ test('Cursor workers keep their hooks in their folder, follow them, and resume t
   assert.equal(worker.sessionId, undefined);
   assert.deepEqual(first.args, ['--trust', '--model', 'gpt-5', '--', '- fix the login']);
   assert.equal(calls.some(r => r.kind === 'claude'), false);
-  // Its hooks are in the folder it runs in, one entry an event, each naming this worker.
-  assert.deepEqual(Object.keys(entries()!), ['sessionStart', 'beforeSubmitPrompt', 'preToolUse', 'postToolUse', 'postToolUseFailure', 'stop']);
-  assert.ok(entries()!.stop[0].command.endsWith(` 'stop' '${worker.id}'`));
-  assert.ok(entries()!.stop[0].command.includes(path.join(f.data, 'agent-office-cursor-hook.cjs')));
+  // The office writes no hooks.json in the folder it runs in.
+  assert.equal(existsSync(hooksFile), false);
   const sessionId = '0b9a7d0e-5c1f-4a57-9d55-3a1d2f6f0c11';
   const hook = (event: string, extra = {}) => workers.handleProviderHook('cursor', worker.id, token, event, { conversation_id: sessionId, ...extra });
   assert.equal(workers.handleProviderHook('cursor', worker.id, 'wrong', 'sessionStart', { conversation_id: sessionId }), false);
@@ -894,9 +892,7 @@ test('Cursor workers keep their hooks in their folder, follow them, and resume t
   assert.equal(workers.handleProviderHook('cursor', worker.id, token, 'stop', { conversation_id: 'second-chat' }), true);
   assert.equal(worker.usage, undefined);
   assert.equal(book.state().total.calls, 0);
-  // The office stops, and the worker with it: nothing of its hooks is left in the project.
   workers.shutdown();
-  assert.equal(existsSync(hooksFile), false);
   process.env.FAKE_AGENT_EXIT_MS = '1500';
   const restored = manager(f, f.claude, [], []);
   t.after(() => restored.shutdown());
@@ -908,18 +904,13 @@ test('Cursor workers keep their hooks in their folder, follow them, and resume t
   assert.equal(restored.get(worker.id)?.provider, 'cursor');
   assert.equal(restored.get(worker.id)?.model, 'gpt-5');
   assert.equal(restored.handleProviderHook('cursor', worker.id, token, 'stop', { conversation_id: 'second-chat' }), false);
-  assert.equal(entries()!.stop.length, 1);
-  // Its process ends: its entries go, and the file with them.
   await waitFor(() => restored.get(worker.id)?.status, (status) => status === 'exited');
-  assert.equal(existsSync(hooksFile), false);
   delete process.env.FAKE_AGENT_EXIT_MS;
   assert.equal(restored.resume(worker.id, 'follow-up from the queue'), undefined);
   const resumed = await waitFor(f.read, x => x.filter(r => r.kind === 'cursor-agent' && !r.stdin).length >= 3);
   assert.deepEqual(resumed.filter(r => r.kind === 'cursor-agent' && !r.stdin).at(-1)!.args, ['--trust', '--resume=second-chat', '--', 'follow-up from the queue']);
-  assert.equal(entries()!.stop.length, 1);
-  // Sent home: the folder is the project's own, so its entries are taken out of it.
   await restored.kill(worker.id);
-  await waitFor(() => existsSync(hooksFile), (there) => !there);
+  assert.equal(existsSync(hooksFile), false);
 });
 
 

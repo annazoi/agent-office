@@ -127,9 +127,8 @@ Everything else reads those, and needs no change of its own:
   (`src/server/agents/models.ts`), which `GET /api/agents/<id>/models` serves; a test checks the two agree.
 - An adapter with a `hook` gets its route, `/hooks/<id>`, on the loopback hook server
   (`src/server/hooks/server.ts`).
-- An adapter whose CLI only reads its settings from the folder it runs in (Cursor's
-  `.cursor/hooks.json`) is handed that folder at `launch`, and is told by `exited` when the run is
-  over (the process ended, the worker was sent home, or the office stopped), to take them out again.
+- An adapter whose CLI only reads its hooks from a file (Cursor, Grok, Muse) gets none: the office
+  keeps nothing in files, so such a worker is followed by its terminal alone.
 
 Hook helpers longer than a few lines (a settings file, a plugin, a payload parser) go in a module
 of their own that the adapter imports, as `src/server/agents/codex.ts` and `src/server/agents/grok.ts` do. One

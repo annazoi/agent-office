@@ -1,25 +1,18 @@
-// Cursor CLI: its hooks go in the hooks.json of the folder each worker runs in (see ../cursor.ts),
-// since that and ~/.cursor, which the office never touches, are the only places it reads them from,
-// and report on /hooks/cursor. It runs on the machine's own Cursor login. Its spend isn't metered by
+// Cursor CLI: the office writes it no hooks (it only reads them from a hooks.json file, and the office
+// keeps nothing in files), so it's followed by its terminal; hooks of the person's own in ~/.cursor
+// still report on /hooks/cursor. It runs on the machine's own Cursor login. Its spend isn't metered by
 // the office, and nothing tells the office about a permission prompt: a worker waiting on one shows
 // as working until it's answered.
-import { addCursorHooks, cursorBlocked, normalizeCursorHook, removeCursorHooks, withoutCursorLaunchArgs, writeCursorHook } from '../agents/cursor.js';
+import { cursorBlocked, normalizeCursorHook, withoutCursorLaunchArgs } from '../agents/cursor.js';
 import { reduceLifecycle } from '../workers/lifecycle.js';
 import type { ProviderAdapter } from './types.js';
 
-interface CursorSetup {
-  /** The helper its hooks run. */
-  hook: string;
-}
-
-export const cursor: ProviderAdapter<undefined, CursorSetup> = {
+export const cursor: ProviderAdapter = {
   id: 'cursor',
   // What Cursor sets in its own shells. CURSOR_API_KEY stays: a worker signs in with it when it's set.
   scrubEnv: ['CURSOR_AGENT', 'CURSOR_CLI', 'CURSOR_INVOKED_AS', 'CURSOR_CONVERSATION_ID', 'CURSOR_REQUEST_ID'],
-  prepare: ({ dataDir }) => ({ hook: writeCursorHook(dataDir) }),
-  launch({ h: { info }, args, prompt, resumeSessionId, cwd, setup }) {
+  launch({ h: { info }, args, prompt, resumeSessionId }) {
     args = withoutCursorLaunchArgs(args);
-    addCursorHooks(cwd, setup.hook, info.id);
     // The office made this folder for it. Cursor's own permission prompts stay as they are.
     args.push('--trust');
     // Its chat id is the first one its hooks name. A resumed chat keeps the model it had.
@@ -28,7 +21,6 @@ export const cursor: ProviderAdapter<undefined, CursorSetup> = {
     if (prompt) args.push('--', prompt);
     return { args, rotateToken: true };
   },
-  exited: ({ info }, cwd) => removeCursorHooks(cwd, info.id),
   titleNoise: /^cursor( agent| cli)?$/i,
   hook: {
     strictJson: true,

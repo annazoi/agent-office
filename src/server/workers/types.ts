@@ -48,8 +48,8 @@ export interface RunAs {
   claudeReady(owner: string): boolean;
   /** What to tell the account when it hasn't. */
   why(which: 'claude'): string;
-  /** Puts the account's sign-ins in place of the office's in `env`; `dirs` are where the worker starts. */
-  apply(owner: string, env: Record<string, string>, dirs: string[]): Record<string, string>;
+  /** Puts the account's sign-ins in place of the office's in `env`. */
+  apply(owner: string, env: Record<string, string>): Record<string, string>;
   /** The account's own Composio MCP endpoint for its workers' tools, once it has one (see composio-mcp.ts). */
   composioMcp?(owner: string): ComposioMcp | undefined;
 }

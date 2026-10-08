@@ -86,7 +86,7 @@ export function createServices(ctx: Ctx): BuildingServices {
       a?.reader.close();
       const reader = new PlanLimitsReader(
         claudeBin,
-        signins.apply(id, childEnv(), [], 'claude'),
+        signins.apply(id, childEnv(), 'claude'),
         () => [...clients.values()].some((o) => o.accountId === id),
         (state) => {
           for (const o of clients.values()) if (o.accountId === id) ctx.sendTo(o, { t: 'limits', state });

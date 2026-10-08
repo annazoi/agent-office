@@ -118,7 +118,7 @@ export async function openFloors(ctx: Ctx, hookPort: number): Promise<FloorsOpen
     lent: (floor) => [...floors.values()].some((f) => f !== floor && worksIn(f, floor)),
     locksUp: () => !!ctx.maps.plan().sendHome?.keeps,
     // Everyone's own sign-ins, and their own Composio tools for the workers they hire.
-    runAs: { claudeReady: (o) => ctx.signins.claudeReady(o), why: (w) => ctx.signins.why(w), apply: (o, env, dirs) => ctx.signins.apply(o, env, dirs), composioMcp: (o) => ctx.composio.mcpCached(o) },
+    runAs: { claudeReady: (o) => ctx.signins.claudeReady(o), why: (w) => ctx.signins.why(w), apply: (o, env) => ctx.signins.apply(o, env), composioMcp: (o) => ctx.composio.mcpCached(o) },
     ghAs: (owner) => (owner ? ctx.signins.ghAs(owner) : undefined),
   };
   /** Whether a worker on `from` works in `on`'s project too (see WorkerInfo.repos). */
