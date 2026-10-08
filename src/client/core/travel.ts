@@ -244,7 +244,7 @@ export function installTravel(ctx: Ctx, core: CoreState, parts: TravelParts) {
     if (!t) return;
     core.trip = null;
     fade(false);
-    if (t.how === 'elevator') lift()?.setOpen(!!store.floor);
+    if (t.how === 'elevator') lift()?.setOpen(true);
     if (t.how === 'ladder' || t.how === 'pole') parts.climbing.climber.abort();
     player.enabled = !modalOpen();
     // The map changed on the way: back where it has you come in (or down off a roof it doesn't have).
@@ -325,9 +325,9 @@ export function installTravel(ctx: Ctx, core: CoreState, parts: TravelParts) {
       core.trip = null;
     }
     if (!store.floor) {
-      // No project yet: the doors stay shut, and you look around. The elevator, or anything that
-      // needs a project, asks for one (see askForProject).
-      lift()?.setOpen(false);
+      // No project yet: the doors open and you look around. The elevator, or anything that needs a
+      // project, asks for one (see askForProject).
+      lift()?.setOpen(true);
       fade(false);
       player.enabled = !modalOpen();
       return;
