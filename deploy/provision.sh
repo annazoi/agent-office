@@ -296,8 +296,8 @@ fi
 if [[ -z "$DATABASE_URL" ]]; then
   if ! command -v pg_ctlcluster >/dev/null 2>&1; then
     step "Installing PostgreSQL (the office keeps everything in it)"
-    quiet sudo apt-get -y -q update
-    quiet sudo apt-get -y -q install postgresql
+    quiet "${APT[@]}" update
+    quiet "${APT[@]}" install postgresql
   fi
   sudo systemctl enable --now postgresql >/dev/null 2>&1 || true
   step "Making the office's database"
