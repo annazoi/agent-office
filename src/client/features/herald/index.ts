@@ -61,7 +61,7 @@ export function installHerald(ctx: Ctx, parts: Pick<Parts, 'place' | 'you' | 'ac
     });
   }
 
-  ctx.interactions.define('herald', {
+  ctx.interactions.define('herald', { needsProject: true,
     reach: 5,
     hint: () => {
       const hd = plan().herald;

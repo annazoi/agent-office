@@ -391,6 +391,8 @@ export interface InteractionTypes {
 export interface InteractionDef<T extends InteractionTypes> {
   /** How close (meters from your eyes) you must be to use it by aiming at it. */
   readonly reach: number;
+  /** It's about a project (a desk, a board, the queue): without one you're asked to add one instead. */
+  readonly needsProject?: boolean;
   hint(it: T['it']): T['hint'];
   /** A key pressed (or the mouse clicked, as E) at it. `note` is the issue note you're pointing at, on the issues board. */
   use(it: T['it'], key: T['key'], note: T['note']): void;
@@ -399,6 +401,11 @@ export interface InteractionDef<T extends InteractionTypes> {
 /** What each kind of thing you can use does, one definition per kind. */
 export class Interactions<T extends InteractionTypes> {
   private readonly defs = new Map<T['it']['kind'], InteractionDef<T>>();
+  /**
+   * Asked before anything that needs a project is used: true when there's none, and it has asked you
+   * to add one (see core/travel.ts), so the thing isn't used.
+   */
+  noProject?: () => boolean;
 
   define(kind: T['it']['kind'], def: InteractionDef<T>): Off {
     if (this.defs.has(kind)) throw new Error(`Interaction ${kind} is already defined`);
@@ -437,7 +444,9 @@ export class Interactions<T extends InteractionTypes> {
   }
 
   use(it: T['it'], key: T['key'], note: T['note']): void {
-    this.def(it.kind).use(it, key, note);
+    const def = this.def(it.kind);
+    if (def.needsProject && this.noProject?.()) return;
+    def.use(it, key, note);
   }
 }
 

@@ -167,6 +167,8 @@ export type FloorServerMsg =
   | { t: 'floor.repos'; repos: RepoChoice[]; error?: string }
   /** Sent to whoever asked for the floor, once it's cloned (or couldn't be). */
   | { t: 'floor.added'; repo: string; floor?: string; error?: string }
+  /** What you did needs a project, and you're not on a floor: the page offers to add one. */
+  | { t: 'floor.needed'; why: string }
   /** The projects folder moved (see floor.projectsDir). */
   | { t: 'projectsDir'; state: ProjectsDirState }
   /** Your floor's signs changed, or its back office was built out or walled up. */

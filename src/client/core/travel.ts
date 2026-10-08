@@ -9,6 +9,7 @@ import type { Arrival, Grip } from '../features/climbing/controller';
 import { lastSpot, store } from '../state';
 import { $, clip, closeAllModals, modalOpen, toast } from '../ui/dom';
 import { GARAGE, openElevator } from '../ui/elevator';
+import { askProject } from '../ui/ask-project';
 import type { Ctx, TripKind } from './context';
 import type { CoreState } from './ctx';
 import { builtFloors, floorWings } from './floors';
@@ -82,6 +83,19 @@ export function installTravel(ctx: Ctx, core: CoreState, parts: TravelParts) {
   function showElevator() {
     openElevator({ net, ride, downstairs });
   }
+
+  /** Something you went to needs a project, and you're not on one: say so, with the way to add one. */
+  function askForProject(why = 'That needs a project. Add one of your repositories as a floor first: the office clones it, and its desks, boards and queue are its own.') {
+    if (modalOpen()) return;
+    askProject(why, showElevator);
+  }
+  // Without a project, the desks, boards and the rest ask for one instead of opening.
+  ctx.interactions.noProject = () => {
+    if (store.floor) return false;
+    askForProject();
+    return true;
+  };
+  ctx.messages.on('floor.needed', (msg) => askForProject(msg.why));
 
   ctx.interactions.define('elevator', {
     reach: 4.5,
@@ -311,11 +325,11 @@ export function installTravel(ctx: Ctx, core: CoreState, parts: TravelParts) {
       core.trip = null;
     }
     if (!store.floor) {
-      // Nowhere to go yet: the doors stay shut until there's a floor, and the panel says how to add one.
+      // No project yet: the doors stay shut, and you look around. The elevator, or anything that
+      // needs a project, asks for one (see askForProject).
       lift()?.setOpen(false);
       fade(false);
       player.enabled = !modalOpen();
-      showElevator();
       return;
     }
     fade(false);

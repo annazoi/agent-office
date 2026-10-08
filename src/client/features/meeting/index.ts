@@ -30,7 +30,7 @@ export function installMeeting(ctx: Ctx, parts: Pick<Parts, 'waiting' | 'actions
     );
   }
 
-  ctx.interactions.define('meeting', {
+  ctx.interactions.define('meeting', { needsProject: true,
     reach: 7,
     hint: () => {
       const m = store.meeting.current;
