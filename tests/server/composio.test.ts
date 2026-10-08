@@ -13,7 +13,7 @@ import { Accounts } from '../../src/server/accounts/accounts.js';
 import { Auth } from '../../src/server/accounts/auth.js';
 import { ComposioHub, composioUserId, type ComposioSdk, type ComposioSession } from '../../src/server/integrations/composio.js';
 import { calendar, gmail, linear, linearBucket, notion, slack } from '../../src/server/integrations/composio-actions.js';
-import { COMPOSIO_HEADER_ENV, codexComposioMcp, describeComposioTool, openCodeComposioMcp, writeClaudeComposioMcp } from '../../src/server/integrations/composio-mcp.js';
+import { COMPOSIO_HEADER_ENV, codexComposioMcp, describeComposioTool, openCodeComposioMcp, claudeComposioMcp } from '../../src/server/integrations/composio-mcp.js';
 import { composioRoutes } from '../../src/server/http/composio.js';
 import { requestHandler } from '../../src/server/http/router.js';
 import { authRoutes } from '../../src/server/http/routes/auth.js';
@@ -218,12 +218,11 @@ test('the actions call the right Composio tools with the right parameters, and k
 
 test("the workers' MCP configs carry the endpoint, and never its header on a command line", () => {
   const mcp = { type: 'http' as const, url: 'https://backend.composio.dev/api/v3/tool_router/session/s1/mcp', headers: { 'x-api-key': KEY } };
-  const dir = tmp('mcp');
-  const file = writeClaudeComposioMcp(dir, mcp);
-  assert.equal(statSync(file).mode & 0o777, 0o600);
-  assert.equal(statSync(path.dirname(file)).mode & 0o777, 0o700);
-  assert.deepEqual(JSON.parse(readFileSync(file, 'utf8')), { mcpServers: { composio: mcp } });
-  assert.equal(writeClaudeComposioMcp(dir, mcp), file, 'the same endpoint, the same file');
+  // Claude: the config on its command line names the header's variable; the key is in the environment.
+  const claude = claudeComposioMcp(mcp);
+  assert.deepEqual(JSON.parse(claude.config), { mcpServers: { composio: { ...mcp, headers: { 'x-api-key': `\${${COMPOSIO_HEADER_ENV}_0}` } } } });
+  assert.deepEqual(claude.env, { [`${COMPOSIO_HEADER_ENV}_0`]: KEY });
+  assert.ok(!claude.config.includes(KEY));
   const codex = codexComposioMcp(mcp);
   assert.deepEqual(codex.args, ['-c', `mcp_servers.composio.url="${mcp.url}"`, '-c', `mcp_servers.composio.env_http_headers={ "x-api-key" = "${COMPOSIO_HEADER_ENV}" }`]);
   assert.deepEqual(codex.env, { [COMPOSIO_HEADER_ENV]: KEY });

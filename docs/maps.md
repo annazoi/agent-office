@@ -31,7 +31,7 @@ A long pressurised deck in orbit: white hull panels and dark plating, ribs overh
 
 ## Maps of your own
 
-A map is plain JSON. Put a file in the office's `.agent-office/maps/` folder: `~/agent-office/.agent-office/maps/` for an office started without a project, or `<dir>/.agent-office/maps/` for `agent-office <dir>`. It's read whenever someone opens ⚙️ Settings or joins, so there's nothing to restart: open Settings and it's in the list. A map that won't load is listed with why.
+A map is plain JSON, which you write and then add to the office's database with `agent-office maps add my-hall.json` (on the office's machine, with its `DATABASE_URL`; `-d <dir>` for an office started in a project). It's checked on the way in, and a map that won't load says why and isn't added. Adding one with the same name replaces it; `agent-office maps` lists them and `agent-office maps remove <name>` takes one away. The running office picks up the change within seconds, so there's nothing to restart: open Settings and it's in the list.
 
 The easy way is to start from the castle and change only what you want. This one moves the issues board, and the Issues agent's lectern under it, three bays down the west wall, and makes the line shorter:
 
@@ -71,7 +71,7 @@ The station works the same way. This one has a quieter crew: no First Officer, a
 }
 ```
 
-To change the lists (move a pillar, resize the hall and everything in it), start from a copy of the whole map instead: [`docs/maps/castle.json`](maps/castle.json) is the castle, as a map of your own called *My castle*, and [`docs/maps/station.json`](maps/station.json) the station, as *My station*. Copy one into the folder and it's in Settings; change what you like from there.
+To change the lists (move a pillar, resize the hall and everything in it), start from a copy of the whole map instead: [`docs/maps/castle.json`](maps/castle.json) is the castle, as a map of your own called *My castle*, and [`docs/maps/station.json`](maps/station.json) the station, as *My station*. Copy one, change what you like, and `agent-office maps add` it.
 
 Or write one from nothing. This is about the least a map can be: a hall, a door, tables to seat 32, the board agents, a meeting table and the four boards. Everything else (the throne, the line, the herald, the props) is optional:
 
@@ -104,13 +104,13 @@ Or write one from nothing. This is about the least a map can be: a hall, a door,
 }
 ```
 
-The folder's first 24 files are read, up to 256 KB each, and a map can have up to 40 tables, 12 seats a side and 400 props.
+The office keeps up to 24 maps of your own, up to 256 KB each, and a map can have up to 40 tables, 12 seats a side and 400 props.
 
 Units are meters. The hall runs from `x = -width/2` (west) to `width/2` (east) and from `z = -length/2` (north) to `length/2` (south); `y` is up. Angles (`rotY`) are in radians: `0` faces south (+z), `π/2` (1.5708) east, `π` north and `-π/2` west. Put the boards on the inside of a wall (`±(width/2 - 0.08)`), facing into the hall.
 
 ### When a map breaks
 
-A map that won't load (bad JSON, something outside the hall, too few seats, a prop reaching over the walls…) is listed in Settings in red, with the reason, and can't be picked. If it's the one the building is on, the building goes back to the office, for everyone, with a note saying why, and comes back to your map by itself once the file loads again. The folder is read again when someone opens Settings or joins. To put the building back to the office by hand, pick 🏢 Office in Settings.
+A map that won't load (bad JSON, something outside the hall, too few seats, a prop reaching over the walls…) is listed in Settings in red, with the reason, and can't be picked. If it's the one the building is on, the building goes back to the office, for everyone, with a note saying why, and comes back to your map by itself once it loads again (add it again, fixed). To put the building back to the office by hand, pick 🏢 Office in Settings.
 
 ### What a map has
 

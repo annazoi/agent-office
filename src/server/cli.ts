@@ -31,6 +31,10 @@ if (argv[0] === 'accounts') {
   const { accountsCommand } = await import('./accounts/accounts.js');
   await done(await accountsCommand(argv.slice(1)));
 }
+if (argv[0] === 'maps') {
+  const { mapsCommand } = await import('./floor/maps-command.js');
+  await done(await mapsCommand(argv.slice(1)));
+}
 if (argv[0] === 'setup') {
   const { setupCommand } = await import('./setup.js');
   await done(await setupCommand(argv.slice(1)));

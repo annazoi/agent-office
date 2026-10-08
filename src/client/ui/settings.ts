@@ -191,7 +191,7 @@ export function openSettings(net: Net, settings: Settings, onChange: (s: Setting
       ),
     );
     const now = choices.find((m) => m.id === pick) ?? choices[0];
-    mapNote.textContent = `${now.description} It’s the same on every floor, for everyone in the building${by ? `, picked by ${by}${at ? ` ${timeAgo(at)}` : ''}` : ''}. Maps of your own go in the office’s .agent-office/maps/ folder as JSON (see docs/maps.md).`;
+    mapNote.textContent = `${now.description} It’s the same on every floor, for everyone in the building${by ? `, picked by ${by}${at ? ` ${timeAgo(at)}` : ''}` : ''}. Maps of your own are added on the office’s machine with agent-office maps add (see docs/maps.md).`;
     const broken = choices.filter((m) => m.error);
     mapBad.textContent = broken.map((m) => `⚠️ ${m.id} won't load: ${m.error}`).join('\n');
     mapBad.hidden = !broken.length;

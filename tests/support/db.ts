@@ -10,6 +10,7 @@ export function memoryBackend(rows = new Map<string, string>()): Backend & { row
     rows,
     loadAll: async () => new Map(rows),
     load: async (key) => rows.get(key),
+    loadPrefix: async (prefix) => new Map([...rows].filter(([k]) => k.startsWith(prefix))),
     write: async (key, json) => void rows.set(key, json),
     remove: async (key) => void rows.delete(key),
     close: async () => {},

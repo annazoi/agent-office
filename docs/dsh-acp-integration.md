@@ -47,7 +47,7 @@ three work. Something has to change; the only question is what.
 
 DSH ships `@deepseek-ai/dsh-hooks-claude-code` and `@deepseek-ai/dsh-hooks-codex`. Each mounts a
 bridge that runs an existing Claude Code `hooks.json` or Codex hook config on DSH's interception
-seams. Pointing one at the office's own generated config (`claude-hooks.json`, written in
+seams. Pointing one at the office's own generated config (the `--settings` JSON built in
 `src/server/providers/claude.ts`) looks almost free: the hooks are shell commands that `curl` the
 office's loopback endpoint carrying `$AGENT_OFFICE_HOOK_URL`, `$AGENT_OFFICE_HOOK_TOKEN` and
 `$AGENT_OFFICE_WORKER_ID`, all of which the office already sets on the child environment.

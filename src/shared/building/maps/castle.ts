@@ -8,7 +8,7 @@ import type { MapConfig, PropConfig } from './types.js';
  * walls, each with a scribe at a lectern below it.
  *
  * This is all data: moving something is changing a number here, or (without touching the code)
- * a map of your own that `extends: 'castle'` in the office's .agent-office/maps/ (docs/maps.md).
+ * a map of your own that `extends: 'castle'`, added with `agent-office maps add` (docs/maps.md).
  *
  * The hall runs north (-z, the throne) to south (+z, the doors); x is across it, west (-x) to east.
  */

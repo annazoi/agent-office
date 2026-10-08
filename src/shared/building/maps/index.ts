@@ -408,7 +408,7 @@ export function planMap(input: unknown): MapPlan {
 
 // ---- Which maps there are -------------------------------------------------------------------------
 
-/** A custom map read from a file, checked: its config if it can be used, else why not. */
+/** A custom map, checked: its config if it can be used, else why not. `file` is its name. */
 export interface CustomMap {
   file: string;
   config?: MapConfig;
@@ -416,7 +416,7 @@ export interface CustomMap {
 }
 
 /**
- * Checks the custom maps (JSON from the office's .agent-office/maps/) against the built-in ones and
+ * Checks the custom maps (JSON the office keeps in its database, see agent-office maps) against the built-in ones and
  * each other: each comes back with its whole config (what it extends filled in), or why it can't be used.
  */
 export function checkCustomMaps(files: { file: string; json: unknown }[]): CustomMap[] {

@@ -34,7 +34,7 @@ export function createServices(ctx: Ctx): BuildingServices {
   const themes = new Themes(cfg.dataDir, () => sky.state.utcOffset, (state) => ctx.broadcast({ t: 'theme', state }));
   themes.start();
   // What the building looks like inside: the office, the castle, or a map of your own (⚙️ Settings).
-  const maps = new Maps(cfg.dataDir);
+  const maps = new Maps(cfg.dataDir, { watch: true });
   // The prompts the office writes for workers by itself, and the worker everyone starts on (⚙️ Settings).
   const configured = configuredProvider(cfg.agentCmd);
   const prompts = new OfficePrompts(cfg.dataDir, { list: agentProviders(configured), configured }, (state) => ctx.broadcast({ t: 'prompts', state }));

@@ -30,6 +30,11 @@ export function postgresBackend(url: string): Backend {
       const { rows } = await pool.query<{ value: string }>('select value::text as value from office_state where key = $1', [key]);
       return rows[0]?.value;
     },
+    async loadPrefix(prefix) {
+      await table();
+      const { rows } = await pool.query<{ key: string; value: string }>('select key, value::text as value from office_state where left(key, length($1)) = $1', [prefix]);
+      return new Map(rows.map((r) => [r.key, r.value]));
+    },
     async write(key, json) {
       await table();
       await pool.query('insert into office_state (key, value, updated_at) values ($1, $2::jsonb, now()) on conflict (key) do update set value = $2::jsonb, updated_at = now()', [key, json]);

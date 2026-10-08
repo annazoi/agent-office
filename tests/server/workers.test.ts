@@ -1157,24 +1157,22 @@ test("every Claude worker gets the office's MCP server, and office-workers on it
   const bin = path.join(f.data, 'bin');
   accessSync(path.join(bin, 'office-workers'), constants.X_OK);
   assert.match(execFileSync(path.join(bin, 'office-workers'), ['--help'], { encoding: 'utf8' }), /office-workers home --merged/);
-  // Claude Code's --mcp-config: the shipped script, run as an MCP server by the office's own node.
-  const config = path.join(f.data, 'agent-office-mcp.json');
-  const server = JSON.parse(readFileSync(config, 'utf8')).mcpServers['agent-office'];
-  assert.equal(server.command, process.execPath);
-  assert.deepEqual(server.args.slice(1), ['mcp']);
-  assert.ok(server.args[0].endsWith(path.join('bin', 'office-workers.js')));
-  // Looking is allowed without asking; hiring and sending home aren't.
-  assert.deepEqual(JSON.parse(readFileSync(path.join(f.data, 'claude-hooks.json'), 'utf8')).permissions, { allow: ['mcp__agent-office__list_workers'] });
-
   const desk = workers.spawn('desk-2', 'Ada', 'Fix login');
   assert.equal(typeof desk, 'object');
   if (typeof desk !== 'object') return;
   const [launch] = await waitFor(() => f.read().filter((r) => r.kind === 'claude' && r.stdin === undefined && r.env.workerId === desk.id), (l) => l.length === 1);
-  // Before --settings, which ends the list of configs --mcp-config takes.
+  // Claude Code's --mcp-config, as JSON on its command line (no file): the shipped script, run as an
+  // MCP server by the office's own node. Before --settings, which ends the list --mcp-config takes.
   const at = launch.args.indexOf('--mcp-config');
   assert.ok(at >= 0);
-  assert.equal(launch.args[at + 1], config);
+  const server = JSON.parse(launch.args[at + 1]).mcpServers['agent-office'];
+  assert.equal(server.command, process.execPath);
+  assert.deepEqual(server.args.slice(1), ['mcp']);
+  assert.ok(server.args[0].endsWith(path.join('bin', 'office-workers.js')));
   assert.equal(launch.args[at + 2], '--settings');
+  // Looking is allowed without asking; hiring and sending home aren't.
+  assert.deepEqual(JSON.parse(launch.args[at + 3]).permissions, { allow: ['mcp__agent-office__list_workers'] });
+  assert.equal(existsSync(path.join(f.data, 'claude-hooks.json')) || existsSync(path.join(f.data, 'agent-office-mcp.json')), false, 'no JSON files');
   assert.equal((launch.env.path ?? '').split(path.delimiter)[0], bin);
 });
 
@@ -1197,7 +1195,7 @@ test('a Claude worker acts out its latest tool call, and puts its head in its ha
   const worker = workers.spawn('desk-1', 'test', 'make the tests pass');
   if (typeof worker === 'string') return assert.fail(worker);
   const [launch] = await waitFor(() => f.read().filter((r) => r.kind === 'claude' && r.args.includes('--settings')), (l) => l.length === 1);
-  const settings = JSON.parse(readFileSync(launch.args[launch.args.indexOf('--settings') + 1], 'utf8'));
+  const settings = JSON.parse(launch.args[launch.args.indexOf('--settings') + 1]);
   assert.ok(settings.hooks.PostToolUseFailure, 'failed tool calls are reported');
 
   const token = launch.env.hookToken!;

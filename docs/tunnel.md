@@ -50,7 +50,7 @@ The office it talks to has to be new enough to list its workers' servers. If it 
 
 ## Signing in
 
-It signs in the way a browser does. The first time, it asks for your account's name and password in the terminal. It keeps the session, not the password, in `~/.config/agent-office/tunnel.json`, which only you can read, so it doesn't ask again for two weeks. Delete that file to sign it out.
+It signs in the way a browser does. The first time, it asks for your account's name and password in the terminal. It keeps the session, not the password, in memory while it runs, so a tunnel that drops and reconnects doesn't ask again; nothing is written to disk.
 
 For a script, pass `--name` (or `AGENT_OFFICE_NAME`) and set `AGENT_OFFICE_PASSWORD` to your account's password.
 

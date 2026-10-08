@@ -11,6 +11,8 @@ export interface Backend {
   loadAll(): Promise<Map<string, string>>;
   /** One document, fresh from the database (another process may have changed it). */
   load(key: string): Promise<string | undefined>;
+  /** Every document whose key starts with `prefix`, fresh from the database. */
+  loadPrefix(prefix: string): Promise<Map<string, string>>;
   write(key: string, json: string): Promise<void>;
   remove(key: string): Promise<void>;
   close(): Promise<void>;
@@ -85,6 +87,16 @@ export class StateDb {
       }
     }
     return this.get<T>(key);
+  }
+
+  /**
+   * Re-reads every key under `prefix` from the database, so documents another process added or
+   * removed (`agent-office maps add`) show up; changes of ours still on their way are left alone.
+   */
+  async refreshPrefix(prefix: string): Promise<void> {
+    const rows = await this.backend.loadPrefix(prefix);
+    for (const key of this.keys(prefix)) if (!rows.has(key) && !this.pending.has(key)) this.cache.delete(key);
+    for (const [key, text] of rows) if (!this.pending.has(key)) this.cache.set(key, text);
   }
 
   doc<T>(key: string): Doc<T> {
