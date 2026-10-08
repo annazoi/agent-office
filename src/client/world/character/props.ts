@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { Drink } from '../../../shared/rooftop';
-import { mesh, toon, toonUnique } from '../toon';
+import { disposeSprite, mesh, toon, toonUnique } from '../toon';
 
 // What people hold and carry (a mug of coffee, a drink, a cigarette, a box of their things), and taking
 // off what they wore.
@@ -200,4 +200,11 @@ export function undress(parts: THREE.Object3D[]) {
     o.traverse((m) => (m as THREE.Mesh).geometry?.dispose());
   }
   parts.length = 0;
+}
+
+/** Takes a sprite off its parent and frees it (none is fine). */
+export function dropSprite(parent: THREE.Object3D, sprite: THREE.Sprite | null) {
+  if (!sprite) return;
+  parent.remove(sprite);
+  disposeSprite(sprite);
 }

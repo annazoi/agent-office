@@ -12,8 +12,9 @@ import { UNDEAD_SKIN } from '../costumes';
 import { HolidayOutfit } from './person-outfit';
 import { disposeSprite, mesh, textSprite, toon, toonUnique } from '../toon';
 import { EXHALE_AT, REACH_TIME, SMOKE_CYCLE, dragCurve, reachCurve } from './curves';
-import { cigarette, coffeeMug, drinkGlass, putDownGlass } from './props';
+import { dropSprite, drinkGlass, putDownGlass } from './props';
 import { styleHair } from './person-hair';
+import { armOut, armsForward, buildFace, sitPose, buildHandProps, gripPose, mouthPose, shootPose, walkPose, type Limbs } from './person-build';
 import { clubSwing, strike, swingStep, type Golf } from './person-golf';
 import { propPosition, throwStep, type Oche } from './person-throw';
 import { poseEmote, type Emoting } from './person-emote';
@@ -36,6 +37,7 @@ export class Person {
   private body = new THREE.Group();
   /** Its moving parts, for what poses them from the other files here (a golf swing, a throw, an emote). */
   readonly rig: PersonRig;
+  private limbs: Limbs;
   private legL: THREE.Object3D;
   private legR: THREE.Object3D;
   private armL: THREE.Object3D;
@@ -135,26 +137,10 @@ export class Person {
     this.root.add(this.body);
     const torso = mesh(new THREE.CapsuleGeometry(0.26, 0.28, 6, 12), this.shirt, 0, 0.72, 0);
     this.body.add(torso);
-    // Head
-    const head = (this.head = new THREE.Group());
-    head.position.y = 1.32;
-    head.add(mesh(new THREE.SphereGeometry(0.34, 20, 16), skin));
-    head.add(this.hair);
-    this.buildHair();
-    for (const sx of [-1, 1]) {
-      head.add(mesh(new THREE.SphereGeometry(0.055, 10, 8), ink, sx * 0.12, 0.02, 0.3, false));
-      head.add(mesh(new THREE.SphereGeometry(0.05, 10, 8), toon('#ff9f9f'), sx * 0.2, -0.08, 0.27, false));
-    }
-    const smile = (this.smile = mesh(new THREE.TorusGeometry(0.06, 0.015, 6, 12, Math.PI), ink, 0, -0.08, 0.32, false));
-    smile.rotation.z = Math.PI;
-    head.add(smile);
-    // Talking mouth: a flattened ball pressed into the face, scaled open and shut with the voice.
-    this.mouth = mesh(new THREE.SphereGeometry(1, 16, 12), toon('#7a2635'), 0, -0.1, 0.295, false);
-    const tongue = mesh(new THREE.SphereGeometry(1, 12, 10), toon('#ff8fa3'), 0, -0.5, 0, false);
-    tongue.scale.set(0.6, 0.45, 1.15);
-    this.mouth.add(tongue);
-    this.mouth.visible = false;
-    head.add(this.mouth);
+    const face = buildFace(skin, ink, this.hair, () => this.buildHair());
+    const head = (this.head = face.head);
+    this.smile = face.smile;
+    this.mouth = face.mouth;
     this.body.add(head);
 
     const limb = (len: number, r: number, mat: THREE.Material, x: number, y: number) => {
@@ -169,45 +155,9 @@ export class Person {
     this.armL = limb(0.24, 0.08, this.shirt, -0.33, 0.9);
     this.armR = limb(0.24, 0.08, this.shirt, 0.33, 0.9);
     for (const arm of [this.armL, this.armR]) arm.add(mesh(new THREE.SphereGeometry(0.085, 12, 10), skin, 0, -0.38, 0));
-    // Forward is +z, so the character's left arm is the one on +x. The handle faces the hand.
-    const cup = (this.cup = coffeeMug(1.4));
-    cup.position.set(0.02, -0.08, 0.1);
-    cup.rotation.y = -Math.PI / 2;
-    this.mug.add(cup);
-    this.mug.position.set(0, -0.38, 0);
-    this.mug.visible = false;
-    this.armR.add(this.mug);
-    // For smoke breaks: a cigarette sticking out of the right fist (the arm on -x, see reach), lit end
-    // pointing down at your side and up and away when it's at your mouth.
-    const cig = cigarette();
-    this.cig = cig.group;
-    this.ember = cig.ember;
-    const along = new THREE.Vector3(0, -0.9, -0.44).normalize();
-    this.cig.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), along);
-    this.cig.position.set(0, -0.38, 0).addScaledVector(along, 0.07);
-    this.cig.visible = false;
-    this.armL.add(this.cig);
-    // Between the hands when both arms are out in front (see update), its front to whoever they walk up to.
-    const holder = this.cardHolder;
-    holder.position.set(0, 0.8, 0.36);
-    holder.rotation.x = -0.1;
-    this.body.add(holder);
-    this.card = new HeldCard(holder, 0.46);
-    // Held out at chest height, turned round and tipped up so the pages face their eyes, top edge
-    // away from them, with the hands on its bottom corners.
-    this.bookHolder.position.set(0, 1, 0.48);
-    this.bookHolder.rotation.set(0.85, Math.PI, 0);
-    this.bookHolder.scale.setScalar(1.25);
-    this.body.add(this.bookHolder);
-    // Along the arm (the fist's -y) the finger points; the thumb sticks out of the front of the fist,
-    // which is up once the arm is out in front.
-    this.thumb = mesh(new THREE.CapsuleGeometry(0.035, 0.07, 4, 8).rotateX(Math.PI / 2), skin, 0, -0.38, 0.1, false);
-    this.finger = mesh(new THREE.CapsuleGeometry(0.03, 0.09, 4, 8), skin, 0, -0.5, 0.02, false);
-    for (const m of [this.thumb, this.finger]) {
-      m.visible = false;
-      this.armL.add(m);
-    }
-
+    this.limbs = { legL: this.legL, legR: this.legR, armL: this.armL, armR: this.armR };
+    const hand = buildHandProps(this.body, this.armL, this.armR, this.mug, this.cardHolder, this.bookHolder, skin);
+    ({ cup: this.cup, cig: this.cig, ember: this.ember, card: this.card, thumb: this.thumb, finger: this.finger } = hand);
     // Little mic icon that pops up while speaking
     this.mic = mesh(new THREE.SphereGeometry(0.09, 10, 8), toon('#7cf29a', { emissive: '#2a9d4b' }), 0, 2.25, 0, false);
     this.mic.visible = false;
@@ -256,10 +206,7 @@ export class Person {
 
   setLabel(name: string, muted: boolean | null) {
     this.name = name;
-    if (this.label) {
-      this.root.remove(this.label);
-      disposeSprite(this.label);
-    }
+    dropSprite(this.root, this.label);
     const suffix = muted === null ? '' : muted ? ' 🔇' : ' 🎙️';
     this.label = textSprite(`${name}${suffix}`, { bg: '#fffaf3', size: 40 });
     this.root.add(this.label);
@@ -271,11 +218,8 @@ export class Person {
     text ??= '';
     if (text === this.doingText) return;
     this.doingText = text;
-    if (this.doing) {
-      this.root.remove(this.doing);
-      disposeSprite(this.doing);
-      this.doing = null;
-    }
+    dropSprite(this.root, this.doing);
+    this.doing = null;
     if (text) {
       this.doing = textSprite(text, { bg: '#e9ecef', size: 26 });
       this.doing.position.y = DOING_Y;
@@ -336,8 +280,7 @@ export class Person {
 
   private hush() {
     if (!this.speech) return;
-    this.root.remove(this.speech.sprite);
-    disposeSprite(this.speech.sprite);
+    dropSprite(this.root, this.speech.sprite);
     this.speech = null;
   }
 
@@ -590,48 +533,25 @@ export class Person {
     const target = moving ? 1 : 0;
     this.walkPhase += dt * 11 * target * pace;
     const swing = Math.sin(this.walkPhase) * 0.7 * target;
-    if (airborne) {
-      this.legL.rotation.x = -0.5;
-      this.legR.rotation.x = 0.3;
-      this.armL.rotation.z = -2.4;
-      this.armR.rotation.z = 2.4;
-      this.armL.rotation.x = this.armR.rotation.x = 0;
-    } else {
-      this.legL.rotation.x = swing;
-      this.legR.rotation.x = -swing;
-      this.armL.rotation.x = -swing;
-      this.armR.rotation.x = swing;
-      this.armL.rotation.z = THREE.MathUtils.lerp(this.armL.rotation.z, -0.1, 0.3);
-      this.armR.rotation.z = THREE.MathUtils.lerp(this.armR.rotation.z, 0.1, 0.3);
-    }
+    walkPose(this.limbs, swing, airborne);
     this.sitK += ((this.hips === null ? 0 : 1) - this.sitK) * Math.min(1, dt * 10);
     const sit = this.sitK > 0.001 ? this.sitK : 0;
     if (sit) {
       // Legs out over the edge of the seat, hands in the lap (a cigarette still comes up for a drag).
-      for (const leg of [this.legL, this.legR]) leg.rotation.x = THREE.MathUtils.lerp(leg.rotation.x, -1.35, sit);
-      for (const arm of [this.armL, this.armR]) arm.rotation.x = THREE.MathUtils.lerp(arm.rotation.x, -0.55, sit);
+      sitPose(this.limbs, sit);
     }
     if (this.smokeT >= 0) this.smokeStep(dt, moving, airborne);
     if (this.book) {
       // Both arms out in front, hands under the book's bottom corners.
-      this.armL.rotation.set(-1.5, 0, 0.32);
-      this.armR.rotation.set(-1.5, 0, -0.32);
+      armsForward(this.limbs, -1.5, 0.32);
       this.book.update(dt);
     } else if (this.card.held || this.ball) {
       // Both arms out in front, hands on the card's edges (or either side of the ball): they don't swing while they walk.
-      this.armL.rotation.set(-1.25, 0, 0.3);
-      this.armR.rotation.set(-1.25, 0, -0.3);
+      armsForward(this.limbs, -1.25, 0.3);
     }
     if (this.shootT >= 0) {
       this.shootT += dt;
-      const k = reachCurve(this.shootT / 0.5);
-      for (const [arm, side] of [
-        [this.armL, 1],
-        [this.armR, -1],
-      ] as const) {
-        arm.rotation.x = THREE.MathUtils.lerp(arm.rotation.x, -2.75, k);
-        arm.rotation.z = THREE.MathUtils.lerp(arm.rotation.z, side * 0.12, k);
-      }
+      shootPose(this.limbs, reachCurve(this.shootT / 0.5));
       if (this.shootT >= 0.5) this.shootT = -1;
     }
     let reach = 0;
@@ -639,14 +559,12 @@ export class Person {
       this.reachT += dt;
       reach = reachCurve(this.reachT / REACH_TIME);
       // Forward is +z, so the character's right arm is the one on -x.
-      this.armL.rotation.x = THREE.MathUtils.lerp(this.armL.rotation.x, -1.65, reach);
-      this.armL.rotation.z = THREE.MathUtils.lerp(this.armL.rotation.z, 0.22, reach);
+      armOut(this.armL, -1.65, 0.22, reach);
       if (this.reachT >= REACH_TIME) this.reachT = -1;
     }
     if (this.gripping && !this.book && !this.card.held && !this.ball) {
       // The right arm out and a little down, onto the shoulder of whoever's in front.
-      this.armL.rotation.x = THREE.MathUtils.lerp(this.armL.rotation.x, -1.15, Math.min(1, dt * 10));
-      this.armL.rotation.z = THREE.MathUtils.lerp(this.armL.rotation.z, 0.3, Math.min(1, dt * 10));
+      armOut(this.armL, -1.15, 0.3, Math.min(1, dt * 10));
     }
     if (this.speech) {
       this.speech.left -= dt;
@@ -655,20 +573,7 @@ export class Person {
     // Lean into the reach a little.
     this.body.rotation.x = reach * 0.12;
     this.body.rotation.z = 0;
-    if (this.grip === 'ladder') {
-      const c = Math.sin(this.walkPhase);
-      this.armL.rotation.set(-2.55 + c * 0.35, 0, -0.12);
-      this.armR.rotation.set(-2.55 - c * 0.35, 0, 0.12);
-      this.legL.rotation.set(-0.55 - c * 0.45, 0, 0);
-      this.legR.rotation.set(-0.55 + c * 0.45, 0, 0);
-      this.body.rotation.x = -0.08;
-    } else if (this.grip === 'pole') {
-      this.armL.rotation.set(0, 0, 2.95);
-      this.armR.rotation.set(0, 0, 2.45);
-      this.legL.rotation.set(-0.35, 0, 0.25);
-      this.legR.rotation.set(-1.15, 0, 0.35);
-      this.body.rotation.z = -0.16;
-    }
+    gripPose(this.limbs, this.body, this.grip, this.walkPhase);
     if (this.mug.visible) this.mug.quaternion.copy(this.armR.quaternion).invert();
     this.body.position.y = moving && !airborne ? Math.abs(Math.sin(this.walkPhase)) * 0.06 : 0;
     // Down onto (or up onto) the seat: the hips go where it puts them.
@@ -679,10 +584,7 @@ export class Person {
     const want = THREE.MathUtils.clamp((this.voiceLevel - 0.02) / 0.12, 0, 1);
     this.mouthOpen += (want - this.mouthOpen) * Math.min(1, dt * (want > this.mouthOpen ? 35 : 15));
     if (this.voiceLevel > SPEAKING * 0.75) this.talkUntil = t + 0.4;
-    const talking = t < this.talkUntil;
-    this.smile.visible = !talking;
-    this.mouth.visible = talking;
-    if (talking) this.mouth.scale.set(0.07 * (1 - this.mouthOpen * 0.2), 0.01 + this.mouthOpen * 0.045, 0.05);
+    mouthPose(this.smile, this.mouth, t < this.talkUntil, this.mouthOpen);
     // Reading, they look down into the book.
     this.head.rotation.x = -this.mouthOpen * 0.08 + (this.book ? 0.32 : 0);
     this.head.rotation.y = this.head.rotation.z = 0;

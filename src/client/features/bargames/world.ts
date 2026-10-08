@@ -1,15 +1,17 @@
 import * as THREE from 'three';
-import { AXE_LANE, AXE_TARGET, DART, DARTBOARD, DART_NUMBERS, targetFrame, throwSpot, type BarGame, type Score, type Toss } from '../../../shared/bargames';
+import { AXE_LANE, AXE_TARGET, DART, DARTBOARD, targetFrame, throwSpot, type BarGame, type Score, type Toss } from '../../../shared/bargames';
 import { FLOOR } from '../../../shared/layout';
 import type { Collider, Interactable } from '../../world/types';
 import { bulb, type NightParts } from '../../world/outside';
-import { canvasTexture } from '../../world/texture';
+import { canvasTexture } from '../../world/texture';import { axeModel, dartModel, plain } from './models';import { axeTargetTexture, dartboardTexture, toonMap } from './textures';
 import { disposeSprite, mergeByMaterial, mesh, textPlane, textSprite, toon } from '../../world/toon';
 
 // The rooftop bar's games corner (see shared/bargames.ts): an axe-throwing booth against the north
 // edge with its target on the back wall, and a dart board in a cabinet on the outside of the booth,
 // each with a chalkboard for the round being thrown. The darts and axes flying at them, and stuck in
 // them, are everyone's: whoever throws, every page up there flies it the same way to the same spot.
+
+export { axeModel, dartModel } from './models';
 
 /** Seconds a dart takes to the board, and an axe to the target (a turn and a bit on the way). */
 const DART_FLIGHT = 0.3;
@@ -26,187 +28,6 @@ const WOOD = '#6b4428';
 const WOOD_LIGHT = '#8a5a34';
 const INK = '#2b2d42';
 const CHALK = '#f1f1ea';
-
-/** A toon material with a picture on it, banded like everything else. */
-function toonMap(map: THREE.Texture): THREE.MeshToonMaterial {
-  const m = new THREE.MeshToonMaterial({ map, gradientMap: (toon('#fff') as THREE.MeshToonMaterial).gradientMap });
-  m.userData.outlineParameters = { visible: false };
-  return m;
-}
-
-/** The dart board's face: the numbers' wedges, the treble and double rings, the bulls and the ring of numbers round it. */
-function dartboardTexture(): THREE.CanvasTexture {
-  const S = 1024;
-  const px = S / 2 / DART.board;
-  return canvasTexture(S, S, (g) => {
-    const c = S / 2;
-    g.fillStyle = '#141414';
-    g.beginPath();
-    g.arc(c, c, c, 0, Math.PI * 2);
-    g.fill();
-    const wedge = (r0: number, r1: number, a: number, color: string) => {
-      g.fillStyle = color;
-      g.beginPath();
-      g.arc(c, c, r1 * px, a - Math.PI / 20, a + Math.PI / 20);
-      g.arc(c, c, r0 * px, a + Math.PI / 20, a - Math.PI / 20, true);
-      g.closePath();
-      g.fill();
-    };
-    for (let i = 0; i < 20; i++) {
-      // Clockwise from the top: on the canvas, y runs down, so that's clockwise from -π/2.
-      const a = -Math.PI / 2 + (i * Math.PI) / 10;
-      const dark = i % 2 === 0;
-      wedge(DART.outer, DART.doubleOut, a, dark ? '#1b1b1b' : '#efe3c8');
-      wedge(DART.trebleIn, DART.trebleOut, a, dark ? '#d62828' : '#2a9d4b');
-      wedge(DART.doubleIn, DART.doubleOut, a, dark ? '#d62828' : '#2a9d4b');
-    }
-    g.fillStyle = '#2a9d4b';
-    g.beginPath();
-    g.arc(c, c, DART.outer * px, 0, Math.PI * 2);
-    g.fill();
-    g.fillStyle = '#d62828';
-    g.beginPath();
-    g.arc(c, c, DART.bull * px, 0, Math.PI * 2);
-    g.fill();
-    // The wire: round the rings, and out along the wedges' edges.
-    g.strokeStyle = '#c9ccd3';
-    g.lineWidth = 2.5;
-    for (const r of [DART.outer, DART.trebleIn, DART.trebleOut, DART.doubleIn, DART.doubleOut]) {
-      g.beginPath();
-      g.arc(c, c, r * px, 0, Math.PI * 2);
-      g.stroke();
-    }
-    for (let i = 0; i < 20; i++) {
-      const a = -Math.PI / 2 + (i * Math.PI) / 10 - Math.PI / 20;
-      g.beginPath();
-      g.moveTo(c + Math.cos(a) * DART.outer * px, c + Math.sin(a) * DART.outer * px);
-      g.lineTo(c + Math.cos(a) * DART.doubleOut * px, c + Math.sin(a) * DART.doubleOut * px);
-      g.stroke();
-    }
-    g.fillStyle = '#f5f5f5';
-    g.font = '900 54px Nunito, ui-rounded, system-ui, sans-serif';
-    g.textAlign = 'center';
-    g.textBaseline = 'middle';
-    const numbersAt = ((DART.doubleOut + DART.board) / 2) * px;
-    DART_NUMBERS.forEach((n, i) => {
-      const a = -Math.PI / 2 + (i * Math.PI) / 10;
-      g.fillText(String(n), c + Math.cos(a) * numbersAt, c + Math.sin(a) * numbersAt);
-    });
-  });
-}
-
-/** The axe target: rings painted on pale planks, a number in each, and the two blue killshot dots. */
-function axeTargetTexture(): THREE.CanvasTexture {
-  const px = 512;
-  const W = Math.round(AXE_TARGET.width * px);
-  const H = Math.round(AXE_TARGET.height * px);
-  return canvasTexture(W, H, (g) => {
-    // Upright planks, each its own shade, with a little grain.
-    const planks = 5;
-    for (let i = 0; i < planks; i++) {
-      const x = (i * W) / planks;
-      const tone = 0.9 + ((i * 7) % 5) * 0.035;
-      g.fillStyle = `rgb(${Math.round(222 * tone)}, ${Math.round(186 * tone)}, ${Math.round(140 * tone)})`;
-      g.fillRect(x, 0, W / planks, H);
-      g.strokeStyle = 'rgba(110, 70, 35, 0.18)';
-      g.lineWidth = 2;
-      for (let k = 0; k < 9; k++) {
-        const gx = x + 12 + ((k * 37 + i * 13) % (W / planks - 24));
-        g.beginPath();
-        g.moveTo(gx, 0);
-        g.bezierCurveTo(gx + 6, H * 0.3, gx - 6, H * 0.6, gx + 3, H);
-        g.stroke();
-      }
-      g.fillStyle = 'rgba(60, 35, 15, 0.45)';
-      g.fillRect(x, 0, 3, H);
-    }
-    const cx = W / 2;
-    const cy = H / 2;
-    const rings = [...AXE_TARGET.rings].reverse();
-    rings.forEach((ring, i) => {
-      g.fillStyle = ring.points === 6 ? '#e63946' : i % 2 === 0 ? '#f7f3ea' : '#22223b';
-      g.beginPath();
-      g.arc(cx, cy, ring.r * px, 0, Math.PI * 2);
-      g.fill();
-      g.strokeStyle = '#111';
-      g.lineWidth = 5;
-      g.stroke();
-    });
-    g.font = '900 44px Nunito, ui-rounded, system-ui, sans-serif';
-    g.textAlign = 'center';
-    g.textBaseline = 'middle';
-    rings.forEach((ring, i) => {
-      if (ring.points === 6) return;
-      const inner = rings[i + 1]?.r ?? 0;
-      g.fillStyle = i % 2 === 0 ? '#22223b' : '#f7f3ea';
-      g.fillText(String(ring.points), cx, cy - ((ring.r + inner) / 2) * px);
-    });
-    g.fillStyle = '#fff';
-    g.fillText('6', cx, cy + 2);
-    const k = AXE_TARGET.kill;
-    for (const s of [-1, 1]) {
-      g.fillStyle = '#118ab2';
-      g.beginPath();
-      g.arc(cx + s * k.u * px, cy - k.v * px, k.r * px, 0, Math.PI * 2);
-      g.fill();
-      g.strokeStyle = '#fff';
-      g.lineWidth = 4;
-      g.stroke();
-    }
-  });
-}
-
-/** A toon material of its own, left out of the outlines (they'd swamp something as thin as a dart). */
-function plain(color: string, side: THREE.Side = THREE.FrontSide): THREE.MeshToonMaterial {
-  const m = new THREE.MeshToonMaterial({ color, side, gradientMap: (toon('#fff') as THREE.MeshToonMaterial).gradientMap });
-  m.userData.outlineParameters = { visible: false };
-  return m;
-}
-
-let dartParts: { steel: THREE.Material; barrel: THREE.Material; shaft: THREE.Material; flights: Map<string, THREE.Material> } | null = null;
-
-/**
- * A dart, its tip at the origin pointing +z: steel tip, tungsten barrel, shaft, and flights in
- * `color`. Half as big again as a real one, like everything here, so it shows from the oche.
- */
-export function dartModel(color: string): THREE.Group {
-  const m = (dartParts ??= { steel: plain('#dfe3ea'), barrel: plain('#4a4e69'), shaft: plain('#eaeaea'), flights: new Map() });
-  let flight = m.flights.get(color);
-  if (!flight) m.flights.set(color, (flight = plain(color, THREE.DoubleSide)));
-  const g = new THREE.Group();
-  const along = (geo: THREE.BufferGeometry) => geo.rotateX(Math.PI / 2);
-  g.add(mesh(along(new THREE.ConeGeometry(0.004, 0.035, 6)).translate(0, 0, -0.0175), m.steel, 0, 0, 0, false));
-  g.add(mesh(along(new THREE.CylinderGeometry(0.0075, 0.006, 0.055, 8)), m.barrel, 0, 0, -0.062, false));
-  g.add(mesh(along(new THREE.CylinderGeometry(0.003, 0.003, 0.045, 6)), m.shaft, 0, 0, -0.11, false));
-  for (const r of [0, Math.PI / 2]) {
-    const fin = mesh(new THREE.BoxGeometry(0.004, 0.042, 0.045), flight, 0, 0, -0.14, false);
-    fin.rotation.z = r;
-    g.add(fin);
-  }
-  g.scale.setScalar(1.5);
-  return g;
-}
-
-/** An axe (see AXE): a wooden handle with black tape round the grip, and a steel head with its edge forward. */
-export function axeModel(): THREE.Group {
-  const g = new THREE.Group();
-  g.add(mesh(new THREE.CylinderGeometry(0.017, 0.02, 0.46, 8), toon('#c68b59'), 0, 0.17, 0, false));
-  g.add(mesh(new THREE.CylinderGeometry(0.022, 0.022, 0.12, 8), toon('#1d1d1d'), 0, -0.01, 0, false));
-  // The head: a block round the top of the handle, the blade flaring out forward from it to the edge.
-  const steel = toon('#8d99ae');
-  g.add(mesh(new THREE.BoxGeometry(0.04, 0.08, 0.07), steel, 0, 0.365, 0, false));
-  const blade = new THREE.Shape();
-  blade.moveTo(0.02, 0.335);
-  blade.lineTo(0.105, 0.3);
-  blade.quadraticCurveTo(0.125, 0.365, 0.105, 0.43);
-  blade.lineTo(0.02, 0.395);
-  blade.closePath();
-  const geo = new THREE.ExtrudeGeometry(blade, { depth: 0.012, bevelEnabled: false }).rotateY(-Math.PI / 2).translate(0.006, 0, 0);
-  g.add(mesh(geo, steel, 0, 0, 0, false));
-  // A bright line along the edge, freshly sharpened.
-  g.add(mesh(new THREE.BoxGeometry(0.014, 0.12, 0.012), toon('#e9ecef'), 0, 0.365, 0.112, false));
-  return g;
-}
 
 /** Something flying at a target, or stuck in it, or lying where it fell. */
 interface Thrown {
