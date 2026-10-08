@@ -39,18 +39,14 @@ function show(next: Mode) {
   const registering = mode === 'register';
   tabSignIn.setAttribute('aria-selected', String(!registering));
   tabRegister.setAttribute('aria-selected', String(registering));
-  // Nobody can register: no account yet means registering is the only way in, so there's nothing to pick.
-  tabs.hidden = !opts.accounts || (!opts.registration && !linkKey);
+  // Registering is closed (and no link from the terminal): signing in is all there is.
+  tabs.hidden = !opts.registration && !linkKey;
   officeRow.hidden = !registering || !!linkKey;
   officePassword.required = registering && !linkKey;
   password.autocomplete = registering ? 'new-password' : 'current-password';
   password.minLength = registering ? PASSWORD_MIN : 0;
   submit.textContent = registering ? 'Make my account' : 'Come on in';
-  sub.textContent = !registering
-    ? 'Knock knock. Who is it?'
-    : !opts.accounts
-      ? 'Welcome! Make the first account: it runs the office.'
-      : 'New here? Make an account of your own.';
+  sub.textContent = registering ? 'New here? Make an account of your own.' : 'Knock knock. Who is it?';
   note.hidden = !registering;
   note.textContent = linkKey
     ? `Opened from the office's own terminal, so no office password is needed. Pick a password of at least ${PASSWORD_MIN} characters.`
@@ -111,6 +107,6 @@ async function start() {
     }
     return show(opts.accounts ? 'signin' : 'register');
   }
-  show(!opts.accounts || (wantsRegister && opts.registration) ? 'register' : 'signin');
+  show(wantsRegister && opts.registration ? 'register' : 'signin');
 }
 void start();
