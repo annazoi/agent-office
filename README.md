@@ -50,7 +50,7 @@ There's a lot more (a rooftop bar, an office dog, an arcade, supercars in the ga
 On the machine that runs the office:
 
 - **Node.js 20+**
-- **A PostgreSQL database**, which the office keeps everything in: its password, everyone's accounts and their own settings, the floors, chat and the rest. A free [Neon](https://neon.tech) database works, or Postgres on the same machine. Give it as `DATABASE_URL` (or `--database-url`); a `.env` file in the folder you start the office from is read too. The servers set up by the deploy scripts below get one of their own.
+- **A PostgreSQL database**, which the office keeps everything in: its password, everyone's accounts and their own settings, the floors, chat and the rest. A free [Neon](https://neon.tech) database works, or Postgres on the same machine. Give it as `DATABASE_URL` (or `--database-url`); a `.env` file in the folder you start the office from is read too. The servers set up by the deploy scripts below get one of their own. An office from before the database brings its JSON files over into it by itself the first time it starts (accounts, floors, chat and all; `agent-office migrate` does it beforehand), and leaves the files as they were.
 - At least one agent CLI, signed in as the user that runs the office: **Claude Code** (`claude`), **Codex** (`codex`), **OpenCode** (`opencode`), **Grok** (`grok`), **Muse** (`muse`), **DeepSeek Harness** (`dsh`), **Pi** (`pi`, 0.87.1+) or the **Cursor** CLI (`cursor-agent`). With [accounts](#add-users), everyone can sign in to their own Claude from the office instead.
 - **git**, and the **GitHub CLI** (`gh auth login`) for cloning repos and the issue and PR boards
 

@@ -66,7 +66,7 @@ The rest of `src/server/` is grouped by what it's for, and only the entry points
 | `usage/` | What the workers use: `usage.ts`, `reported-usage.ts`, `codex-usage.ts` and the plan `limits.ts`. |
 | `integrations/` | GitHub and Composio: `github.ts`, `github-composio.ts`, `repos.ts`, `clone.ts`, and the Composio files below. |
 | `accounts/` | Who's signed in: `accounts.ts` (registering, invites, roles), `auth.ts` (sessions), `user-config.ts` (each account's own settings), `signins.ts` and `signins/`. |
-| `db/` | The office's database: `state.ts` (`StateDb`, the documents every store reads and writes, and `stateDoc`) and `postgres.ts` (the Postgres backend, required at start-up). |
+| `db/` | The office's database: `state.ts` (`StateDb`, the documents every store reads and writes, and `stateDoc`) `postgres.ts` (the Postgres backend, required at start-up), and `migrate.ts` (bringing an office's JSON files from before over, once). |
 | `ops/` | Running the office on a machine: `machine.ts`, `upgrade.ts`, `team.ts`, `tailnet.ts`, `relay.ts`, `webhook.ts`. |
 
 A module that outgrows one file becomes a folder (`agents/dsh/`, `floor/meetings/`, `accounts/signins/`), and the old `<name>.ts` stays beside it as a barrel that re-exports what it exported before, so its importers don't change. The client does the same: `world/sky/`, `world/city/`, `world/holiday/`, `world/costumes/` and `dnb/` each have an `index.ts`.
