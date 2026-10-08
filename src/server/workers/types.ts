@@ -1,12 +1,12 @@
 // The shapes the workers' modules and the provider adapters (server/providers/) share.
-import type { ComposioMcp } from '../composio-mcp.js';
+import type { ComposioMcp } from '../integrations/composio-mcp.js';
 import type serialize from '@xterm/addon-serialize';
 import type { Run, WorkerInfo, WorkerStatus } from '../../shared/protocol.js';
-import type { DshSession } from '../dsh.js';
-import type { PromptSource } from '../prompts.js';
-import type { Pty } from '../ptys.js';
-import type { UsageTracker } from '../usage.js';
-import type { Worktrees } from '../worktrees.js';
+import type { DshSession } from '../agents/dsh.js';
+import type { PromptSource } from '../floor/prompts.js';
+import type { Pty } from './ptys.js';
+import type { UsageTracker } from '../usage/usage.js';
+import type { Worktrees } from './worktrees.js';
 import type { HeadlessTerminal } from './terminal.js';
 
 export type Worktree = NonNullable<WorkerInfo['worktree']>;

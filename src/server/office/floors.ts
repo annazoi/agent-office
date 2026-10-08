@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { WebSocket } from 'ws';
-import type { FloorDef } from '../building.js';
-import { Floor, type FloorContext } from '../floor.js';
+import type { FloorDef } from '../floor/building.js';
+import { Floor, type FloorContext } from '../floor/floor.js';
 import { ROOF } from '../../shared/rooftop.js';
 import type { FloorInfo, ServerMsg } from '../../shared/protocol.js';
 import type { Ctx, FloorHelpers, FloorsOpen } from './context.js';

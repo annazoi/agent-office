@@ -4,11 +4,11 @@ import { accessSync, appendFileSync, chmodSync, constants, existsSync, mkdirSync
 import { execFileSync } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { Ledger } from '../src/server/usage.js';
+import { Ledger } from '../src/server/usage/usage.js';
 import { CARRY_ON_PROMPT, WorkerManager, type WorkerEvents } from '../src/server/workers.js';
-import { Worktrees } from '../src/server/worktrees.js';
+import { Worktrees } from '../src/server/workers/worktrees.js';
 import type { AgentProvider, WorkerInfo } from '../src/shared/protocol.js';
-import type { PromptSource } from '../src/server/prompts.js';
+import type { PromptSource } from '../src/server/floor/prompts.js';
 import { PROMPTS } from '../src/shared/prompts.js';
 
 type Invocation = {

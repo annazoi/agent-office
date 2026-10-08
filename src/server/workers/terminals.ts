@@ -1,5 +1,5 @@
 import type { TerminalHit } from '../../shared/protocol.js';
-import { searchTerminal } from '../history.js';
+import { searchTerminal } from '../floor/history.js';
 import { offlineBanner } from './terminal.js';
 import type { Worker, WorkerContext } from './types.js';
 import { clamp, truncate } from './util.js';

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { agentProviders, configuredProvider, providerCommand, validateWorkerEffort, validateWorkerModel } from '../src/server/agents.js';
+import { agentProviders, configuredProvider, providerCommand, validateWorkerEffort, validateWorkerModel } from '../src/server/agents/agents.js';
 import { AGENT_PROVIDERS, CLAUDE_MODELS, CLAUDE_MODEL_NAMES, PROVIDER_META, claudeModelName, isValidCodexModel, isValidDshModel } from '../src/shared/providers.js';
 import { isAgentProvider } from '../src/shared/protocol.js';
 

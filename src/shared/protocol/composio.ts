@@ -1,5 +1,5 @@
 // The Composio integrations: Linear, Notion, Slack, Google Calendar and Gmail as stations in the
-// office, each person connecting their own accounts (see src/server/composio.ts).
+// office, each person connecting their own accounts (see src/server/integrations/composio.ts).
 
 /** The toolkits with a station in the office, by Composio's slug for each. */
 export const COMPOSIO_STATION_TOOLKITS = ['linear', 'notion', 'slack', 'googlecalendar', 'gmail'] as const;

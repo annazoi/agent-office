@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import http from 'node:http';
 import type { AddressInfo } from 'node:net';
-import { relayRequest, tunneledPort, tunneledService } from '../src/server/relay.js';
+import { relayRequest, tunneledPort, tunneledService } from '../src/server/ops/relay.js';
 import type { ServiceInfo } from '../src/shared/protocol.js';
 
 const req = (host: string, extra: Record<string, string> = {}) => ({ headers: { host, ...extra } }) as unknown as http.IncomingMessage;

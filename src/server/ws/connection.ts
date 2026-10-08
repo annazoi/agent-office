@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import type { WebSocket } from 'ws';
-import type { Session } from '../auth.js';
+import type { Session } from '../accounts/auth.js';
 import type { ClientMsg } from '../../shared/protocol.js';
 import { elevatorSpot } from '../../shared/layout.js';
 import { lookFromSeed, sanitizeLook } from '../../shared/avatar.js';

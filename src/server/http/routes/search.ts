@@ -1,5 +1,5 @@
 // The 🔎 search, across chat and the terminals of a floor's workers.
-import type { Floor } from '../../floor.js';
+import type { Floor } from '../../floor/floor.js';
 import type { SearchResults } from '../../../shared/protocol.js';
 import { SEARCH_MAX, SEARCH_MIN, searchKey } from '../../../shared/search.js';
 import type { Ctx } from '../../office/context.js';

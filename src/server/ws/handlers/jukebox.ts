@@ -1,5 +1,5 @@
 // The lounge jukebox on every floor.
-import type { Floor } from '../../floor.js';
+import type { Floor } from '../../floor/floor.js';
 import { JUKEBOX_TUNES, STREAM } from '../../../shared/jukebox.js';
 import type { JukeboxClientMsg } from '../../../shared/protocol.js';
 import type { Ctx } from '../../office/context.js';

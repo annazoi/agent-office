@@ -12,7 +12,7 @@ import {
   withoutGrokLaunchArgs,
   writeGrokHome,
   writeGrokHook,
-} from '../src/server/grok.js';
+} from '../src/server/agents/grok.js';
 
 test('normalizes bounded root Grok hook payloads from camelCase or snake_case', () => {
   assert.deepEqual(normalizeGrokHook('SessionStart', {

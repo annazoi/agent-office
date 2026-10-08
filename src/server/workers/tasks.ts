@@ -1,6 +1,6 @@
 // What each worker is working on (WorkerInfo.task): named from its latest prompts and tool calls,
 // by Claude for the providers the office names tasks for (see TaskNamer and ProviderAdapter.namesTasks).
-import { officePrompt } from '../prompts.js';
+import { officePrompt } from '../floor/prompts.js';
 import { providerAdapter } from '../providers/index.js';
 import { TaskNamer, fallbackTask } from '../tasks.js';
 import type { Worker, WorkerContext } from './types.js';

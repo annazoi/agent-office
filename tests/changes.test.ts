@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, realpathSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { Changes, insideCheckout, type ChangesTarget } from '../src/server/changes.js';
+import { Changes, insideCheckout, type ChangesTarget } from '../src/server/workers/changes.js';
 import { changedImageType } from '../src/shared/protocol.js';
 
 /** A git repo with one committed picture, and a Changes that diffs it against HEAD. */

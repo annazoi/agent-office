@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { isValidGrokModel, isValidMuseModel, isValidOpenCodeModel } from '../src/shared/providers.js';
-import { MODEL_LISTERS, createModelCatalogue, fetchCodexModels, fetchCursorModels, fetchGrokModels, fetchOpenCodeModels, type ModelCommandRunner } from '../src/server/models.js';
+import { MODEL_LISTERS, createModelCatalogue, fetchCodexModels, fetchCursorModels, fetchGrokModels, fetchOpenCodeModels, type ModelCommandRunner } from '../src/server/agents/models.js';
 import { AGENT_PROVIDERS, PROVIDER_META } from '../src/shared/providers.js';
 
 test('OpenCode model ids require provider/model and reject whitespace or control characters', () => {

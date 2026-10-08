@@ -8,7 +8,7 @@ import type { AgentEffort, AgentProvider, GhPull, QueueTask, WorkerInfo, WorkerS
 import { isAgentEffort, isAgentProvider } from '../shared/protocol.js';
 import { DESK_BY_ID, STATION_AGENT } from '../shared/layout.js';
 import { workerPr } from '../shared/status.js';
-import { landedWork, notLeaving } from './leave-on-merge.js';
+import { landedWork, notLeaving } from './floor/leave-on-merge.js';
 
 /** One worker as an agent sees it: enough to pick the ones to send home, and say why. */
 export interface WorkerRow {

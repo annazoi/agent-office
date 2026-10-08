@@ -12,7 +12,7 @@ import {
   normalizeCodexHook,
   validateCodexHook,
   writeCodexHook,
-} from '../src/server/codex.js';
+} from '../src/server/agents/codex.js';
 import { codex } from '../src/server/providers/codex.js';
 
 test('normalizes bounded root Codex hook payloads and passes only the metric reader path', () => {

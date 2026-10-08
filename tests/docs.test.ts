@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { Docs, docTitle } from '../src/server/docs.js';
+import { Docs, docTitle } from '../src/server/floor/docs.js';
 import { isDocPath, resolveDocLink } from '../src/shared/docs.js';
 
 /** A folder with some Markdown in it, and whatever `git` makes of it. */

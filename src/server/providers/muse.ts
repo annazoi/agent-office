@@ -3,7 +3,7 @@
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import path from 'node:path';
-import { normalizeMuseHook, withoutMuseLaunchArgs, writeMuseHome, type MuseHome } from '../muse.js';
+import { normalizeMuseHook, withoutMuseLaunchArgs, writeMuseHome, type MuseHome } from '../agents/muse.js';
 import { reduceLifecycle } from '../workers/lifecycle.js';
 import type { ProviderAdapter } from './types.js';
 

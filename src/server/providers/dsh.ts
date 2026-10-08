@@ -1,6 +1,6 @@
 // DeepSeek Harness: no terminal and no hooks. The office holds an ACP connection to it and draws
 // its updates into the worker's terminal itself (see ../dsh.ts and docs/dsh-acp-integration.md).
-import { dshArgs, writeDshPatch } from '../dsh.js';
+import { dshArgs, writeDshPatch } from '../agents/dsh.js';
 import type { ProviderAdapter } from './types.js';
 
 interface DshSetup {

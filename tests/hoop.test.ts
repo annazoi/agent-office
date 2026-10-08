@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { BALL, HOOP, SWEET, backboard, idealSpeed, launch, lookAtRim, meter, outOfReach, shotSpeed, simulate, throwOk, throwPitch, underCeiling, type BallHit, type Solid } from '../src/shared/hoop.js';
 import { FLOOR, LOFT, WALL_HEIGHT } from '../src/shared/layout.js';
-import { Court } from '../src/server/court.js';
+import { Court } from '../src/server/floor/court.js';
 
 // The floor, the wall behind the hoop, the ceiling and the backboard: all a shot at the hoop meets.
 const room: Solid[] = [

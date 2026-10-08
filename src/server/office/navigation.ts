@@ -1,4 +1,4 @@
-import type { Floor } from '../floor.js';
+import type { Floor } from '../floor/floor.js';
 import { elevatorSpot } from '../../shared/layout.js';
 import { ROOF } from '../../shared/rooftop.js';
 import { features } from '../ws/handlers/index.js';

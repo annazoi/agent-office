@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { Machine, parseWorkerLimit } from '../src/server/machine.js';
+import { Machine, parseWorkerLimit } from '../src/server/ops/machine.js';
 import type { MachineState } from '../src/shared/protocol.js';
 
 function fixture(ceiling?: number) {

@@ -1,4 +1,4 @@
-import type { Accounts } from '../accounts.js';
+import type { Accounts } from '../accounts/accounts.js';
 import type { Me } from '../../shared/protocol.js';
 import type { Ctx, People } from './context.js';
 import type { Client } from './client.js';

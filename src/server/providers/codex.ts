@@ -1,10 +1,10 @@
 // Codex: its native lifecycle hooks (see ../codex.ts), set on its command line, report on
 // /hooks/codex; its usage is read from the root session's rollout (see codex-usage.ts).
-import { codexComposioMcp } from '../composio-mcp.js';
+import { codexComposioMcp } from '../integrations/composio-mcp.js';
 import { homedir } from 'node:os';
 import path from 'node:path';
-import { codexHookArgs, codexModelArgs, normalizeCodexHook, writeCodexHook } from '../codex.js';
-import { CodexUsageReader } from '../codex-usage.js';
+import { codexHookArgs, codexModelArgs, normalizeCodexHook, writeCodexHook } from '../agents/codex.js';
+import { CodexUsageReader } from '../usage/codex-usage.js';
 import { codexMcpArgs } from '../office-workers.js';
 import { reduceLifecycle, type ToolTracker } from '../workers/lifecycle.js';
 import type { WorkerHandle } from '../workers/types.js';

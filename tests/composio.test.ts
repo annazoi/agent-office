@@ -9,11 +9,11 @@ import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
-import { Accounts } from '../src/server/accounts.js';
-import { Auth } from '../src/server/auth.js';
-import { ComposioHub, composioUserId, type ComposioSdk, type ComposioSession } from '../src/server/composio.js';
-import { calendar, gmail, linear, linearBucket, notion, slack } from '../src/server/composio-actions.js';
-import { COMPOSIO_HEADER_ENV, codexComposioMcp, describeComposioTool, openCodeComposioMcp, writeClaudeComposioMcp } from '../src/server/composio-mcp.js';
+import { Accounts } from '../src/server/accounts/accounts.js';
+import { Auth } from '../src/server/accounts/auth.js';
+import { ComposioHub, composioUserId, type ComposioSdk, type ComposioSession } from '../src/server/integrations/composio.js';
+import { calendar, gmail, linear, linearBucket, notion, slack } from '../src/server/integrations/composio-actions.js';
+import { COMPOSIO_HEADER_ENV, codexComposioMcp, describeComposioTool, openCodeComposioMcp, writeClaudeComposioMcp } from '../src/server/integrations/composio-mcp.js';
 import { composioRoutes } from '../src/server/http/composio.js';
 import { requestHandler } from '../src/server/http/router.js';
 import { authRoutes } from '../src/server/http/routes/auth.js';
@@ -378,7 +378,7 @@ test('the routes run as the signed-in person, refuse the shared password, and te
 });
 
 test("GitHub through Composio: the elevator's repository list and lookup, for an account that connected it", async () => {
-  const { ComposioGitHub } = await import('../src/server/github-composio.js');
+  const { ComposioGitHub } = await import('../src/server/integrations/github-composio.js');
   const dir = tmp('gh');
   const page1 = Array.from({ length: 100 }, (_, i) => ({ full_name: `annazoi/repo-${i}`, private: i % 2 === 0, description: i ? `d${i}` : '', pushed_at: '2026-10-01T00:00:00Z' }));
   const page2 = [{ full_name: 'annazoi/last', private: false }, { full_name: 'annazoi/repo-1', private: false }];

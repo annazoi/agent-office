@@ -4,9 +4,9 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { PROMPTS, PROMPT_IDS, PROMPT_MAX, fillPrompt, placeholders, promptText } from '../src/shared/prompts.js';
-import { OfficePrompts, officePrompt, type PromptSource } from '../src/server/prompts.js';
-import { stationBrief } from '../src/server/stations.js';
-import { TaskQueue, type QueueWorkers } from '../src/server/queue.js';
+import { OfficePrompts, officePrompt, type PromptSource } from '../src/server/floor/prompts.js';
+import { stationBrief } from '../src/server/floor/stations.js';
+import { TaskQueue, type QueueWorkers } from '../src/server/floor/queue.js';
 import type { AgentChoice, PromptsState, WorkerInfo } from '../src/shared/protocol.js';
 
 function scratch(t: { after(fn: () => void): void }) {

@@ -1,5 +1,5 @@
 // Pictures on a floor's walls.
-import type { Floor } from '../../floor.js';
+import type { Floor } from '../../floor/floor.js';
 import type { DecorClientMsg } from '../../../shared/protocol.js';
 import type { Ctx } from '../../office/context.js';
 import { str } from '../../office/input.js';

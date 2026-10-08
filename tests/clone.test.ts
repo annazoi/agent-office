@@ -4,8 +4,8 @@ import { execFileSync } from 'node:child_process';
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { Building, type FloorDef } from '../src/server/building.js';
-import { parseProgress, whyCloneFailed } from '../src/server/clone.js';
+import { Building, type FloorDef } from '../src/server/floor/building.js';
+import { parseProgress, whyCloneFailed } from '../src/server/integrations/clone.js';
 
 // A stand-in for gh: `repo view` and `repo clone` from bare repositories in $FAKE_GH_REPOS. It says
 // how far along it is the way git does, can wait first ($FAKE_GH_DELAY), hang ($FAKE_GH_HANG) or

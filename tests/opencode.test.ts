@@ -7,7 +7,7 @@ import { pathToFileURL } from 'node:url';
 import {
   mergeOpenCodeConfigContent,
   writeOpenCodePlugin,
-} from '../src/server/opencode.js';
+} from '../src/server/agents/opencode.js';
 import { opencode } from '../src/server/providers/opencode.js';
 
 test('merges the inline OpenCode config and preserves user plugins', () => {

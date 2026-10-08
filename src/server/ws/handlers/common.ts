@@ -1,5 +1,5 @@
 // Lookups most handlers start with.
-import type { Floor } from '../../floor.js';
+import type { Floor } from '../../floor/floor.js';
 import type { Ctx } from '../../office/context.js';
 import type { Client } from '../../office/client.js';
 import { str } from '../../office/input.js';

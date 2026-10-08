@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { Arcade, DROP_POINTS, GAME_BURST, GAME_EVERY, HighScores, PIECE_BURST, PIECES_PER_SECOND, RECORD_EVERY, clearPoints, type Player } from '../src/server/cabinet.js';
+import { Arcade, DROP_POINTS, GAME_BURST, GAME_EVERY, HighScores, PIECE_BURST, PIECES_PER_SECOND, RECORD_EVERY, clearPoints, type Player } from '../src/server/floor/cabinet.js';
 import { SCORES_KEPT, WELL_COLS, WELL_ROWS, checkFrame, levelFor, type CabinetFrame } from '../src/shared/cabinet.js';
 import { Blocks } from '../src/client/features/cabinet/blocks.js';
 import { lostGame } from '../src/client/features/cabinet/ui.js';

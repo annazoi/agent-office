@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { randomBytes } from 'node:crypto';
-import { Auth } from '../src/server/auth.js';
-import type { Accounts } from '../src/server/accounts.js';
+import { Auth } from '../src/server/accounts/auth.js';
+import type { Accounts } from '../src/server/accounts/accounts.js';
 
 const auth = () => new Auth(randomBytes(32), randomBytes(16), 'secret', {} as Accounts);
 

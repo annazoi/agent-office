@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { appendFileSync, mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { CodexUsageReader, codexTokenUsage } from '../src/server/codex-usage.js';
+import { CodexUsageReader, codexTokenUsage } from '../src/server/usage/codex-usage.js';
 
 const totals = (input = 120, output = 30) => ({ input_tokens: input, cached_input_tokens: 20, cache_write_input_tokens: 5, output_tokens: output, reasoning_output_tokens: 10, total_tokens: input + output });
 const event = (value = totals()) => JSON.stringify({ type: 'event_msg', payload: { type: 'token_count', info: { total_token_usage: value } } });

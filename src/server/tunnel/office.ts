@@ -2,7 +2,7 @@ import http from 'node:http';
 import https from 'node:https';
 import net from 'node:net';
 import tls from 'node:tls';
-import { COOKIE_NAME } from '../auth.js';
+import { COOKIE_NAME } from '../accounts/auth.js';
 import { FORWARDS_PATH, LOOPBACK_NAME, type ForwardList } from './wire.js';
 
 const TIMEOUT_MS = 10_000;

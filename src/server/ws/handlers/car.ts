@@ -1,5 +1,5 @@
 // The cars in every floor's garage.
-import type { Floor } from '../../floor.js';
+import type { Floor } from '../../floor/floor.js';
 import type { CarClientMsg } from '../../../shared/protocol.js';
 import type { Ctx } from '../../office/context.js';
 import type { Client } from '../../office/client.js';

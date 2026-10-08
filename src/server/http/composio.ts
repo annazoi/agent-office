@@ -4,13 +4,13 @@
 // head. The office's API key and the OAuth tokens stay on the server: nothing here answers with them.
 import type { Ctx } from '../office/context.js';
 import type { Client } from '../office/client.js';
-import type { Session } from '../auth.js';
+import type { Session } from '../accounts/auth.js';
 import { str } from '../office/input.js';
 import { readBody, sameOrigin, send } from './util.js';
 import type { Route, RouteRequest } from './router.js';
 import { COMPOSIO_API, type ComposioDone, type ComposioStatus } from '../../shared/composio-api.js';
 import { isComposioToolkit, type ComposioToolkit } from '../../shared/protocol.js';
-import { calendar, gmail, linear, notion, slack, type Run } from '../composio-actions.js';
+import { calendar, gmail, linear, notion, slack, type Run } from '../integrations/composio-actions.js';
 import { floorParam } from './routes/files.js';
 
 type Body = Record<string, unknown>;

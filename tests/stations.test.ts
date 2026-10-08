@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { QUEUE_AGENT_DISALLOWED_TOOLS, stationBrief } from '../src/server/stations.js';
+import { QUEUE_AGENT_DISALLOWED_TOOLS, stationBrief } from '../src/server/floor/stations.js';
 import type { StationKind } from '../src/shared/layout.js';
 
 const KINDS: StationKind[] = ['issues', 'pulls', 'queue'];

@@ -117,14 +117,14 @@ Everything else reads those, and needs no change of its own:
 - The `AgentProvider` union and `isAgentProvider` are `AGENT_PROVIDERS`.
 - The persistence allowlist (`src/server/workers/persist.ts`), the executable, model and effort
   checks (`configuredProvider`, `validateWorkerModel` and `validateWorkerEffort` in
-  `src/server/agents.ts`, which the queue and meetings use too) and which providers a floor offers
+  `src/server/agents/agents.ts`, which the queue and meetings use too) and which providers a floor offers
   (`agentProviders`, in the same file) go by the table.
 - So do the client's labels, badges, usage states and notes (`src/client/ui/provider.ts`, which
   `terminal.ts`, `workers-panel.ts`, `queue.ts` and `usage.ts` beside it use), and the hire
   dialog's model and effort fields (`agentFields` there): a provider's `models` says whether its
   model is picked from a list or typed, and `takesEffort` gives it an effort.
 - A provider whose CLI lists its models (`models.catalog`) also gets a lister in `MODEL_LISTERS`
-  (`src/server/models.ts`), which `GET /api/agents/<id>/models` serves; a test checks the two agree.
+  (`src/server/agents/models.ts`), which `GET /api/agents/<id>/models` serves; a test checks the two agree.
 - An adapter with a `hook` gets its route, `/hooks/<id>`, on the loopback hook server
   (`src/server/hooks/server.ts`).
 - An adapter whose CLI only reads its settings from the folder it runs in (Cursor's
@@ -132,7 +132,7 @@ Everything else reads those, and needs no change of its own:
   over (the process ended, the worker was sent home, or the office stopped), to take them out again.
 
 Hook helpers longer than a few lines (a settings file, a plugin, a payload parser) go in a module
-of their own that the adapter imports, as `src/server/codex.ts` and `src/server/grok.ts` do. One
+of their own that the adapter imports, as `src/server/agents/codex.ts` and `src/server/agents/grok.ts` do. One
 place still names providers one by one: the wording of `usageLabel` and `usageTitle` in
 `src/client/ui/usage.ts`.
 
@@ -193,7 +193,7 @@ Two options, decided by the Phase 0 spike:
    unavailable, the way Codex already reports cost as unavailable.
 2. **Otherwise**, set the profile's `session-persistence-jsonl` row to `compression: 'none'` with an
    office-owned `root`, then fold token records out of the plain JSONL log — the same shape of work
-   as `src/server/usage.ts` does for Claude transcripts.
+   as `src/server/usage/usage.ts` does for Claude transcripts.
 
 The office's `--budget` is deliberately Claude-only today. Whether DSH spend joins it is a product
 decision, not a technical one; the doc defaults to **not** joining it, matching OpenCode and Codex.
@@ -220,9 +220,9 @@ The key design choice: **a DSH worker still has a headless terminal.** ACP updat
 into it as ANSI lines. Everything downstream — `screenSnapshot`, `SCROLLBACK`, scrollback
 persistence, `worker.attach` broadcasting, search, reconnection — keeps working with no changes.
 
-### New module: `src/server/dsh.ts`
+### New module: `src/server/agents/dsh.ts`
 
-Mirrors the role of `src/server/opencode.ts` and `src/server/codex.ts`:
+Mirrors the role of `src/server/agents/opencode.ts` and `src/server/agents/codex.ts`:
 
 - Locate the `dsh` executable and the profile name (`--dsh-profile`, env
   `AGENT_OFFICE_DSH_PROFILE`, default `acp`).
@@ -282,7 +282,7 @@ Output: a short findings note appended to this document, and a decision on usage
 - [x] Add `'dsh'` to `AgentProvider` and `isAgentProvider`; update the persistence allowlists.
 - [x] Map the `dsh` executable in `configuredProvider`; add `validateWorkerModel` and
       `validateWorkerEffort` rules.
-- [x] Add `'dsh'` to `agentProviders` in `src/server/agents.ts`.
+- [x] Add `'dsh'` to `agentProviders` in `src/server/agents/agents.ts`.
 - [x] Add `PROVIDER_LABEL.dsh = 'DeepSeek Harness'` and cover `supportedProviders`, `modelBadge`,
       `providerUsageTracked`, `providerUsageState`, `providerUsageNote`.
 - [x] Cover the usage-label branches in `terminal.ts`, `workers-panel.ts`, `queue.ts`, `usage.ts`
@@ -293,7 +293,7 @@ Output: a short findings note appended to this document, and a decision on usage
 
 ### Phase 2 — the ACP worker runtime
 
-- [x] `src/server/dsh.ts`: locate `dsh`, spawn the child, own the ACP connection.
+- [x] `src/server/agents/dsh.ts`: locate `dsh`, spawn the child, own the ACP connection.
 - [x] Status derivation from `session/new`, `session/prompt` settlement and `session/request_permission`.
 - [x] Action mapping from `ToolKind`, alongside the existing name-based mapper.
 - [x] Render transcript into the headless terminal; keep scrollback, sharing and search working.
@@ -381,7 +381,7 @@ payload normalisation, not the upstream CLI. DSH should follow that convention:
 | Claude bridge supports no `PermissionRequest`/`Notification`; `transcript_path` always empty | `@deepseek-ai/dsh-hooks-claude-code/README.md` |
 | Codex bridge supports five events; `transcript_path` always `null` | `@deepseek-ai/dsh-hooks-codex/README.md` |
 | Session logs can be uncompressed JSONL with a configurable root | `@deepseek-ai/dsh-session-persistence-jsonl/README.md` |
-| Office hook env vars and endpoint shape | `src/server/workers/manager.ts`, `src/server/codex.ts`, `src/server/opencode.ts` |
+| Office hook env vars and endpoint shape | `src/server/workers/manager.ts`, `src/server/agents/codex.ts`, `src/server/agents/opencode.ts` |
 
 ## Phase 0 findings (measured 2026-xx, DSH 0.1.7-rc.2, Node 24)
 

@@ -10,7 +10,7 @@ import { fileURLToPath } from 'node:url';
 import { TOOLS, UsageError, buildRequest, formatHome, formatLinked, formatWorkers, handleMcp, main, parseArgs } from '../bin/office-workers.js';
 import { codexMcpArgs, findWorker, readHireRequest, readHomeRequest, readPrRequest, workerRow } from '../src/server/office-workers.js';
 import { ownPr } from '../src/server/workers/pr.js';
-import { notLeaving } from '../src/server/leave-on-merge.js';
+import { notLeaving } from '../src/server/floor/leave-on-merge.js';
 import type { GhPull, WorkerInfo } from '../src/shared/protocol.js';
 
 const SCRIPT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'bin', 'office-workers.js');

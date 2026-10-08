@@ -12,7 +12,7 @@ import {
   withoutMuseLaunchArgs,
   writeMuseHome,
   writeMuseHook,
-} from '../src/server/muse.js';
+} from '../src/server/agents/muse.js';
 
 test('normalizes bounded root Muse hook payloads from camelCase or snake_case', () => {
   assert.deepEqual(normalizeMuseHook('SessionStart', {

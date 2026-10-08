@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { Claims, MergeWatch } from '../src/server/github.js';
+import { Claims, MergeWatch } from '../src/server/integrations/github.js';
 import type { GhIssue, GhPull } from '../src/shared/protocol.js';
 
 const pull = (number: number, state: string): GhPull => ({

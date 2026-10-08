@@ -7,9 +7,9 @@ import { createInterface } from 'node:readline/promises';
 import tty from 'node:tty';
 import { normalizeRepo, sameRepo } from '../shared/floors.js';
 import type { RepoChoice } from '../shared/protocol.js';
-import { Building, tildify } from './building.js';
+import { Building, tildify } from './floor/building.js';
 import { officeHome, type Config } from './config.js';
-import { ComposioHub } from './composio.js';
+import { ComposioHub } from './integrations/composio.js';
 import { composioStep } from './setup-composio.js';
 
 // Setting up an office from its terminal: where projects are cloned, signing the GitHub CLI in, and

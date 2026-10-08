@@ -4,8 +4,8 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { Changes } from '../src/server/changes.js';
-import { Worktrees } from '../src/server/worktrees.js';
+import { Changes } from '../src/server/workers/changes.js';
+import { Worktrees } from '../src/server/workers/worktrees.js';
 
 /**
  * A project cloned from a bare origin, plus a second clone standing in for GitHub: whatever it

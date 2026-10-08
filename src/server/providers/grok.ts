@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import { existsSync } from 'node:fs';
 import { homedir } from 'node:os';
 import path from 'node:path';
-import { normalizeGrokHook, withoutGrokLaunchArgs, writeGrokHome } from '../grok.js';
+import { normalizeGrokHook, withoutGrokLaunchArgs, writeGrokHome } from '../agents/grok.js';
 import { reduceLifecycle } from '../workers/lifecycle.js';
 import type { ProviderAdapter } from './types.js';
 

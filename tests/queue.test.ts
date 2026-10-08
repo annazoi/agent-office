@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { TaskQueue, type QueueWorkers } from '../src/server/queue.js';
+import { TaskQueue, type QueueWorkers } from '../src/server/floor/queue.js';
 import type { AgentEffort, AgentProvider, WorkerInfo } from '../src/shared/protocol.js';
 
 function fixture(defaultProvider: AgentProvider = 'claude') {

@@ -3,7 +3,7 @@
 // and report on /hooks/cursor. It runs on the machine's own Cursor login. Its spend isn't metered by
 // the office, and nothing tells the office about a permission prompt: a worker waiting on one shows
 // as working until it's answered.
-import { addCursorHooks, cursorBlocked, normalizeCursorHook, removeCursorHooks, withoutCursorLaunchArgs, writeCursorHook } from '../cursor.js';
+import { addCursorHooks, cursorBlocked, normalizeCursorHook, removeCursorHooks, withoutCursorLaunchArgs, writeCursorHook } from '../agents/cursor.js';
 import { reduceLifecycle } from '../workers/lifecycle.js';
 import type { ProviderAdapter } from './types.js';
 

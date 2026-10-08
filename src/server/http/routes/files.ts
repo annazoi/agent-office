@@ -1,6 +1,6 @@
 // Files a floor's windows show or take: pictures on the walls and the whiteboard, files dropped into
 // a terminal, changed pictures in the Changes window, and the bookshelf's Markdown.
-import type { Floor } from '../../floor.js';
+import type { Floor } from '../../floor/floor.js';
 import { WB_MAX_FILE_BYTES } from '../../../shared/whiteboard.js';
 import { DROP_MAX_BYTES } from '../../../shared/drops.js';
 import type { Ctx } from '../../office/context.js';

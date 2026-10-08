@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { Sky } from '../src/server/sky.js';
+import { Sky } from '../src/server/floor/sky.js';
 
 test('the sky keeps the clock someone picked, and keeps it across a restart', () => {
   const clockFile = path.join(mkdtempSync(path.join(tmpdir(), 'sky-clock-')), 'sky-clock.json');

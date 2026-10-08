@@ -1,5 +1,5 @@
 // A floor's plan: the signs over its desks, and how far its back office is built out.
-import type { Floor } from '../../floor.js';
+import type { Floor } from '../../floor/floor.js';
 import { DESK_BY_ID } from '../../../shared/layout.js';
 import { EMPTY_PLAN } from '../../../shared/floorplan.js';
 import type { PlanClientMsg } from '../../../shared/protocol.js';

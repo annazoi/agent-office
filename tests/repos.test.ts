@@ -4,12 +4,12 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { Changes } from '../src/server/changes.js';
+import { Changes } from '../src/server/workers/changes.js';
 import { excludeFromGit } from '../src/server/config.js';
-import { landedWorkers } from '../src/server/leave-on-merge.js';
-import { Ledger } from '../src/server/usage.js';
+import { landedWorkers } from '../src/server/floor/leave-on-merge.js';
+import { Ledger } from '../src/server/usage/usage.js';
 import { WorkerManager, relatedBlock, withRelated, workspaceNames, type RepoSource, type WorkerEvents } from '../src/server/workers.js';
-import { Worktrees } from '../src/server/worktrees.js';
+import { Worktrees } from '../src/server/workers/worktrees.js';
 import type { ChangesState, GhPull, WorkerInfo } from '../src/shared/protocol.js';
 
 // A worker across repositories (WorkerInfo.repos): hired on one floor with other floors' projects,

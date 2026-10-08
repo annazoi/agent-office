@@ -13,7 +13,7 @@ import {
   removeCursorHooks,
   withoutCursorLaunchArgs,
   writeCursorHook,
-} from '../src/server/cursor.js';
+} from '../src/server/agents/cursor.js';
 import { isValidCursorModel } from '../src/shared/providers.js';
 
 function scratch(t: { after(fn: () => void): void }): string {

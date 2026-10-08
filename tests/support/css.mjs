@@ -3,7 +3,7 @@
 // "Unknown file extension .css".
 //
 // npm test loads it as #tests/css (package.json "imports"), not by a relative path: processes the
-// tests start with node's own flags, like the PTY host (src/server/ptys.ts), run from another folder,
+// tests start with node's own flags, like the PTY host (src/server/workers/ptys.ts), run from another folder,
 // where ./tests/support/css.mjs isn't there and they would fail to start.
 import { register } from 'node:module';
 

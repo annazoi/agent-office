@@ -3,7 +3,7 @@
 import { randomBytes } from 'node:crypto';
 import type { WorkerInfo } from '../../shared/protocol.js';
 import { providerAdapter } from '../providers/index.js';
-import type { UsageTracker } from '../usage.js';
+import type { UsageTracker } from '../usage/usage.js';
 import type { Worker } from './types.js';
 
 export const NAMES = [

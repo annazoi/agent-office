@@ -4,8 +4,8 @@ import { execFileSync } from 'node:child_process';
 import { mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { LeaveOnMerge, landedWorkers } from '../src/server/leave-on-merge.js';
-import { Worktrees } from '../src/server/worktrees.js';
+import { LeaveOnMerge, landedWorkers } from '../src/server/floor/leave-on-merge.js';
+import { Worktrees } from '../src/server/workers/worktrees.js';
 import type { GhPull, QueueTask, WorkerInfo, WorkerStatus } from '../src/shared/protocol.js';
 
 function worker(id: string, status: WorkerStatus = 'done', more: Partial<WorkerInfo> = {}): WorkerInfo {

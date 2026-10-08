@@ -1,6 +1,6 @@
 import type http from 'node:http';
-import type { Session } from '../auth.js';
-import { RELAY_LOGIN, relayRequest, signInPage, stoppedPage, tunneledService } from '../relay.js';
+import type { Session } from '../accounts/auth.js';
+import { RELAY_LOGIN, relayRequest, signInPage, stoppedPage, tunneledService } from '../ops/relay.js';
 import type { Ctx } from '../office/context.js';
 import { login, loginOptions } from './routes/auth.js';
 import { send } from './util.js';

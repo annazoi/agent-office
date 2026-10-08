@@ -4,8 +4,8 @@ import type { AgentProvider, WorkerInfo, WorkerStatus, WorkerTask } from '../../
 import { DESK_BY_ID } from '../../shared/layout.js';
 import { isAgentProvider, savedEffort, savedModel } from '../../shared/providers.js';
 import { providerAdapter } from '../providers/index.js';
-import { reportedUsage } from '../reported-usage.js';
-import { restoreTracker, trackerUsage } from '../usage.js';
+import { reportedUsage } from '../usage/reported-usage.js';
+import { restoreTracker, trackerUsage } from '../usage/usage.js';
 import { workedMs } from './clock.js';
 import { midTurn } from './lifecycle.js';
 import type { Worker } from './types.js';

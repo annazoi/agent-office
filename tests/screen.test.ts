@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import headless from '@xterm/headless';
 import serialize from '@xterm/addon-serialize';
-import { screenSnapshot } from '../src/server/screen.js';
+import { screenSnapshot } from '../src/server/workers/screen.js';
 
 function terminal() {
   const term = new headless.Terminal({ cols: 80, rows: 10, scrollback: 100, allowProposedApi: true });

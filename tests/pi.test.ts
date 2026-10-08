@@ -3,11 +3,11 @@ import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { normalizePiHook, piArgs, PI_EXTENSION_SOURCE, writePiExtension } from '../src/server/pi.js';
+import { normalizePiHook, piArgs, PI_EXTENSION_SOURCE, writePiExtension } from '../src/server/agents/pi.js';
 import { isValidPiModel } from '../src/shared/providers.js';
 import { WorkerManager, type WorkerEvents } from '../src/server/workers.js';
-import { Ledger } from '../src/server/usage.js';
-import type { Pty, PtyExit, SpawnOpts } from '../src/server/ptys.js';
+import { Ledger } from '../src/server/usage/usage.js';
+import type { Pty, PtyExit, SpawnOpts } from '../src/server/workers/ptys.js';
 
 test('Pi launch uses interactive mode, an isolated session, and safe prompt arguments', () => {
   const args = piArgs(['--provider', 'openai', '--model', 'old', '--thinking', 'low', '--mode', 'rpc', '-p', '--continue', '--session', 'other', '--session-dir', '/shared', '-e', '/user-extension.mjs'], {

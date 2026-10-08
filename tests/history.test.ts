@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import headless from '@xterm/headless';
 import serialize from '@xterm/addon-serialize';
-import { CHAT_KEEP, ChatLog, ScrollbackStore, searchTerminal, terminalTail } from '../src/server/history.js';
+import { CHAT_KEEP, ChatLog, ScrollbackStore, searchTerminal, terminalTail } from '../src/server/floor/history.js';
 import { findLine, searchKey, snippet } from '../src/shared/search.js';
 import type { ChatLine } from '../src/shared/protocol.js';
 

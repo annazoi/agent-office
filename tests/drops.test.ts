@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { DropStore, dropName } from '../src/server/drops.js';
+import { DropStore, dropName } from '../src/server/floor/drops.js';
 import { droppedPaths } from '../src/shared/drops.js';
 
 function dataDir(t: { after(fn: () => void): void }) {

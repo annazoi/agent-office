@@ -4,7 +4,7 @@ import path from 'node:path';
 import 'dotenv/config';
 import { loadConfig, ensureSelfSigned } from './config.js';
 import { startServer } from './server.js';
-import { tildify } from './building.js';
+import { tildify } from './floor/building.js';
 import { openBrowser } from './browser.js';
 
 const argv = process.argv.slice(2);
@@ -13,7 +13,7 @@ if (argv[0] === 'prune') {
   process.exit(await prune(argv.slice(1)));
 }
 if (argv[0] === 'accounts') {
-  const { accountsCommand } = await import('./accounts.js');
+  const { accountsCommand } = await import('./accounts/accounts.js');
   process.exit(await accountsCommand(argv.slice(1)));
 }
 if (argv[0] === 'setup') {

@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { newTracker, restoreTracker, scanTracker, trackerUsage } from '../src/server/usage.js';
+import { newTracker, restoreTracker, scanTracker, trackerUsage } from '../src/server/usage/usage.js';
 
 const assistant = (id: string, model: string, more: Record<string, unknown> = {}) =>
   JSON.stringify({ type: 'assistant', timestamp: new Date(Date.UTC(2026, 9, 1, 12, 0, Number(id))).toISOString(), ...more, message: { id: `msg_${id}`, model, usage: { input_tokens: 10, output_tokens: 5 } } });

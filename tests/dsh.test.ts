@@ -23,8 +23,8 @@ import {
   toolKindAction,
   writeDshPatch,
   type DshLaunch,
-} from '../src/server/dsh.js';
-import { Ledger } from '../src/server/usage.js';
+} from '../src/server/agents/dsh.js';
+import { Ledger } from '../src/server/usage/usage.js';
 import { WorkerManager, type WorkerEvents } from '../src/server/workers.js';
 import type { Usage, WorkerAction, WorkerInfo, WorkerStatus } from '../src/shared/protocol.js';
 
