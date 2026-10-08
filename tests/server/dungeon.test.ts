@@ -6,6 +6,7 @@ import path from 'node:path';
 import { NavGrid, type Pt } from '../../src/shared/building/nav.js';
 import { checkCustomMaps, dungeonClear, levelRoute, planOf, prisonSeat, wasting } from '../../src/shared/building/maps/index.js';
 import { Jail, MAX_PRISONERS } from '../../src/server/floor/jail.js';
+import { stateDoc } from '../../src/server/db/state.js';
 
 /** Every step along `way` is walkable: in the hall on `hall`, down in the dungeon (below `ceiling`, by `level`) on `vault`, and on the stairs, on them. */
 function walkable(way: Pt[], ok: (x: number, z: number) => boolean, what: string) {
@@ -171,9 +172,9 @@ test('the jail remembers everyone locked up, keeps the latest by name, and survi
   assert.equal(full.prisoners.length, MAX_PRISONERS);
   assert.equal(full.bones, 2);
   assert.equal(full.prisoners[0].id, 'x0');
-  // A broken file is an empty dungeon, not a broken office.
+  // A dungeon of its own for a floor of its own.
   const bad = mkdtempSync(path.join(tmpdir(), 'jail-'));
   const j2 = new Jail(bad);
   j2.add({ id: 'a', name: 'A', color: '#111111' });
-  assert.ok(readFileSync(path.join(bad, 'jail.json'), 'utf8').includes('"A"'));
+  assert.ok(JSON.stringify(stateDoc<any>(bad, 'jail').read()).includes('"A"'));
 });

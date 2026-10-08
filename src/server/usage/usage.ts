@@ -1,6 +1,7 @@
-import { closeSync, existsSync, fstatSync, openSync, readdirSync, readFileSync, readSync, writeFileSync } from 'node:fs';
+import { closeSync, fstatSync, openSync, readdirSync, readSync } from 'node:fs';
 import path from 'node:path';
 import type { Usage, UsageState } from '../../shared/protocol.js';
+import { stateDoc, type Doc } from '../db/state.js';
 
 /*
  * Where a worker's numbers come from
@@ -272,7 +273,7 @@ export const fmtUsd = (n: number) => `$${n.toFixed(2)}`;
  * the office was down at the time.
  */
 export class Ledger {
-  private file: string;
+  private doc: Doc<unknown>;
   private total = zeroUsage();
   private days: Record<string, Usage> = {};
   private warnedDay = '';
@@ -287,7 +288,7 @@ export class Ledger {
     private onChange: (state: UsageState) => void,
     private toast: (text: string, level: 'info' | 'warn') => void,
   ) {
-    this.file = path.join(dataDir, 'usage.json');
+    this.doc = stateDoc(dataDir, 'usage');
     this.load();
     this.shownDay = localDay();
     // Midnight: "today" starts over and a paused office hires again.
@@ -354,17 +355,13 @@ export class Ledger {
   }
 
   private write() {
-    try {
-      writeFileSync(this.file, JSON.stringify({ total: this.total, days: this.days }, null, 2), { mode: 0o600 });
-    } catch {
-      // disk issues shouldn't take the office down
-    }
+    this.doc.write({ total: this.total, days: this.days });
   }
 
   private load() {
-    if (!existsSync(this.file)) return;
+    const saved = this.doc.read() as { total?: unknown; days?: Record<string, unknown> } | undefined;
+    if (saved === undefined) return;
     try {
-      const saved = JSON.parse(readFileSync(this.file, 'utf8'));
       this.total = asUsage(saved?.total) ?? zeroUsage();
       if (saved?.days && typeof saved.days === 'object') {
         for (const [day, u] of Object.entries(saved.days)) {

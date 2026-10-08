@@ -1,11 +1,12 @@
 import { randomBytes, scryptSync } from 'node:crypto';
-import { existsSync, mkdirSync, readFileSync, writeFileSync, appendFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, appendFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { WEATHERS, isComposioToolkit, type ComposioToolkit, type Weather } from '../shared/protocol.js';
 import { AGENT_PROVIDERS, PROVIDER_META } from '../shared/agents/providers.js';
 import { MAX_WORKER_LIMIT, parseWorkerLimit } from './ops/machine.js';
+import { docKey, stateDb, stateDoc } from './db/state.js';
 
 export interface Config {
   /** The office's own folder: the building's data lives in its .agent-office. */
@@ -65,8 +66,6 @@ export interface Config {
   weather?: Weather;
   /** The sky keeps real time (a day a day), instead of a whole day and night every hour. */
   realTimeSky: boolean;
-  /** Accounts and the Composio key live here instead of their JSON files when set (--database-url / DATABASE_URL). */
-  databaseUrl?: string;
 }
 
 export interface RTCIceServerLike {
@@ -105,8 +104,8 @@ Commands:
   prune                   Remove leftover worker worktrees (.agent-office/worktrees/)
                           and their office/* branches. Anything with uncommitted
                           changes or unpushed commits is kept unless --force is given.
-  accounts                Invite, list and revoke people's own accounts, and switch
-                          the shared password off or on (see accounts --help)
+  accounts                Invite, list and revoke people's accounts, and open or
+                          close registering with the office password (see accounts --help)
   tunnel                  On your own computer, for an office that runs somewhere
                           else: every web server a worker starts there opens on the
                           same port here, by itself (see tunnel --help)
@@ -120,9 +119,9 @@ Options:
   -p, --port <n>          Port to listen on (default 4600, env PORT)
   -H, --host <addr>       Address to bind (default 127.0.0.1: only this machine).
                           0.0.0.0 lets other computers on your network in
-      --password <pw>     Office password (env AGENT_OFFICE_PASSWORD).
-                          Without one, a random password is generated once and
-                          saved in <dir>/.agent-office/config.json
+      --password <pw>     Office password: what people register their own account
+                          with (env AGENT_OFFICE_PASSWORD). Without one, a random
+                          password is generated once and kept in the database
       --claim-token <t>   Show the generated password exactly once, at /claim?t=<t>
                           (env AGENT_OFFICE_CLAIM_TOKEN). After that only a hash
                           is kept and the password is never displayed again.
@@ -176,15 +175,14 @@ Options:
                           (⚙️ Settings can switch it)
                           (env AGENT_OFFICE_SKY_CLOCK=real)
       --database-url <url>
-                          Keep accounts and the Composio key in this Postgres
-                          database (e.g. a Neon connection string) instead of
-                          their JSON files (env DATABASE_URL or
-                          AGENT_OFFICE_DATABASE_URL). A .env file in the
-                          project is loaded automatically if there is one
+                          The Postgres database the office keeps everything in
+                          (required; e.g. a Neon connection string; env
+                          DATABASE_URL or AGENT_OFFICE_DATABASE_URL). A .env file
+                          in the folder it starts in is loaded if there is one
   -h, --help              Show this help
 
-Started in a terminal, the office opens in your browser already signed in, with
-a link that works once. Only this machine can reach it unless you pass --host.
+Started in a terminal, the office opens in your browser with a link that works
+once, to register your account (the first one is the office's admin). Only this machine can reach it unless you pass --host.
 To run it on a server for your team, see deploy/provision.sh.
 
 Voice and screen sharing need a secure context: use https (a reverse proxy,
@@ -235,6 +233,27 @@ export function excludeFromGit(dir: string, entry = '.agent-office/') {
   }
 }
 
+/** loadConfig did all there was to do (--reset-password): exit with `code` once the database has its changes. */
+export class ConfigDone extends Error {
+  constructor(readonly code: number) {
+    super('done');
+  }
+}
+
+/** The office's own settings, in its database: the password (until it's claimed) and the keys sessions are signed with. */
+interface Stored {
+  password?: string;
+  verifier?: string;
+  salt?: string;
+  secret?: string;
+  claimedAt?: number;
+}
+
+/** Whether an office has run with `dir` as its folder (its config is in the database). */
+export function officeRanIn(dir: string): boolean {
+  return stateDb().has(docKey(path.join(dir, '.agent-office'), 'config'));
+}
+
 export function loadConfig(argv: string[]): Config {
   let project = '';
   let home = officeHome();
@@ -263,7 +282,6 @@ export function loadConfig(argv: string[]): Config {
   let city = process.env.AGENT_OFFICE_CITY || '';
   let weather = process.env.AGENT_OFFICE_WEATHER || '';
   let realTimeSky = process.env.AGENT_OFFICE_SKY_CLOCK === 'real';
-  let databaseUrl = process.env.DATABASE_URL || process.env.AGENT_OFFICE_DATABASE_URL || '';
   const iceServers: RTCIceServerLike[] = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302'] }];
   // A container can't take --turn (deploy/container/compose.yaml), so the TURN servers come from the environment too.
   for (const url of (process.env.AGENT_OFFICE_TURN ?? '').split(/\s+/).filter(Boolean)) iceServers.push(parseTurn(url));
@@ -355,9 +373,6 @@ export function loadConfig(argv: string[]): Config {
       case '--real-time-sky':
         realTimeSky = true;
         break;
-      case '--database-url':
-        databaseUrl = takeValue(argv, i++, a);
-        break;
       default:
         if (a.startsWith('-')) {
           console.error(`agent-office: unknown option ${a}\n`);
@@ -371,7 +386,7 @@ export function loadConfig(argv: string[]): Config {
   // An office already runs in this project (started here before there were floors): carry on with
   // it, its workers and its password, rather than open an empty building somewhere else.
   const cwd = process.cwd();
-  if (!project && !homeGiven && cwd !== home && existsSync(path.join(cwd, '.agent-office', 'config.json'))) project = cwd;
+  if (!project && !homeGiven && cwd !== home && officeRanIn(cwd)) project = cwd;
   if (project && !existsSync(project)) {
     console.error(`agent-office: directory not found: ${project}`);
     process.exit(2);
@@ -403,14 +418,9 @@ export function loadConfig(argv: string[]): Config {
   mkdirSync(dataDir, { recursive: true, mode: 0o700 });
   if (project) excludeFromGit(dir);
 
-  const cfgPath = path.join(dataDir, 'config.json');
-  let stored: { password?: string; verifier?: string; salt?: string; secret?: string; claimedAt?: number } = {};
-  try {
-    stored = JSON.parse(readFileSync(cfgPath, 'utf8'));
-  } catch {
-    // first run
-  }
-  const save = () => writeFileSync(cfgPath, JSON.stringify(stored, null, 2), { mode: 0o600 });
+  const doc = stateDoc<Stored>(dataDir, 'config');
+  const stored: Stored = doc.read() ?? {};
+  const save = () => doc.write(stored);
   if (!stored.secret) stored.secret = randomBytes(32).toString('hex');
   if (!stored.salt) stored.salt = randomBytes(16).toString('hex');
   const salt = Buffer.from(stored.salt, 'hex');
@@ -422,7 +432,8 @@ export function loadConfig(argv: string[]): Config {
     delete stored.claimedAt;
     save();
     console.log('agent-office: password forgotten — a new one is generated on the next start');
-    process.exit(0);
+    // Done: the caller exits once the change is in the database.
+    throw new ConfigDone(0);
   }
 
   let verifier: Buffer;
@@ -497,22 +508,21 @@ export function loadConfig(argv: string[]): Config {
     city: city.trim() || undefined,
     weather: (weather as Weather) || undefined,
     realTimeSky,
-    databaseUrl: databaseUrl.trim() || undefined,
   };
 }
 
+/** --self-signed: the certificate made the first time, kept in the database for the next start. */
 export async function ensureSelfSigned(cfg: Config): Promise<void> {
   if (!cfg.tls || cfg.tls.cert) return;
-  const certPath = path.join(cfg.dataDir, 'tls-cert.pem');
-  const keyPath = path.join(cfg.dataDir, 'tls-key.pem');
-  if (existsSync(certPath) && existsSync(keyPath)) {
-    cfg.tls = { cert: readFileSync(certPath, 'utf8'), key: readFileSync(keyPath, 'utf8') };
+  const doc = stateDoc<{ cert?: unknown; key?: unknown }>(cfg.dataDir, 'tls');
+  const saved = doc.read();
+  if (typeof saved?.cert === 'string' && typeof saved.key === 'string') {
+    cfg.tls = { cert: saved.cert, key: saved.key };
     return;
   }
   const selfsigned = await import('selfsigned');
   const gen = (selfsigned as any).generate ?? (selfsigned as any).default?.generate;
   const pems = await gen([{ name: 'commonName', value: 'agent-office' }], { days: 825, keySize: 2048 });
-  writeFileSync(certPath, pems.cert, { mode: 0o600 });
-  writeFileSync(keyPath, pems.private, { mode: 0o600 });
+  doc.write({ cert: pems.cert, key: pems.private });
   cfg.tls = { cert: pems.cert, key: pems.private };
 }

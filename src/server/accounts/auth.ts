@@ -7,21 +7,21 @@ const SESSION_TTL_MS = 1000 * 60 * 60 * 24 * 14;
 
 const MAX_ATTEMPTS = 10;
 const WINDOW_MS = 5 * 60_000;
-/** Sign-in links not used yet; making one more forgets the oldest. */
+/** Registration links not used yet; making one more forgets the oldest. */
 const MAX_LINKS = 8;
 
-/** A signed-in browser: with its own account, or (no account) with the shared office password. */
+/** A signed-in browser: everyone signs in with an account of their own. */
 export interface Session {
-  account?: Account;
+  account: Account;
 }
 
 export class Auth {
   private attempts = new Map<string, { count: number; resetAt: number }>();
-  /** Hashes of the one-time sign-in links' keys that haven't been used yet. */
+  /** Hashes of the one-time registration links' keys that haven't been used yet. */
   private links = new Set<string>();
-  /** Signs shared-password sessions. Derived from the password too, so changing it logs those out. */
+  /** Compares tokens without giving their length or contents away in the time it takes. */
   private key: Buffer;
-  /** Signs account sessions, which outlive a change of the shared password. */
+  /** Signs sessions. */
   private accountKey: Buffer;
 
   constructor(
@@ -34,7 +34,7 @@ export class Auth {
     this.accountKey = createHmac('sha256', secret).update('account-session:').digest();
   }
 
-  /** scrypt runs on the libuv pool, so guessing can't stall the event loop. */
+  /** The office password, which lets people register. scrypt runs on the libuv pool, so guessing can't stall the event loop. */
   checkPassword(candidate: string): Promise<boolean> {
     return new Promise((resolve) => {
       scrypt(candidate, this.salt, 32, (err, derived) => resolve(!err && timingSafeEqual(derived, this.verifier)));
@@ -67,8 +67,9 @@ export class Auth {
   }
 
   /**
-   * The key of a sign-in link that works once, for whoever started the office in a terminal: it
-   * signs in like the shared password. Only its hash is kept, in memory, so a restart forgets it.
+   * The key of a link that works once, for whoever started the office in a terminal: it lets them
+   * register an account without typing the office password (the office's first account is its
+   * admin). Only its hash is kept, in memory, so a restart forgets it.
    */
   linkKey(): string {
     const key = randomBytes(24).toString('base64url');
@@ -77,22 +78,24 @@ export class Auth {
     return key;
   }
 
-  /** Uses up a sign-in link: true the first time its key is given, never again. */
+  /** Whether a registration link's key is one that hasn't been used yet. */
+  hasLinkKey(key: string): boolean {
+    return !!key && this.links.has(linkHash(key));
+  }
+
+  /** Uses up a registration link: true the first time its key is given, never again. */
   useLinkKey(key: string): boolean {
     return !!key && this.links.delete(linkHash(key));
   }
 
-  /** A session cookie's value: for that account, or for the shared password when there's none. */
-  issue(accountId?: string): string {
-    const body = { exp: Date.now() + SESSION_TTL_MS, n: randomBytes(8).toString('hex'), ...(accountId ? { u: accountId } : {}) };
+  /** A session cookie's value, for that account. */
+  issue(accountId: string): string {
+    const body = { exp: Date.now() + SESSION_TTL_MS, n: randomBytes(8).toString('hex'), u: accountId };
     const payload = Buffer.from(JSON.stringify(body)).toString('base64url');
-    return `${payload}.${this.sign(payload, !!accountId)}`;
+    return `${payload}.${this.sign(payload)}`;
   }
 
-  /**
-   * Who a cookie signs in, if anyone. A revoked account, or the shared password once it's switched
-   * off, stops working at once, whatever the cookie's expiry says.
-   */
+  /** Who a cookie signs in, if anyone. A revoked account stops working at once, whatever the cookie's expiry says. */
   verify(token: string | undefined): Session | undefined {
     if (!token) return undefined;
     const dot = token.indexOf('.');
@@ -104,13 +107,11 @@ export class Auth {
     } catch {
       return undefined;
     }
-    const accountId = typeof body?.u === 'string' ? body.u : undefined;
     const sig = Buffer.from(token.slice(dot + 1));
-    const expected = Buffer.from(this.sign(payload, !!accountId));
+    const expected = Buffer.from(this.sign(payload));
     if (sig.length !== expected.length || !timingSafeEqual(sig, expected)) return undefined;
-    if (typeof body.exp !== 'number' || body.exp <= Date.now()) return undefined;
-    if (!accountId) return this.accounts.sharedPassword ? {} : undefined;
-    const account = this.accounts.get(accountId);
+    if (typeof body?.u !== 'string' || typeof body.exp !== 'number' || body.exp <= Date.now()) return undefined;
+    const account = this.accounts.get(body.u);
     return account ? { account } : undefined;
   }
 
@@ -137,8 +138,8 @@ export class Auth {
     return `${cookieName(req)}=; Path=/; HttpOnly; SameSite=Lax; Max-Age=0`;
   }
 
-  private sign(payload: string, account: boolean): string {
-    return createHmac('sha256', account ? this.accountKey : this.key).update(payload).digest('base64url');
+  private sign(payload: string): string {
+    return createHmac('sha256', this.accountKey).update(payload).digest('base64url');
   }
 }
 

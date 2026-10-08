@@ -2,7 +2,6 @@ import path from 'node:path';
 import type { Config } from '../config.js';
 import { Auth } from '../accounts/auth.js';
 import { Accounts } from '../accounts/accounts.js';
-import { postgresStore } from '../accounts/store.js';
 import { providerCommand } from '../agents/agents.js';
 import type { AgentProvider } from '../../shared/agents/providers.js';
 import { createModelCatalogues } from '../agents/models.js';
@@ -17,11 +16,10 @@ import type { Client } from './client.js';
 
 /** The first of the office: accounts and sign-in, the people in it, chat, the arcade, and the building's floors. */
 export async function createCore(ctx: Ctx, cfg: Config, publicDir: string): Promise<Core> {
-  const accounts = new Accounts(cfg.dataDir, cfg.databaseUrl ? postgresStore(cfg.databaseUrl) : undefined);
-  await accounts.whenReady();
+  const accounts = new Accounts(cfg.dataDir, { watch: true });
   const auth = new Auth(cfg.verifier, cfg.salt, cfg.secret, accounts);
   const clients = new Map<string, Client>();
-  // Kept on disk, so a restart doesn't wipe it.
+  // Kept in the database, so a restart doesn't wipe it.
   const chat = new ChatLog(cfg.dataDir);
   // The arcade's high scores: one table for the whole building, on every floor's cabinet. The office
   // follows every game and puts the scores up itself (see Arcade).

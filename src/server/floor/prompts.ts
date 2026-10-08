@@ -1,8 +1,7 @@
-import { readFileSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
 import { isAgentEffort, isAgentProvider, type AgentChoice, type AgentProvider, type PromptsState } from '../../shared/protocol.js';
 import { PROMPTS, PROMPT_MAX, fillPrompt, isPromptId, promptText, type PromptId, type PromptVars } from '../../shared/agents/prompts.js';
 import { validateWorkerEffort, validateWorkerModel } from '../agents/agents.js';
+import { stateDoc, type Doc } from '../db/state.js';
 
 /** What the floors read: a prompt as the office has it now, and what workers start on. */
 export interface PromptSource {
@@ -19,11 +18,11 @@ export function officePrompt(source: PromptSource | undefined, id: PromptId, var
 /**
  * The prompts the office writes for workers by itself (shared/agents/prompts.ts), as rewritten in
  * ⚙️ Settings, and the provider, model and effort every worker starts on unless whoever starts it
- * picks others. The same for the whole building, kept in .agent-office/prompts.json; admins change them.
+ * picks others. The same for the whole building, kept in the database; admins change them.
  */
 export class OfficePrompts implements PromptSource {
   private saved: PromptsState = { custom: {} };
-  private path: string;
+  private doc: Doc<unknown>;
 
   constructor(
     dataDir: string,
@@ -31,7 +30,7 @@ export class OfficePrompts implements PromptSource {
     private providers: { list: AgentProvider[]; configured: AgentProvider },
     private onState: (state: PromptsState) => void,
   ) {
-    this.path = path.join(dataDir, 'prompts.json');
+    this.doc = stateDoc(dataDir, 'prompts');
     this.restore();
   }
 
@@ -87,12 +86,8 @@ export class OfficePrompts implements PromptSource {
   }
 
   private restore() {
-    let raw: Partial<PromptsState>;
-    try {
-      raw = JSON.parse(readFileSync(this.path, 'utf8'));
-    } catch {
-      return; // never changed: the defaults
-    }
+    const raw = this.doc.read() as Partial<PromptsState> | undefined;
+    if (!raw) return; // never changed: the defaults
     for (const [id, v] of Object.entries(raw?.custom ?? {})) {
       if (!isPromptId(id) || typeof v?.text !== 'string') continue;
       this.saved.custom[id] = { text: v.text.slice(0, PROMPT_MAX), by: typeof v.by === 'string' ? v.by : 'someone', at: typeof v.at === 'number' ? v.at : 0 };
@@ -106,10 +101,6 @@ export class OfficePrompts implements PromptSource {
   }
 
   private persist() {
-    try {
-      writeFileSync(this.path, JSON.stringify(this.saved, null, 2), { mode: 0o600 });
-    } catch {
-      // disk issues shouldn't take the office down
-    }
+    this.doc.write(this.saved);
   }
 }

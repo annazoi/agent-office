@@ -1,18 +1,17 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
 import { canLabel, cleanLabel, cleanPlan, rowDesks, signColor, type DeskLabel, type FloorPlan } from '../../shared/building/floorplan.js';
 import { DESK_BY_ID, WING } from '../../shared/building/layout.js';
+import { stateDoc, type Doc } from '../db/state.js';
 
 /**
  * A floor's own layout: the signs over its desks, and how far its back office is built out. Saved in
- * .agent-office/floorplan.json.
+ * the database.
  */
 export class FloorPlanStore {
   private plan: FloorPlan;
-  private file: string;
+  private doc: Doc<unknown>;
 
   constructor(dataDir: string) {
-    this.file = path.join(dataDir, 'floorplan.json');
+    this.doc = stateDoc(dataDir, 'floorplan');
     this.plan = this.load();
   }
 
@@ -61,20 +60,15 @@ export class FloorPlanStore {
   }
 
   private load(): FloorPlan {
-    if (!existsSync(this.file)) return cleanPlan(undefined);
     try {
-      return cleanPlan(JSON.parse(readFileSync(this.file, 'utf8')));
+      return cleanPlan(this.doc.read());
     } catch {
-      // a broken file just means the office as it comes
+      // a broken document just means the office as it comes
       return cleanPlan(undefined);
     }
   }
 
   private save() {
-    try {
-      writeFileSync(this.file, JSON.stringify(this.plan, null, 2), { mode: 0o600 });
-    } catch {
-      // disk issues shouldn't take the office down
-    }
+    this.doc.write(this.plan);
   }
 }

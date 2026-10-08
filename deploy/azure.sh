@@ -1104,7 +1104,7 @@ cmd_reset_password() {
     node /opt/agent-office/bin/agent-office.js --home \"\$(cat /etc/agent-office/home)\" --reset-password >/dev/null
     sudo systemctl start agent-office" || die "reset failed"
   wait_healthy || die "the office didn't come back — check: deploy/azure.sh logs$NAME_FLAG"
-  ok "Everyone has been signed out"
+  ok "The office password is new: it registers new accounts, and everyone keeps theirs"
   open_office
 }
 

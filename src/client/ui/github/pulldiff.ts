@@ -2,6 +2,7 @@ import './pulldiff.css';
 import type { GhReviewComment } from '../../../shared/protocol';
 import { h, timeAgo } from '../dom';
 import { markdown } from '../markdown';
+import { userStorage } from '../../state/user-storage';
 
 // A PR's unified diff (`gh pr diff`), split into files, and the pieces the Files tab draws with it:
 // each file's lines with inline review comments, the file list/tree, and which files you've reviewed.
@@ -98,7 +99,7 @@ export function parseDiff(text: string): DiffFile[] {
   return files;
 }
 
-// ---- Which files you've reviewed, per PR, kept in this browser --------------------------------
+// ---- Which files you've reviewed, per PR, kept with your account -------------------------------
 
 const REVIEWED_KEY = 'agent-office.reviewed';
 const KEEP_PRS = 60;
@@ -107,7 +108,7 @@ type ReviewedStore = Record<string, { at: number; files: Record<string, string> 
 
 function loadReviewed(): ReviewedStore {
   try {
-    const v = JSON.parse(localStorage.getItem(REVIEWED_KEY) ?? '{}');
+    const v = JSON.parse(userStorage.getItem(REVIEWED_KEY) ?? '{}');
     return v && typeof v === 'object' ? v : {};
   } catch {
     return {};
@@ -139,7 +140,7 @@ export class Reviewed {
     const keys = Object.keys(all).sort((a, b) => all[b].at - all[a].at);
     for (const k of keys.slice(KEEP_PRS)) delete all[k];
     try {
-      localStorage.setItem(REVIEWED_KEY, JSON.stringify(all));
+      userStorage.setItem(REVIEWED_KEY, JSON.stringify(all));
     } catch {
       // storage blocked or full: the mark lasts until the window closes
     }

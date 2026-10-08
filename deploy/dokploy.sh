@@ -816,7 +816,7 @@ cmd_reset_password() {
   api POST application.reload "$(mkjson '({applicationId: v[0], appName: v[1]})' "$APPLICATION_ID" "$APP_NAME")" >/dev/null ||
     die "couldn't restart the office"
   wait_replaced "$was" || die "the office didn't come back — check: deploy/dokploy.sh logs$NAME_FLAG"
-  ok "Everyone has been signed out"
+  ok "The office password is new: it registers new accounts, and everyone keeps theirs"
   open_office
 }
 

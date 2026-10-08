@@ -66,11 +66,6 @@ form.addEventListener('submit', async (e) => {
       error.textContent = r.body.error ?? 'Could not make your account';
       return;
     }
-    try {
-      localStorage.setItem('agent-office.login-name', r.body.name);
-    } catch {
-      // storage blocked
-    }
     location.replace('/');
   } catch {
     error.textContent = 'Server unreachable';

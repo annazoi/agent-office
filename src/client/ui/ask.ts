@@ -5,6 +5,7 @@ import { store } from '../state';
 import { providerPicker, type ProviderPicker } from './provider';
 import { repoPicker } from './prompt';
 import { dictateField } from './dictate';
+import { userStorage } from '../state/user-storage';
 
 // Send a prompt about an issue or PR to a worker: a new one at a free desk, or one already sitting
 // at a desk (it lands in their input box, queued if they're busy).
@@ -45,7 +46,7 @@ export function openAsk(opts: AskOptions) {
   ta.value = opts.initial ?? '';
   const wtBox = h('input', { type: 'checkbox', id: 'ask-wt' }) as HTMLInputElement;
   try {
-    wtBox.checked = localStorage.getItem(WT_KEY) === '1';
+    wtBox.checked = userStorage.getItem(WT_KEY) === '1';
   } catch {
     // storage blocked
   }
@@ -102,7 +103,7 @@ export function openAsk(opts: AskOptions) {
     modal.close();
     if (!to && opts.worktreeOption) {
       try {
-        localStorage.setItem(WT_KEY, wtBox.checked ? '1' : '0');
+        userStorage.setItem(WT_KEY, wtBox.checked ? '1' : '0');
       } catch {
         // storage blocked
       }

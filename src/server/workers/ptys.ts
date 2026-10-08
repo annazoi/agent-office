@@ -1,11 +1,12 @@
 import { createHash, randomBytes } from 'node:crypto';
 import { spawn as spawnProcess } from 'node:child_process';
-import { closeSync, openSync, readFileSync, writeFileSync } from 'node:fs';
+import { closeSync, openSync } from 'node:fs';
 import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import * as pty from '@lydell/node-pty';
+import { stateDoc, type Doc } from '../db/state.js';
 
 /**
  * Workers' terminals live in a small host process of their own (ptyhost.ts), not in the office.
@@ -157,13 +158,14 @@ export class PtyHost {
   /** Leaving on purpose: the connection closing is not the host dying. */
   private leaving = false;
   private socketPath: string;
-  private infoPath: string;
+  /** The token the host takes hellos with, so a restarted office can find its way back to it. */
+  private info: Doc<{ token?: unknown }>;
 
   constructor(
     private dataDir: string,
     private onLost: () => void,
   ) {
-    this.infoPath = path.join(dataDir, 'pty-host.json');
+    this.info = stateDoc(dataDir, 'pty-host');
     // Unix socket paths are capped at ~104 bytes; a deep project falls back to the temp dir.
     const inData = path.join(dataDir, 'pty.sock');
     const hash = createHash('sha256').update(dataDir).digest('hex').slice(0, 16);
@@ -309,12 +311,8 @@ export class PtyHost {
 
   /** Connects and says hello with the saved token. Undefined if no host answers. */
   private hello(): Promise<{ sock: net.Socket; version: number; sessions: string[] } | undefined> {
-    let token: string;
-    try {
-      token = JSON.parse(readFileSync(this.infoPath, 'utf8')).token;
-    } catch {
-      return Promise.resolve(undefined);
-    }
+    const token = this.info.read()?.token;
+    if (typeof token !== 'string') return Promise.resolve(undefined);
     return new Promise((resolve) => {
       const sock = net.createConnection(this.socketPath);
       let settled = false;
@@ -338,7 +336,8 @@ export class PtyHost {
 
   /** Starts a host, detached so that it outlives this process and never sees its Ctrl+C. */
   private startHost() {
-    writeFileSync(this.infoPath, JSON.stringify({ token: randomBytes(24).toString('hex') }), { mode: 0o600 });
+    const token = randomBytes(24).toString('hex');
+    this.info.write({ token });
     const here = fileURLToPath(import.meta.url);
     // Under tsx this is ptyhost.ts, run with the same loader flags; built, it's ptyhost.js.
     const script = path.join(path.dirname(here), `ptyhost${path.extname(here)}`);
@@ -346,7 +345,9 @@ export class PtyHost {
     const flags = process.execArgv.filter((a) => !/^--(inspect|debug)/.test(a)).map((a) => a.replace(/^(--[\w-]+=)?(\.\.?\/.*)$/, (_, flag = '', p) => `${flag}${path.resolve(p)}`));
     const log = openSync(path.join(this.dataDir, 'pty-host.log'), 'w', 0o600);
     try {
-      const child = spawnProcess(process.execPath, [...flags, script, this.socketPath, this.infoPath], {
+      const child = spawnProcess(process.execPath, [...flags, script, this.socketPath], {
+        // Its terminals get their environment from the office (childEnv); the host needs no database.
+        env: { ...process.env, DATABASE_URL: undefined, AGENT_OFFICE_DATABASE_URL: undefined, AGENT_OFFICE_PTY_TOKEN: token },
         detached: true,
         stdio: ['ignore', 'ignore', log],
         // Where the office's own code is, so a loader flag (`--import tsx`) resolves from its

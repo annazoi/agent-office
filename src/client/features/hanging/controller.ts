@@ -7,6 +7,7 @@ import { openHangDialog, openPicture, type HangChoice } from './ui';
 import { toast } from '../../ui/dom';
 import { Ghost, aimAtWall, brokenTexture, holdPicture, loadPicture, type Gallery } from './world';
 import type { Office } from '../../world/types';
+import { userStorage } from '../../state/user-storage';
 
 interface Hanging {
   url: string;
@@ -37,7 +38,7 @@ export interface Spot {
 const SIZE_KEY = 'agent-office.picture-size';
 function lastSize(): number {
   try {
-    const n = Number(localStorage.getItem(SIZE_KEY));
+    const n = Number(userStorage.getItem(SIZE_KEY));
     return n >= PICTURE_MIN && n <= PICTURE_MAX ? n : 1.2;
   } catch {
     return 1.2;
@@ -183,7 +184,7 @@ export class Hanger {
       this.net.send({ t: 'decor.add', decor: { url: cur.url, title: cur.title || undefined, frame: cur.frame, ...spot } });
     }
     try {
-      localStorage.setItem(SIZE_KEY, String(cur.size));
+      userStorage.setItem(SIZE_KEY, String(cur.size));
     } catch {
       // storage blocked
     }

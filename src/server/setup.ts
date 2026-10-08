@@ -1,5 +1,5 @@
 import { execFile, spawnSync } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { mkdirSync, readdirSync, statSync } from 'node:fs';
 import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
@@ -8,9 +8,10 @@ import tty from 'node:tty';
 import { normalizeRepo, sameRepo } from '../shared/building/floors.js';
 import type { RepoChoice } from '../shared/protocol.js';
 import { Building, tildify } from './floor/building.js';
-import { officeHome, type Config } from './config.js';
+import { officeHome, type Config, officeRanIn } from './config.js';
 import { ComposioHub } from './integrations/composio.js';
 import { composioStep } from './setup-composio.js';
+import { stateDoc } from './db/state.js';
 
 // Setting up an office from its terminal: where projects are cloned, signing the GitHub CLI in, and
 // picking the first repositories to clone as floors. A new office walks you through it the first time
@@ -27,11 +28,11 @@ const CODE_FOLDERS = ['Workspace', 'workspace', 'Developer', 'code', 'Code', 'pr
 const SETUP_HELP = `agent-office setup — pick where projects are cloned and which ones are floors
 
 Usage:
-  agent-office setup [--projects <dir>] [--project <owner/repo>]... [--home <dir>]
+  agent-office setup [--projects <dir> | --default-projects <dir>] [--project <owner/repo>]... [--home <dir>]
 
 In a terminal it walks you through it: the workspace folder new projects are cloned
 into, signing the GitHub CLI in, and picking repositories to clone as floors. Given
---projects or --project it does just that and asks nothing, for scripts.
+--projects, --default-projects or --project it does just that and asks nothing, for scripts.
 
 A new office runs this by itself the first time it starts in a terminal. Run it
 while the office is stopped; while it runs, use its elevator and ⚙️ Settings.
@@ -39,6 +40,9 @@ while the office is stopped; while it runs, use its elevator and ⚙️ Settings
 Options:
       --home <dir>        The office to set up (default ~/agent-office, env AGENT_OFFICE_HOME)
       --projects <dir>    Clone new projects into <dir>/<owner>/<repo> from now on
+      --default-projects <dir>
+                          The same, unless a folder was picked already (for scripts
+                          that run at every start, like the container's)
       --project <repo>    Clone this repository (owner/name or a GitHub URL) as a floor.
                           Repeat it for more than one
   -h, --help              Show this help
@@ -78,6 +82,8 @@ export async function welcome(cfg: Config): Promise<void> {
 export async function setupCommand(argv: string[]): Promise<number> {
   let home = '';
   let projects = '';
+  /** --default-projects: only when nobody has picked a folder yet. */
+  let onlyIfUnset = false;
   const repos: string[] = [];
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
@@ -94,6 +100,10 @@ export async function setupCommand(argv: string[]): Promise<number> {
       return 0;
     } else if (a === '--home') home = path.resolve(value());
     else if (a === '--projects') projects = value();
+    else if (a === '--default-projects') {
+      projects = value();
+      onlyIfUnset = true;
+    }
     else if (a === '--project') repos.push(value());
     else {
       console.error(`agent-office setup: unknown option ${a}\n`);
@@ -106,7 +116,7 @@ export async function setupCommand(argv: string[]): Promise<number> {
   const cwd = process.cwd();
   let dir = home || officeHome();
   let inProject = false;
-  if (!home && !process.env.AGENT_OFFICE_HOME && cwd !== dir && existsSync(path.join(cwd, '.agent-office', 'config.json'))) {
+  if (!home && !process.env.AGENT_OFFICE_HOME && cwd !== dir && officeRanIn(cwd)) {
     dir = cwd;
     inProject = true;
   }
@@ -124,6 +134,7 @@ export async function setupCommand(argv: string[]): Promise<number> {
       return 2;
     }
     let code = 0;
+    if (projects && onlyIfUnset && building.projectsDirState().custom) projects = '';
     if (projects) {
       const err = building.setProjectsDir(projects, 'agent-office setup');
       if (err) {
@@ -325,12 +336,7 @@ function whoAmI(): string {
 
 /** An office is running from this data folder: its hook server is listening where it said it would. */
 function officeRunning(dataDir: string): Promise<boolean> {
-  let port = 0;
-  try {
-    port = Number(readFileSync(path.join(dataDir, 'hook-port'), 'utf8')) || 0;
-  } catch {
-    // never started
-  }
+  const port = Number(stateDoc<number>(dataDir, 'hook-port').read()) || 0;
   if (!port) return Promise.resolve(false);
   return new Promise((resolve) => {
     const sock = net.connect({ host: '127.0.0.1', port });

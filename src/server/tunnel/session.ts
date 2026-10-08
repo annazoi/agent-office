@@ -89,7 +89,7 @@ function askHidden(question: string): Promise<string> {
 }
 
 export interface Credentials {
-  /** An account's name; without one the password is the shared office password. */
+  /** The account to sign in as; asked for when missing. */
   name?: string;
   password?: string;
 }
@@ -114,14 +114,12 @@ export async function signIn(office: Office, key: string, given: Credentials, sa
     if (!err || !interactive()) return err;
     say(`  ${err}`);
   }
-  if (!interactive()) return 'Not signed in. Run it in a terminal to type the password, or set AGENT_OFFICE_PASSWORD (and --name for an account of your own).';
+  if (!interactive()) return 'Not signed in. Run it in a terminal to type your name and password, or pass --name and set AGENT_OFFICE_PASSWORD to your account\'s password.';
 
-  const opts = await office.loginOptions();
-  const askName = given.name === undefined && (opts.accounts || !opts.shared);
   say(`  Sign in to the office at ${office.origin} (asked once: the session is kept in ${tildify(sessionsFile())})`);
   for (let tries = 0; tries < 3; tries++) {
-    const name = askName ? await ask(opts.shared ? '  Your name (Enter for the office password): ' : '  Your name: ') : (given.name ?? '');
-    const err = await office.signIn(name, await askHidden(name ? '  Password: ' : '  Office password: '));
+    const name = given.name ?? (await ask('  Your name: '));
+    const err = await office.signIn(name, await askHidden('  Password: '));
     if (!err) {
       keep(key, office.token);
       return '';

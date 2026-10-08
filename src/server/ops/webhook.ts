@@ -1,7 +1,6 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
 import type { NotifyState, WebhookKind, WorkerInfo, WorkerStatus } from '../../shared/protocol.js';
 import { alertDetail } from '../../shared/agents/status.js';
+import { stateDoc, type Doc } from '../db/state.js';
 
 /** A worker has to stay put this long before the channel hears about it, so a flicker never posts. */
 const SETTLE_MS = 5_000;
@@ -41,13 +40,13 @@ const oneLine = (s: string, max: number) => {
 /**
  * The office's Slack / Discord webhook. When an agent worker starts waiting on input or finishes its
  * turn, and is still that way a few seconds later with nobody at its terminal, the channel gets a
- * line about it. Set from ⚙️ Settings (or --webhook) and kept in .agent-office/webhook.json.
+ * line about it. Set from ⚙️ Settings (or --webhook) and kept in the database.
  */
 export class Webhook {
   private saved?: Saved;
   private error?: string;
   private lastSentAt?: number;
-  private path: string;
+  private doc: Doc<unknown>;
   /** Each worker's latest state, and the alert waiting out its settle time. */
   private latest = new Map<string, WorkerInfo>();
   private pending = new Map<string, { status: Alert; timer: NodeJS.Timeout }>();
@@ -60,7 +59,7 @@ export class Webhook {
     private project: (workerId?: string) => string,
     private onState: (state: NotifyState) => void,
   ) {
-    this.path = path.join(dataDir, 'webhook.json');
+    this.doc = stateDoc(dataDir, 'webhook');
     this.restore();
   }
 
@@ -205,20 +204,16 @@ export class Webhook {
   }
 
   private persist() {
-    try {
-      writeFileSync(this.path, JSON.stringify(this.saved ?? {}, null, 2), { mode: 0o600 });
-    } catch {
-      // disk issues shouldn't take the office down
-    }
+    this.doc.write(this.saved ?? {});
   }
 
   private restore() {
-    if (!existsSync(this.path)) return;
+    const s = this.doc.read() as Partial<Saved> | undefined;
+    if (s === undefined) return;
     try {
-      const s = JSON.parse(readFileSync(this.path, 'utf8')) as Partial<Saved>;
       if (typeof s.url === 'string' && URL.canParse(s.url)) this.saved = { url: s.url, by: typeof s.by === 'string' ? s.by : '?', at: typeof s.at === 'number' ? s.at : Date.now() };
     } catch {
-      // a broken file just means no webhook
+      // a broken document just means no webhook
     }
   }
 }

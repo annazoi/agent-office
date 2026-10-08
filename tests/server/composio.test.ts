@@ -21,6 +21,7 @@ import type { Ctx } from '../../src/server/office/context.js';
 import { parseToolkitPick } from '../../src/server/setup-composio.js';
 import { stationFootprint, stationObstacles, STATION_SPOTS } from '../../src/shared/integrations/integrations.js';
 import type { ServerMsg } from '../../src/shared/protocol.js';
+import { stateDoc } from '../../src/server/db/state.js';
 
 const tmp = (name: string) => mkdtempSync(path.join(os.tmpdir(), `ao-${name}-`));
 const KEY = 'ak_test_0123456789abcdef';
@@ -74,21 +75,20 @@ test('the hub keeps the key to itself, checks it before saving, and tells browse
   assert.equal(state.by, 'Sam');
   assert.deepEqual(state.toolkits, ['linear', 'notion', 'slack', 'googlecalendar', 'gmail', 'github']);
   assert.ok(!JSON.stringify(state).includes(KEY), 'the state never carries the key');
-  // On disk for the office's user alone, and read back by a fresh hub.
-  const file = path.join(dir, 'composio.json');
-  assert.equal(statSync(file).mode & 0o777, 0o600);
-  assert.equal(JSON.parse(readFileSync(file, 'utf8')).apiKey, KEY);
+  // In the office's database, and read back by a fresh hub.
+  const saved = stateDoc<{ apiKey?: string }>(dir, 'composio');
+  assert.equal(saved.read()?.apiKey, KEY);
   const again = new ComposioHub(dir, () => {}, () => {}, async () => sdk);
   assert.equal(again.configured, true);
   // Toolkits can be narrowed, never to something that isn't one.
   assert.equal(hub.setToolkits(['gmail', 'bogus', 'linear']), undefined);
   assert.deepEqual(hub.state().toolkits, ['linear', 'gmail']);
-  assert.match(hub.blocked(undefined)!, /account of your own/);
+  assert.match(hub.blocked(undefined)!, /Sign in with your account/);
   assert.equal(hub.blocked('a1'), undefined);
   // '' removes it.
   assert.equal(await hub.setKey('', 'Sam'), undefined);
   assert.equal(hub.configured, false);
-  assert.equal(JSON.parse(readFileSync(file, 'utf8')).apiKey, undefined);
+  assert.equal(saved.read()?.apiKey, undefined);
 });
 
 test("a key Composio refuses isn't saved, and an SDK that won't load is a state, not a crash", async () => {
@@ -303,10 +303,10 @@ async function office() {
     server.close();
     server.closeAllConnections();
   };
-  return { port: cfg.port, hub, calls, sent, fay, shared: cookieFor(auth.issue()), asFay: cookieFor(auth.issue(fay.id)), close };
+  return { port: cfg.port, hub, calls, sent, fay, gone: cookieFor(auth.issue('nobody0')), asFay: cookieFor(auth.issue(fay.id)), close };
 }
 
-test('the routes run as the signed-in person, refuse the shared password, and tell the floor what was done', async () => {
+test('the routes run as the signed-in person, refuse an account that is gone, and tell the floor what was done', async () => {
   const o = await office();
   try {
     const { port } = o;
@@ -327,10 +327,9 @@ test('the routes run as the signed-in person, refuse the shared password, and te
     assert.ok(!r.body.includes(KEY), 'the key never reaches a browser');
     assert.deepEqual(status.mine.toolkits, { linear: 'connected', notion: 'off', slack: 'off', googlecalendar: 'off', gmail: 'pending', github: 'off' });
 
-    // The shared password has no account: it can see the office's state, and do nothing else.
-    r = await request(port, 'GET', '/api/composio/status', undefined, o.shared);
-    assert.match(JSON.parse(r.body).mine.blocked, /account of your own/);
-    assert.equal((await request(port, 'GET', '/api/composio/linear/issues', undefined, o.shared)).status, 403);
+    // An account that's gone is signed out: nothing at all.
+    assert.equal((await request(port, 'GET', '/api/composio/status', undefined, o.gone)).status, 401);
+    assert.equal((await request(port, 'GET', '/api/composio/linear/issues', undefined, o.gone)).status, 401);
 
     // Fay's issues, through her session.
     r = await request(port, 'GET', '/api/composio/linear/issues', undefined, o.asFay);

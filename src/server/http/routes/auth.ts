@@ -1,5 +1,6 @@
-// Signing in and out: the office password, an account's own, an invite link, a claim link, and a
-// sign-in link printed in the office's terminal.
+// Signing in and out, and registering. Everyone signs in with an account of their own; an account is
+// made with the office password (registering), an invite link, or the one-time link printed in the
+// office's terminal. The claim link shows a generated office password, once.
 import type http from 'node:http';
 import type { Ctx } from '../../office/context.js';
 import { str } from '../../office/input.js';
@@ -24,30 +25,52 @@ async function readGuess(ctx: Ctx, req: http.IncomingMessage, res: http.ServerRe
   }
   send(res, 400, { error: 'Bad request' });
 }
-const signedIn = (ctx: Ctx, req: http.IncomingMessage, accountId?: string) => ({ 'set-cookie': ctx.auth.cookie(req, ctx.auth.issue(accountId), isSecure(req, ctx.cfg)) });
+const signedIn = (ctx: Ctx, req: http.IncomingMessage, accountId: string) => ({ 'set-cookie': ctx.auth.cookie(req, ctx.auth.issue(accountId), isSecure(req, ctx.cfg)) });
 
-/** With a name, that person's own account; without one, the shared office password (while it's on). */
+/** Signs in with an account's name and its own password. */
 export async function login(ctx: Ctx, req: http.IncomingMessage, res: http.ServerResponse) {
   const { accounts, auth } = ctx;
   const guess = await readGuess(ctx, req, res);
   if (!guess) return;
   const name = str(guess.body.name, 64).trim();
   const password = str(guess.body.password, 512);
-  if (name) {
-    const account = await accounts.check(name, password);
-    if (!account) return send(res, 401, { error: 'Wrong name or password' });
-    auth.recordSuccess(guess.ip);
-    return send(res, 200, { ok: true }, signedIn(ctx, req, account.id));
+  if (!name) return send(res, 400, { error: accounts.any ? 'Type your name too' : 'Nobody has an account yet: register the first one' });
+  const account = await accounts.check(name, password);
+  if (!account) return send(res, 401, { error: 'Wrong name or password' });
+  auth.recordSuccess(guess.ip);
+  return send(res, 200, { ok: true }, signedIn(ctx, req, account.id));
+}
+
+/**
+ * Registers an account and signs it in: with the office's one-time link from its terminal (`key`),
+ * or with the office password while registration is open. The office's first account is its admin.
+ */
+async function register(ctx: Ctx, req: http.IncomingMessage, res: http.ServerResponse) {
+  const { accounts, auth } = ctx;
+  const guess = await readGuess(ctx, req, res);
+  if (!guess) return;
+  const key = str(guess.body.key, 128);
+  if (key) {
+    if (!auth.hasLinkKey(key)) return send(res, 410, { error: 'That link was already used. Register with the office password instead.' });
+  } else {
+    if (!accounts.openRegistration) return send(res, 403, { error: 'This office takes new people by invite only. Ask an admin for an invite link.' });
+    if (!(await auth.checkPassword(str(guess.body.officePassword, 512)))) return send(res, 401, { error: "That isn't the office password" });
   }
-  if (!accounts.sharedPassword) return send(res, 401, { error: 'Sign in with your name and your own password' });
-  if (!(await auth.checkPassword(password))) {
-    return send(res, 401, { error: accounts.any ? 'Wrong password. With an account of your own, type your name too.' : 'Wrong password' });
+  const r = await accounts.register(str(guess.body.name, 64), str(guess.body.password, 1024));
+  if (typeof r === 'string') return send(res, 400, { error: r });
+  // Used up only now, so a name that was taken doesn't cost the link.
+  if (key && !auth.useLinkKey(key)) {
+    accounts.revoke(r.id);
+    return send(res, 410, { error: 'That link was just used. Register with the office password instead.' });
   }
   auth.recordSuccess(guess.ip);
-  return send(res, 200, { ok: true }, signedIn(ctx, req));
+  console.log(`  ${r.name} registered${r.role === 'admin' ? ", the office's admin" : ''}`);
+  ctx.accountsChanged();
+  return send(res, 200, { ok: true, name: r.name, role: r.role }, signedIn(ctx, req, r.id));
 }
-/** Which fields the sign-in forms ask for. */
-export const loginOptions = (ctx: Ctx) => ({ accounts: ctx.accounts.any, shared: ctx.accounts.sharedPassword });
+
+/** Which fields the sign-in forms ask for: whether anyone has an account, and whether the office password registers one. */
+export const loginOptions = (ctx: Ctx) => ({ accounts: ctx.accounts.any, registration: ctx.accounts.openRegistration });
 
 /**
  * An invite link: `peek` says who it's for; otherwise it makes the account and signs it in.
@@ -75,6 +98,7 @@ const claimable = ({ cfg }: Ctx) => !!cfg.claimToken && !cfg.claimed && !!cfg.pa
 export const authRoutes = {
   login: { method: 'POST', path: '/api/login', auth: 'public', handle: (ctx, { req, res }) => login(ctx, req, res) },
   loginOptions: { method: 'GET', path: '/api/login', auth: 'public', handle: (ctx, { res }) => send(res, 200, loginOptions(ctx)) },
+  register: { method: 'POST', path: '/api/register', auth: 'public', handle: (ctx, { req, res }) => register(ctx, req, res) },
   join: { method: 'POST', path: '/api/join', auth: 'public', handle: (ctx, { req, res }) => join(ctx, req, res) },
   claimable: { method: 'GET', path: '/api/claim', auth: 'public', handle: (ctx, { res }) => send(res, 200, { claimable: claimable(ctx) }) },
   claim: {
@@ -85,16 +109,17 @@ export const authRoutes = {
       const { cfg, auth } = ctx;
       const guess = await readGuess(ctx, req, res);
       if (!guess) return;
-      if (!claimable(ctx)) return send(res, 410, { error: 'This office has already been claimed. Sign in with the password you saved.' });
+      if (!claimable(ctx)) return send(res, 410, { error: 'This office has already been claimed. Sign in, or register with the password you saved.' });
       if (!auth.checkToken(str(guess.body.token, 256), cfg.claimToken!)) return send(res, 403, { error: 'That claim link is not valid.' });
       const password = cfg.password!;
       cfg.markClaimed();
       auth.recordSuccess(guess.ip);
       console.log('  the office password was claimed — it will not be shown again');
-      return send(res, 200, { password }, signedIn(ctx, req));
+      // Not signed in yet: the office password registers an account (the first one is the admin).
+      return send(res, 200, { password, first: !ctx.accounts.any });
     },
   },
-  // A sign-in link the office printed in its terminal (/login#key=…), traded for a session once.
+  // The link the office printed in its terminal (/login#key=…): whether it still registers an account.
   link: {
     method: 'POST',
     path: '/api/link',
@@ -102,13 +127,11 @@ export const authRoutes = {
     async handle(ctx, { req, res }) {
       const guess = await readGuess(ctx, req, res);
       if (!guess) return;
-      if (!ctx.accounts.sharedPassword || !ctx.auth.useLinkKey(str(guess.body.key, 128))) {
-        return send(res, 410, { error: 'That sign-in link was already used. Sign in with the office password.' });
-      }
+      if (!ctx.auth.hasLinkKey(str(guess.body.key, 128))) return send(res, 410, { error: 'That link was already used. Sign in, or register with the office password.' });
       ctx.auth.recordSuccess(guess.ip);
-      return send(res, 200, { ok: true }, signedIn(ctx, req));
+      return send(res, 200, { ok: true, first: !ctx.accounts.any });
     },
   },
   logout: { method: 'POST', path: '/api/logout', auth: 'public', handle: (ctx, { req, res }) => send(res, 200, { ok: true }, { 'set-cookie': ctx.auth.clearCookie(req) }) },
-  whoami: { path: '/api/whoami', auth: 'session', handle: (ctx, { res, session }) => send(res, 200, { ok: true, me: ctx.meOf(session.account?.id) }) },
+  whoami: { path: '/api/whoami', auth: 'session', handle: (ctx, { res, session }) => send(res, 200, { ok: true, me: ctx.meOf(session.account.id) }) },
 } satisfies Record<string, Route>;

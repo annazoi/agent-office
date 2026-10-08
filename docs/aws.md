@@ -78,7 +78,7 @@ deploy/aws.sh revoke 203.0.113.7   # …and take it back
 deploy/aws.sh status               # instance, address, office up?, team, allowed IPs
 deploy/aws.sh resize t3.2xlarge    # bigger or smaller machine; same address, ~1-2 min of downtime
 deploy/aws.sh update               # install the latest agent-office and restart
-deploy/aws.sh reset-password       # new password, shown once; signs everyone out
+deploy/aws.sh reset-password       # new office password (what people register with), shown once
 deploy/aws.sh ssh | logs           # get on the box / follow the office logs
 ```
 

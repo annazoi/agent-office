@@ -6,6 +6,7 @@ import path from 'node:path';
 import { FloorPlanStore } from '../../src/server/floor/floorplan.js';
 import { MAX_LABEL, SIGN_COLORS, cleanLabel, cleanPlan } from '../../src/shared/building/floorplan.js';
 import { BEANBAGS, DESKS, WING, WING_DESKS, beanbagsOut, builtDesks, nextFreeSeat } from '../../src/shared/building/layout.js';
+import { stateDoc } from '../../src/server/db/state.js';
 
 function withDir(fn: (dir: string) => void) {
   const dir = mkdtempSync(path.join(tmpdir(), 'agent-office-floorplan-'));
@@ -70,16 +71,16 @@ test('the back office goes back a row at a time, as far as it can, and walls up 
   });
 });
 
-test('a broken or tampered plan file comes back as what is valid of it', () => {
+test('a broken or tampered saved plan comes back as what is valid of it', () => {
   withDir((dir) => {
-    writeFileSync(path.join(dir, 'floorplan.json'), JSON.stringify({ wing: 99, labels: { 'desk-1': { text: 'Ops', color: 'red' }, 'beanbag-2': { text: 'x' }, 'desk-2': { text: '   ' } } }));
+    stateDoc<any>(dir, 'floorplan').write({ wing: 99, labels: { 'desk-1': { text: 'Ops', color: 'red' }, 'beanbag-2': { text: 'x' }, 'desk-2': { text: '   ' } } });
     const plan = new FloorPlanStore(dir).state();
     assert.equal(plan.wing, WING.rows);
     assert.deepEqual(Object.keys(plan.labels), ['desk-1']);
     assert.equal(plan.labels['desk-1'].color, SIGN_COLORS[0].color);
-    writeFileSync(path.join(dir, 'floorplan.json'), '{nope');
+    stateDoc<any>(dir, 'floorplan').write('{nope');
     assert.deepEqual(new FloorPlanStore(dir).state(), cleanPlan(undefined));
-    assert.ok(readFileSync(path.join(dir, 'floorplan.json'), 'utf8'));
+    assert.ok(JSON.stringify(stateDoc<any>(dir, 'floorplan').read()));
   });
 });
 

@@ -4,6 +4,7 @@ import { store } from '../../state';
 import { holdPicture, loadPicture, type Picture } from './world';
 import { h, openModal, timeAgo } from '../../ui/dom';
 import { confirmDialog } from '../../ui/prompt';
+import { userStorage } from '../../state/user-storage';
 
 export interface HangChoice {
   picture: Picture;
@@ -14,7 +15,7 @@ export interface HangChoice {
 const FRAME_KEY = 'agent-office.frame';
 function lastFrame(): number {
   try {
-    const n = Number(localStorage.getItem(FRAME_KEY));
+    const n = Number(userStorage.getItem(FRAME_KEY));
     return Number.isInteger(n) && n >= 0 && n < FRAMES.length ? n : 0;
   } catch {
     return 0;
@@ -147,7 +148,7 @@ export function openHangDialog(opts: { initial?: Decoration; onDone(choice: Hang
   const finish = () => {
     if (!pic) return;
     try {
-      localStorage.setItem(FRAME_KEY, String(frame));
+      userStorage.setItem(FRAME_KEY, String(frame));
     } catch {
       // storage blocked
     }

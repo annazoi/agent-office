@@ -1,10 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { appendFileSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
+import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import headless from '@xterm/headless';
 import serialize from '@xterm/addon-serialize';
+import { stateDoc } from '../../src/server/db/state.js';
 import { CHAT_KEEP, ChatLog, ScrollbackStore, searchTerminal, terminalTail } from '../../src/server/floor/history.js';
 import { findLine, searchKey, snippet } from '../../src/shared/util/search.js';
 import type { ChatLine } from '../../src/shared/protocol.js';
@@ -25,19 +26,20 @@ function terminal(cols = 80, rows = 10) {
 
 const line = (text: string, name = 'Sam', at = Date.now()): ChatLine => ({ from: 'x', name, color: '#ef476f', text, at });
 
-test('chat survives a restart, trimmed to the newest lines, and skips a torn last line', (t) => {
+test('chat survives a restart, trimmed to the newest lines, and skips a broken line', (t) => {
   const dir = dataDir(t);
   const first = new ChatLog(dir);
   for (let i = 0; i < CHAT_KEEP + 5; i++) first.add(line(`message ${i}`));
-  appendFileSync(path.join(dir, 'chat.jsonl'), '{"from":"x","name":"Sam","te');
+  // Only the newest are kept.
+  const saved = stateDoc<unknown[]>(dir, 'chat');
+  assert.equal(saved.read()!.length, CHAT_KEEP);
+  saved.write([...saved.read()!, { from: 'x', name: 'Sam', te: 1 }]);
 
   const again = new ChatLog(dir);
   const recent = again.recent(CHAT_KEEP + 10);
   assert.equal(recent.length, CHAT_KEEP);
   assert.equal(recent[0].text, 'message 5');
   assert.equal(recent.at(-1)!.text, `message ${CHAT_KEEP + 4}`);
-  // The rewrite on load dropped the overflow and the torn line.
-  assert.equal(readFileSync(path.join(dir, 'chat.jsonl'), 'utf8').trim().split('\n').length, CHAT_KEEP);
 });
 
 test('chat search matches text or sender, any case and spacing, newest first', (t) => {
@@ -94,7 +96,7 @@ test('snippets cut long lines down around the match', () => {
   assert.ok(s.length <= 62);
 });
 
-test('scrollback files are per worker, and pruning keeps only workers still at a desk', (t) => {
+test('scrollback is kept per worker, and pruning keeps only workers still at a desk', (t) => {
   const store = new ScrollbackStore(dataDir(t));
   store.save('aaa', 'one');
   store.save('bbb', 'two');

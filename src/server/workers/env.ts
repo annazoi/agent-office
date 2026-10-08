@@ -1,4 +1,5 @@
-// The environment the workers start with: the office's own, minus a parent agent session's.
+// The environment the workers start with: the office's own, minus a parent agent session's and the
+// office's database (a project's own DATABASE_URL comes from the project, never the office's).
 import { PROVIDERS } from '../providers/index.js';
 
 // Env vars from a parent agent session (e.g. starting the office from inside Claude Code) that
@@ -7,6 +8,7 @@ import { PROVIDERS } from '../providers/index.js';
 const SCRUB_ENV = new Set([
   ...Object.values(PROVIDERS).flatMap((p) => p.scrubEnv ?? []),
   'NO_COLOR', 'FORCE_COLOR', 'VSCODE_INJECTION', 'TERM_PROGRAM', 'TERM_PROGRAM_VERSION',
+  'DATABASE_URL',
 ]);
 const SCRUB_PREFIXES = [...Object.values(PROVIDERS).flatMap((p) => p.scrubPrefixes ?? []), 'NEBULA_', 'AGENT_OFFICE_'];
 const scrubbed = (k: string) => SCRUB_ENV.has(k) || SCRUB_PREFIXES.some((p) => k.startsWith(p));

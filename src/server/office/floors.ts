@@ -36,7 +36,7 @@ export function floorHelpers(ctx: Ctx): FloorHelpers {
   const arrivalFloor = (wanted: string | null): Floor | undefined => (wanted && ctx.floors.get(wanted)) || ctx.floors.values().next().value;
 
   /**
-   * Takes `floor` off the building (already out of floors.json): everyone on it rides the elevator to
+   * Takes `floor` off the building (already out of the floors document): everyone on it rides the elevator to
    * the next floor, or out to the lobby if it was the last (the roof goes with it), and its workers stop.
    */
   const closeFloor = (floor: Floor, who: string) => {

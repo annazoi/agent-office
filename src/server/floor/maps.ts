@@ -1,7 +1,8 @@
-import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import type { MapState } from '../../shared/protocol.js';
 import { OFFICE_MAP, checkCustomMaps, isMapChoice, planOf, type CustomMap, type MapPlan } from '../../shared/building/maps/index.js';
+import { stateDoc, type Doc } from '../db/state.js';
 
 /** The most custom maps read, and the biggest file that's read as one. */
 const MAX_FILES = 24;
@@ -15,19 +16,19 @@ interface Saved {
 
 /**
  * The building's map (the office, the castle, or one of your own), picked in ⚙️ Settings by anyone
- * and kept in .agent-office/map.json. Everyone's on the same one. Maps of your own are JSON files in
+ * and kept in the database. Everyone's on the same one. Maps of your own are JSON files in
  * .agent-office/maps/ (see docs/maps.md), read again whenever someone looks at the list.
  */
 export class Maps {
   private saved?: Saved;
-  private file: string;
+  private doc: Doc<unknown>;
   private dir: string;
   private custom: CustomMap[] = [];
   /** What the folder looked like when it was last read: each file's name, size and mtime. */
   private stamp = '';
 
   constructor(dataDir: string) {
-    this.file = path.join(dataDir, 'map.json');
+    this.doc = stateDoc(dataDir, 'map');
     this.dir = path.join(dataDir, 'maps');
     this.restore();
     this.reload();
@@ -103,7 +104,7 @@ export class Maps {
 
   private restore() {
     try {
-      const s = JSON.parse(readFileSync(this.file, 'utf8')) as Partial<Saved>;
+      const s = this.doc.read() as Partial<Saved>;
       if (typeof s.pick === 'string') this.saved = { pick: s.pick, by: typeof s.by === 'string' ? s.by : 'someone', at: typeof s.at === 'number' ? s.at : 0 };
     } catch {
       // never set: the office
@@ -111,10 +112,6 @@ export class Maps {
   }
 
   private persist() {
-    try {
-      writeFileSync(this.file, JSON.stringify(this.saved ?? {}, null, 2), { mode: 0o600 });
-    } catch {
-      // disk issues shouldn't take the office down
-    }
+    this.doc.write(this.saved ?? {});
   }
 }

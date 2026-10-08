@@ -7,6 +7,7 @@ import { Arcade, DROP_POINTS, GAME_BURST, GAME_EVERY, HighScores, PIECE_BURST, P
 import { SCORES_KEPT, WELL_COLS, WELL_ROWS, checkFrame, levelFor, type CabinetFrame } from '../../src/shared/toys/cabinet.js';
 import { Blocks } from '../../src/client/features/cabinet/blocks.js';
 import { lostGame } from '../../src/client/features/cabinet/ui.js';
+import { stateDoc } from '../../src/server/db/state.js';
 
 const game = (n: number) => `game${String(n).padStart(8, '0')}`;
 const entry = (n: number, score: number, name = 'Ada') => ({ game: game(n), name, color: '#ef476f', score, lines: 1, level: 1 });
@@ -74,20 +75,17 @@ test('several games go on the table at once, and the one that ends up in front i
   assert.deepEqual(news(table.record(entry(1, 900), entry(2, 1400, 'Grace'))), { changed: false, first: null });
 });
 
-test('a broken or tampered table file is read as far as it makes sense', (t) => {
+test('a broken or tampered saved table is read as far as it makes sense', (t) => {
   const dir = mkdtempSync(path.join(tmpdir(), 'agent-office-arcade-'));
   t.after(() => rmSync(dir, { recursive: true, force: true }));
-  writeFileSync(
-    path.join(dir, 'arcade.json'),
-    JSON.stringify([
+  stateDoc<any>(dir, 'arcade').write([
       { ...entry(1, 300), at: 1 },
       { ...entry(2, 700), color: 'red; x', at: 2 },
       { ...entry(3, 900), score: 'lots', at: 3 },
       null,
       { ...entry(4, 100), name: '', at: 4 },
       entry(5, 800),
-    ]),
-  );
+    ]);
   const table = new HighScores(dir);
   assert.deepEqual(
     table.top().map((s) => [s.score, s.color]),
@@ -96,7 +94,7 @@ test('a broken or tampered table file is read as far as it makes sense', (t) => 
       [300, '#ef476f'],
     ],
   );
-  writeFileSync(path.join(dir, 'arcade.json'), '{ not json');
+  stateDoc<any>(dir, 'arcade').write('{ not json');
   assert.deepEqual(new HighScores(dir).top(), []);
 });
 

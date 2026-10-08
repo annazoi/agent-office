@@ -81,7 +81,7 @@ deploy/azure.sh service 5173             # open a worker's web server from the ð
 deploy/azure.sh status                   # VM, address, office up?, team, allowed IPs
 deploy/azure.sh resize Standard_D8as_v5  # bigger or smaller VM; same address, a few minutes of downtime
 deploy/azure.sh update                   # install the latest agent-office and restart
-deploy/azure.sh reset-password           # new password, shown once; signs everyone out
+deploy/azure.sh reset-password           # new office password (what people register with), shown once
 deploy/azure.sh ssh | logs               # get on the VM / follow the office logs
 ```
 

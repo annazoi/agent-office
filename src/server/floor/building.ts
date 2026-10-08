@@ -1,5 +1,5 @@
 import { execFileSync } from 'node:child_process';
-import { accessSync, constants, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { accessSync, constants, existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
 import { FLOOR_PALETTES, MAX_FLOORS, normalizeRepo, sameRepo } from '../../shared/building/floors.js';
@@ -8,8 +8,9 @@ import { CloneRun, GH_MISSING, dropLog, whyCloneFailed, type CloneEnd, type Clon
 import type { RepoSource } from '../integrations/github-composio.js';
 import { gh } from '../integrations/github.js';
 import { cloneHere, listRepos } from '../integrations/repos.js';
+import { stateDoc, type Doc } from '../db/state.js';
 
-/** A floor as floors.json keeps it. */
+/** A floor as the floors document keeps it. */
 export interface FloorDef {
   id: string;
   name: string;
@@ -21,14 +22,14 @@ export interface FloorDef {
   addedAt: number;
 }
 
-/** A projects folder picked in ⚙️ Settings (or with --projects), as projects-folder.json keeps it. */
+/** A projects folder picked in ⚙️ Settings (or with --projects), as the projects-folder document keeps it. */
 interface PickedDir {
   dir: string;
   by: string;
   at: number;
 }
 
-/** The checkout the office was started in, once it's been taken off the building (local-floor.json). */
+/** The checkout the office was started in, once it's been taken off the building (the local-floor document). */
 interface LocalOff {
   dir: string;
   by: string;
@@ -45,7 +46,7 @@ interface Pending {
   empty: boolean;
 }
 
-/** A clone under way, as cloning.json keeps it for the next office to pick up (see resumeClones). */
+/** A clone under way, as the cloning document keeps it for the next office to pick up (see resumeClones). */
 interface SavedClone extends FloorDef {
   pid: number;
   log: string;
@@ -67,19 +68,19 @@ export interface BuildingOptions {
 const REPOS_TTL_MS = 5 * 60_000;
 
 /**
- * The floors of the building, saved in <office>/.agent-office/floors.json: which projects there are,
+ * The floors of the building, in the database: which projects there are,
  * where their checkouts live, and how each floor is painted. New floors are cloned with the office
  * machine's `gh` login into <projects>/<owner>/<repo>; the projects folder can be picked in ⚙️ Settings
- * (kept in projects-folder.json).
+ * (kept in the projects-folder document).
  */
 export class Building {
   private defs: FloorDef[] = [];
-  private file: string;
-  private pickedFile: string;
+  private doc: Doc<Partial<FloorDef>[]>;
+  private pickedDoc: Doc<Partial<PickedDir>>;
   private picked?: PickedDir;
-  /** Floors being cloned, by lower-cased repo. Not in floors.json until the clone is there, but in cloning.json. */
+  /** Floors being cloned, by lower-cased repo. Not in the floors document until the clone is there, but in cloning.json. */
   private cloning = new Map<string, Pending>();
-  private clonesFile: string;
+  private clonesDoc: Doc<Partial<SavedClone>[]>;
   /** Where clones write their progress. */
   private logsDir: string;
   /** Hears when a clone gets further along. */
@@ -89,7 +90,7 @@ export class Building {
   private local?: { dir: string; repo?: string };
   /** The floor that checkout is, while it is one. */
   private localId?: string;
-  private localFile: string;
+  private localDoc: Doc<Partial<LocalOff>>;
   /** That checkout was taken off the building: a restart doesn't put it back. */
   private localOff?: LocalOff;
 
@@ -106,11 +107,11 @@ export class Building {
     private defaultProjectsDir: string,
     private opts: BuildingOptions = {},
   ) {
-    this.file = path.join(dataDir, 'floors.json');
-    this.clonesFile = path.join(dataDir, 'cloning.json');
+    this.doc = stateDoc(dataDir, 'floors');
+    this.clonesDoc = stateDoc(dataDir, 'cloning');
     this.logsDir = path.join(dataDir, 'clones');
-    this.pickedFile = path.join(dataDir, 'projects-folder.json');
-    this.localFile = path.join(dataDir, 'local-floor.json');
+    this.pickedDoc = stateDoc(dataDir, 'projects-folder');
+    this.localDoc = stateDoc(dataDir, 'local-floor');
     this.load();
     this.loadPicked();
     this.loadLocalOff();
@@ -142,11 +143,7 @@ export class Building {
       if (inside) return `${tildify(dir)} is inside ${inside.name}'s checkout — pick a folder outside every project`;
     }
     this.picked = dir === this.defaultProjectsDir ? undefined : { dir, by, at: Date.now() };
-    try {
-      writeFileSync(this.pickedFile, JSON.stringify(this.picked ?? {}, null, 2), { mode: 0o600 });
-    } catch (err) {
-      console.error(`agent-office: couldn't save the projects folder: ${(err as Error).message}`);
-    }
+    this.pickedDoc.write(this.picked ?? {});
     return undefined;
   }
 
@@ -426,9 +423,9 @@ export class Building {
   }
 
   private load() {
-    if (!existsSync(this.file)) return;
+    const saved = this.doc.read();
+    if (saved === undefined) return;
     try {
-      const saved = JSON.parse(readFileSync(this.file, 'utf8')) as Partial<FloorDef>[];
       const ids = new Set<string>();
       for (const s of Array.isArray(saved) ? saved : []) {
         if (typeof s.id !== 'string' || !/^[a-z0-9-]{1,40}$/.test(s.id) || ids.has(s.id) || typeof s.dir !== 'string' || !path.isAbsolute(s.dir)) continue;
@@ -444,13 +441,13 @@ export class Building {
         });
       }
     } catch (err) {
-      console.error(`agent-office: ${this.file} couldn't be read, so the building starts empty: ${(err as Error).message}`);
+      console.error(`agent-office: the saved floors couldn't be read, so the building starts empty: ${(err as Error).message}`);
     }
   }
 
   private loadPicked() {
     try {
-      const saved = JSON.parse(readFileSync(this.pickedFile, 'utf8')) as Partial<PickedDir>;
+      const saved = this.pickedDoc.read() ?? {};
       if (typeof saved.dir === 'string' && path.isAbsolute(saved.dir)) {
         this.picked = { dir: saved.dir, by: typeof saved.by === 'string' ? saved.by : '?', at: typeof saved.at === 'number' ? saved.at : Date.now() };
       }
@@ -461,7 +458,7 @@ export class Building {
 
   private loadLocalOff() {
     try {
-      const saved = JSON.parse(readFileSync(this.localFile, 'utf8')) as Partial<LocalOff>;
+      const saved = this.localDoc.read() ?? {};
       if (typeof saved.dir === 'string' && path.isAbsolute(saved.dir)) {
         this.localOff = { dir: saved.dir, by: typeof saved.by === 'string' ? saved.by : '?', at: typeof saved.at === 'number' ? saved.at : Date.now() };
       }
@@ -472,25 +469,17 @@ export class Building {
 
   private setLocalOff(off: LocalOff | undefined) {
     this.localOff = off;
-    try {
-      if (off) writeFileSync(this.localFile, JSON.stringify(off, null, 2), { mode: 0o600 });
-      else rmSync(this.localFile, { force: true });
-    } catch (err) {
-      console.error(`agent-office: couldn't save ${this.localFile}: ${(err as Error).message}`);
-    }
+    if (off) this.localDoc.write(off);
+    else this.localDoc.remove();
   }
 
   private save() {
-    try {
-      writeFileSync(this.file, JSON.stringify(this.defs, null, 2), { mode: 0o600 });
-    } catch (err) {
-      console.error(`agent-office: couldn't save the floors: ${(err as Error).message}`);
-    }
+    this.doc.write(this.defs);
   }
 
   private loadClones(): SavedClone[] {
     try {
-      const saved = JSON.parse(readFileSync(this.clonesFile, 'utf8')) as Partial<SavedClone>[];
+      const saved = this.clonesDoc.read();
       return (Array.isArray(saved) ? saved : []).filter(
         // Its log is one of ours (it gets deleted), in .agent-office/clones.
         (s): s is SavedClone =>
@@ -501,15 +490,11 @@ export class Building {
     }
   }
 
-  /** Keeps the clones under way in cloning.json, so the next office can pick them up after a restart. */
+  /** Keeps the clones under way in the database, so the next office can pick them up after a restart. */
   private saveClones() {
     const saved: SavedClone[] = [...this.cloning.values()].flatMap((p) => (p.run ? [{ ...p.def, pid: p.run.pid, log: p.run.log, owner: p.owner, empty: p.empty }] : []));
-    try {
-      if (saved.length) writeFileSync(this.clonesFile, JSON.stringify(saved, null, 2), { mode: 0o600 });
-      else rmSync(this.clonesFile, { force: true });
-    } catch (err) {
-      console.error(`agent-office: couldn't save ${this.clonesFile}: ${(err as Error).message}`);
-    }
+    if (saved.length) this.clonesDoc.write(saved);
+    else this.clonesDoc.remove();
   }
 }
 

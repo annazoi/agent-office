@@ -1,5 +1,5 @@
 import { randomBytes } from 'node:crypto';
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, rmSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { MEETING_SEATS } from '../../../shared/building/layout.js';
 import { MEETING_NOTES_DIR, MEETING_PATTERNS, isMeetingPattern, meetingRecord, outputProblem, slugify } from '../../../shared/agents/meetings.js';
@@ -11,6 +11,7 @@ import { PROMPTS, fillPrompt, type PromptId, type PromptVars } from '../../../sh
 import { brief, isLast, plan, type PatternEnv } from './patterns.js';
 import type { MeetingEvents, MeetingTrees, MeetingWorkers, Part } from './types.js';
 import { clamp, commitAll, firstLine, list, numbered, readStart } from './util.js';
+import { stateDoc, type Doc } from '../../db/state.js';
 
 const PUMP_MS = 3000;
 /** A part handed to a worker that sits ready this long without starting on it is handed over again, once. */
@@ -44,7 +45,7 @@ const ready = (s: WorkerStatus) => s === 'idle' || s === 'done';
 export class MeetingRoom {
   private current: Meeting | null = null;
   private past: MeetingRecord[] = [];
-  private statePath: string;
+  private doc: Doc<unknown>;
   private timer: NodeJS.Timeout;
   private pumping = false;
   private again = false;
@@ -63,7 +64,7 @@ export class MeetingRoom {
     private trees: MeetingTrees | undefined,
     private events: MeetingEvents,
   ) {
-    this.statePath = path.join(dataDir, 'meetings.json');
+    this.doc = stateDoc(dataDir, 'meetings');
     this.restore();
     this.timer = setInterval(() => this.tick(), PUMP_MS);
   }
@@ -532,17 +533,13 @@ export class MeetingRoom {
   }
 
   private persist() {
-    try {
-      writeFileSync(this.statePath, JSON.stringify({ current: this.current, past: this.past }, null, 2), { mode: 0o600 });
-    } catch {
-      // disk issues shouldn't take the office down
-    }
+    this.doc.write({ current: this.current, past: this.past });
   }
 
   private restore() {
-    if (!existsSync(this.statePath)) return;
+    const saved = this.doc.read() as Partial<MeetingState> | undefined;
+    if (saved === undefined) return;
     try {
-      const saved = JSON.parse(readFileSync(this.statePath, 'utf8')) as Partial<MeetingState>;
       if (Array.isArray(saved.past)) this.past = saved.past.filter((r) => r && typeof r.id === 'string' && typeof r.summary === 'string').slice(0, PAST_MAX);
       const m = saved.current;
       // The workers at the table outlive a restart of the office, so a meeting carries on where it was.

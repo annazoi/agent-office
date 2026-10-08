@@ -8,6 +8,7 @@ import { OfficePrompts, officePrompt, type PromptSource } from '../../src/server
 import { stationBrief } from '../../src/server/floor/stations.js';
 import { TaskQueue, type QueueWorkers } from '../../src/server/floor/queue.js';
 import type { AgentChoice, PromptsState, WorkerInfo } from '../../src/shared/protocol.js';
+import { stateDoc } from '../../src/server/db/state.js';
 
 function scratch(t: { after(fn: () => void): void }) {
   const dir = mkdtempSync(path.join(tmpdir(), 'office-prompts-'));
@@ -94,14 +95,14 @@ test('the default worker is checked before it is kept, and one the office can no
   assert.equal(book.agent(), undefined);
 
   // Custom, then the office comes back with another --agent: custom is gone.
-  const file = path.join(dir, 'prompts.json');
-  writeFileSync(file, JSON.stringify({ custom: {}, agent: { provider: 'custom', by: 'Ada', at: 1 } }));
+  const saved = stateDoc<unknown>(dir, 'prompts');
+  saved.write({ custom: {}, agent: { provider: 'custom', by: 'Ada', at: 1 } });
   assert.deepEqual(new OfficePrompts(dir, { list: ['claude', 'opencode', 'codex', 'custom'], configured: 'custom' }, () => {}).agent(), { provider: 'custom' });
   assert.equal(new OfficePrompts(dir, { list: ['claude', 'opencode', 'codex'], configured: 'claude' }, () => {}).agent(), undefined);
-  // A broken file is the defaults.
-  writeFileSync(file, '{nope');
+  // A broken document is the defaults, and is left as it is.
+  saved.write('{nope');
   assert.deepEqual(new OfficePrompts(dir, { list: ['claude'], configured: 'claude' }, () => {}).state(), { custom: {} });
-  assert.ok(readFileSync(file, 'utf8'));
+  assert.equal(saved.read(), '{nope');
 });
 
 test('a board agent is told its rewritten brief', () => {

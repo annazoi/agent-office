@@ -122,7 +122,7 @@ export interface FloorHelpers {
   /** Where someone arriving goes: the floor they asked for, else the first one there is. */
   arrivalFloor(wanted: string | null): Floor | undefined;
   /**
-   * Takes `floor` off the building (already out of floors.json): everyone on it rides the elevator to
+   * Takes `floor` off the building (already out of the floors document): everyone on it rides the elevator to
    * the next floor, or out to the lobby if it was the last (the roof goes with it), and its workers stop.
    */
   closeFloor(floor: Floor, who: string): void;
@@ -130,9 +130,9 @@ export interface FloorHelpers {
 
 /** Who's signed in (office/people.ts). */
 export interface People {
-  /** Who a connection is: its account's current name and role, or an admin guest on the shared password. */
+  /** Who a connection is: its account's current name and role. */
   meOf(accountId: string | undefined): Me;
-  /** Still signed in: the account wasn't revoked, and the shared password wasn't switched off. */
+  /** Still signed in: the account wasn't revoked. */
   stillIn(c: Client): boolean;
   signOut(c: Client): void;
   onlineAccounts(): Set<string>;

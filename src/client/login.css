@@ -28,3 +28,7 @@ a { color: var(--ink); font-weight: 800; }
 label + label { margin-top: 12px; }
 .note { text-align: left; color: var(--muted); font-size: 13px; margin: 8px 0 0; }
 .role { display: inline-block; background: #fff3c4; border: 2px solid var(--border); border-radius: 999px; padding: 0 8px; font-size: 13px; font-weight: 800; }
+.tabs { display: flex; gap: 6px; margin: 12px 0 10px; padding: 4px; border: 3px solid var(--border); border-radius: 14px; background: #fff; }
+.tabs button { margin: 0; padding: 8px; font-size: 15px; background: transparent; color: var(--ink); border: 0; box-shadow: none; border-radius: 10px; }
+.tabs button[aria-selected='true'] { background: var(--accent); color: #fff; }
+.tabs button:active { transform: none; }

@@ -7,6 +7,7 @@ import type { SignInKind, SignInState, SignInsState } from '../../../shared/prot
 import { seedClaude, trustProjects } from './claude-config.js';
 import { ACCOUNT_ID, API_KEY, CLAUDE_TOKEN, CLAUDE_VARS, FLOW_MS, GITHUB_TOKEN, GITHUB_VARS, HELP_WHERE, LOOK_GAP_MS } from './constants.js';
 import type { Flow, GhAs, Live, Saved } from './types.js';
+import { userDoc } from '../user-config.js';
 import { lastWords, plain, quote, run } from './util.js';
 
 /*
@@ -25,12 +26,13 @@ import { lastWords, plain, quote, run } from './util.js';
  * runs with the same folders, so `claude auth login` typed there works too. Admins may keep using
  * the office machine's own sign-ins.
  *
- * An office without accounts (you alone, on the shared password) never comes here: everything runs
+ * An admin may pick the office machine's own sign-ins instead (see mayUseOffice): everything then runs
  * on the machine's own `claude` and `gh`, exactly as before.
  */
 
 export class SignIns {
   private homes: string;
+  private dataDir: string;
   private live = new Map<string, Live>();
 
   constructor(
@@ -45,6 +47,7 @@ export class SignIns {
     private onChange: (accountId: string) => void,
   ) {
     this.homes = path.join(dataDir, 'homes');
+    this.dataDir = dataDir;
   }
 
   state(id: string): SignInsState {
@@ -216,6 +219,7 @@ export class SignIns {
     this.stop(id, 'claude');
     this.stop(id, 'github');
     this.live.delete(id);
+    this.doc(id).remove();
     const home = path.join(this.homes, id);
     if (!existsSync(home)) return;
     // On a Mac, Claude keeps the login in the keychain, not the folder: sign out so it goes too.
@@ -286,22 +290,19 @@ export class SignIns {
     return home;
   }
 
+  /** Which logins an account picked, kept with the rest of its settings in the database. */
+  private doc(id: string) {
+    return userDoc<Saved>(this.dataDir, id, 'signins');
+  }
+
   private load(id: string): Saved {
-    try {
-      const s = JSON.parse(readFileSync(path.join(this.home(id), 'signins.json'), 'utf8')) as Saved;
-      return s && typeof s === 'object' ? s : {};
-    } catch {
-      return {};
-    }
+    const s = this.doc(id).read();
+    return s && typeof s === 'object' ? s : {};
   }
 
   private save(id: string, s: Saved) {
     this.prepare(id);
-    try {
-      writeFileSync(path.join(this.home(id), 'signins.json'), JSON.stringify(s, null, 2), { mode: 0o600 });
-    } catch (err) {
-      console.error(`agent-office: couldn't save ${id}'s sign-ins: ${(err as Error).message}`);
-    }
+    this.doc(id).write(s);
   }
 
   private stop(id: string, which: SignInKind) {

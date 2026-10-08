@@ -1,5 +1,5 @@
-// The page's state: the store (./store.ts), made of the core and every slice (./slices), and what this
-// browser remembers between visits (./persist.ts).
+// The page's state: the store (./store.ts), made of the core and every slice (./slices), and what your
+// account keeps between visits (./persist.ts, in the database through ./user-storage.ts).
 
 import { SLICES } from './slices';
 import { Store } from './store';

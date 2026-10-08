@@ -140,7 +140,7 @@ export interface WorkerHandle<S = unknown> {
   setStatus(status: WorkerStatus): void;
   /** Tells everyone how it's doing now. */
   emit(): void;
-  /** Saves every worker (workers.json). */
+  /** Saves every worker (the workers document). */
   persist(): void;
   /** A new message for it: shown right away, and its task (re)named. */
   notePrompt(prompt: string): void;
@@ -173,7 +173,7 @@ export interface WorkerContext {
   readonly closing: boolean;
   /** Tells everyone how `w` is doing now. */
   emit(w: Worker): void;
-  /** Saves every worker (workers.json). */
+  /** Saves every worker (the workers document). */
   persist(): void;
   setStatus(w: Worker, status: WorkerStatus): void;
   /** Starts a worker that isn't running again (see WorkerManager.resume). */

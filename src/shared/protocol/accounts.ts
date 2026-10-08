@@ -4,8 +4,8 @@ export type AccountRole = 'admin' | 'member';
 
 /** Who this browser is signed in as. */
 export interface Me {
-  /** Your own account; missing when you came in with the shared office password. */
-  account?: { name: string; role: AccountRole };
+  /** Your account: everyone in the office is signed in with their own. */
+  account: { name: string; role: AccountRole };
   /** May invite, list and revoke accounts. */
   admin: boolean;
 }
@@ -28,7 +28,7 @@ export interface SignInState {
 
 /**
  * Your own Claude and GitHub sign-ins, which your workers run with and the office acts on GitHub
- * with for you. Only accounts have them: on the shared password, the office's own are used.
+ * with for you.
  */
 export interface SignInsState {
   claude: SignInState;
@@ -64,8 +64,8 @@ export interface AccountInvite {
 export interface AccountsState {
   accounts: AccountInfo[];
   invites: AccountInvite[];
-  /** Whether the shared office password still lets people in. */
-  sharedPassword: boolean;
+  /** Whether the office password lets people register an account of their own (the first one always can). */
+  openRegistration: boolean;
 }
 
 export interface TeamMember {
@@ -104,8 +104,8 @@ export type AccountsClientMsg =
   | { t: 'accounts.cancel'; inviteId: string }
   | { t: 'accounts.revoke'; accountId: string }
   | { t: 'accounts.role'; accountId: string; role: AccountRole }
-  /** Let the shared office password sign people in, or stop it. */
-  | { t: 'accounts.shared'; on: boolean };
+  /** Let people register with the office password, or stop it (invites still work). */
+  | { t: 'accounts.registration'; on: boolean };
 
 export type SignInsClientMsg =
   /** Your own sign-ins (accounts only): look at them again. */

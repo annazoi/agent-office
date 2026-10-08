@@ -59,7 +59,7 @@ export interface ProviderHook<S> {
 export interface ProviderUsage<S> {
   /** The office reads its session's transcript itself (WorkerHandle.tracker) and books it in the budget (see usage.ts). */
   transcript?: boolean;
-  /** Its numbers are what it last reported: kept in workers.json. */
+  /** Its numbers are what it last reported: kept in the workers document. */
   persisted?: boolean;
   /** Reads its numbers afresh. */
   scan?(h: WorkerHandle<S>): void;
@@ -67,7 +67,7 @@ export interface ProviderUsage<S> {
   scanOnExit?: boolean;
   /** Where its sessions are logged, looked up as it starts (or is picked back up) in `cwd` with `env`. */
   locate?(h: WorkerHandle<S>, cwd: string, env: NodeJS.ProcessEnv): void;
-  /** What of its state workers.json keeps, and taking that back. */
+  /** What of its state the workers document keeps, and taking that back. */
   save?(state: S): Record<string, unknown>;
   restore?(state: S, saved: Record<string, unknown>): void;
 }

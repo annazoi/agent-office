@@ -33,7 +33,8 @@ The office listens on `127.0.0.1:4600` in its machine, and everyone reaches it t
 
 | On the volume | What it holds |
 | --- | --- |
-| `/data/home/agent-office` | The office's own data: the password hash, accounts and invites, floors, chat, settings, arcade scores, each account's own Claude and GitHub sign-ins |
+| `/data/postgres` | The office's database: the password hash, accounts and invites, everyone's own settings, floors, chat, arcade scores (unless `DATABASE_URL` names another, such as Neon) |
+| `/data/home/agent-office` | The office's folder: each account's own Claude and GitHub logins, and `.env` with the database's address |
 | `/data/home/workspace` | The projects, cloned as `<owner>/<repo>`, with the workers' worktrees |
 | `/data/home/.local`, `.claude`, `.claude.json` | Claude Code itself, its sign-in, and the sessions workers resume |
 | `/data/home/.config/gh`, `.gitconfig` | The GitHub CLI's sign-in and git's name and email |
@@ -62,7 +63,7 @@ deploy/fly.sh restart                 # restart the machine without rebuilding
 deploy/fly.sh resize performance-2x   # another machine size (memory: resize <size> 16gb)
 deploy/fly.sh pause                   # stop the machine, and paying for its CPU and memory
 deploy/fly.sh resume                  # start it again and open it
-deploy/fly.sh reset-password          # new password, shown once; signs everyone out
+deploy/fly.sh reset-password          # new office password (what people register with), shown once
 deploy/fly.sh ssh | logs              # a shell in the machine / follow the office's logs
 ```
 

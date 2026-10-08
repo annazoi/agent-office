@@ -12,6 +12,7 @@ import { DESK_KEYS } from '../../input/interaction';
 import { LapTimer, lapTime } from './laps';
 import { store } from '../../state';
 import { clip, h, toast } from '../../ui/dom';
+import { userStorage } from '../../state/user-storage';
 
 // The kinds of thing you can use that this defines (see InteractKinds in world/types.ts).
 declare module '../../world/types' {
@@ -145,12 +146,12 @@ export function installCars(ctx: Ctx, deps: CarsDeps) {
     ctx.net.send({ t: 'car.honk' });
   }
 
-  /** Laps of the scenic loop you've driven (see LapTimer), and your fastest, kept in this browser. */
+  /** Laps of the scenic loop you've driven (see LapTimer), and your fastest, kept with your account. */
   const LAP_KEY = 'agent-office.bestLap';
   const laps = new LapTimer(
     (() => {
       try {
-        const best = Number(localStorage.getItem(LAP_KEY));
+        const best = Number(userStorage.getItem(LAP_KEY));
         return best > 0 ? best : null;
       } catch {
         return null;
@@ -161,7 +162,7 @@ export function installCars(ctx: Ctx, deps: CarsDeps) {
     const done = laps.done;
     if (done?.best) {
       try {
-        localStorage.setItem(LAP_KEY, String(time));
+        userStorage.setItem(LAP_KEY, String(time));
       } catch {
         // private window: it's only for this visit then
       }

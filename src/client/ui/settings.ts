@@ -38,7 +38,7 @@ const PANES: { id: SettingsPane; icon: string; label: string; blurb: string }[] 
 /** Who a setting is for, shown by its name: some are yours alone, some the whole office's. */
 type Scope = 'you' | 'floor' | 'office';
 const SCOPE: Record<Scope, [label: string, title: string]> = {
-  you: ['Just you', 'Only for you, kept in this browser'],
+  you: ['Just you', 'Only for you, kept with your account'],
   floor: ['This floor', 'The same for everyone on this floor'],
   office: ['Everyone', 'The same for everyone in the building'],
 };
@@ -451,7 +451,7 @@ export function openSettings(net: Net, settings: Settings, onChange: (s: Setting
     you: [
       setting('Your character', null, character),
       setting('Camera view', 'you', seg, note),
-      setting('Signed in', null, h('div.volume', {}, signOut), h('p.setting-note', {}, account ? `As ${account.name}, with your own account (${account.role}).` : 'With the shared office password.')),
+      setting('Signed in', null, h('div.volume', {}, signOut), h('p.setting-note', {}, `As ${account.name}, with your own account (${account.role}).`)),
     ],
     sound: [
       setting('Office sounds', 'you', soundRow, h('p.setting-note', {}, 'Workers typing, footsteps, the coffee machine, birds and rain outside, the dog, the ding when a worker is done and the alarm when one needs you. Voice chat isn’t affected.')),

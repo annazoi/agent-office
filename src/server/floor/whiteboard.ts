@@ -1,8 +1,7 @@
-import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
 import { WB_MAX_BYTES, WB_MAX_ELEMENTS, WB_MAX_ELEMENT_BYTES, WB_MAX_FILES_BYTES, byIndex, checkElement, checkFile, newer, type WbElement, type WbFile } from '../../shared/toys/whiteboard.js';
+import { docKey, stateDb, stateDoc, type Doc } from '../db/state.js';
 
-/** How long after the last stroke the drawing is written to disk. */
+/** How long after the last stroke the drawing is saved. */
 const SAVE_DELAY_MS = 2000;
 /** Deleted elements are kept this long, so the deletion reaches anyone who still has them. */
 const TOMBSTONE_MS = 7 * 24 * 3600_000;
@@ -17,24 +16,25 @@ export interface Applied {
 
 /**
  * A floor's whiteboard: the Excalidraw elements everyone drew, merged by version the way
- * Excalidraw's live collaboration merges them, and the pictures on it. Kept in the floor's
- * .agent-office/whiteboard folder: elements.json, and a file per picture under files/.
+ * Excalidraw's live collaboration merges them, and the pictures on it. Kept in the database: the
+ * elements in one document, and a document per picture.
  */
 export class Whiteboard {
   private elements = new Map<string, WbElement>();
   /** Each element's size as JSON, to keep the board under WB_MAX_BYTES. */
   private sizes = new Map<string, number>();
   private bytes = 0;
-  /** Pictures on disk, by id, with their size. */
+  /** Pictures saved, by id, with their size. */
   private files = new Map<string, number>();
   private fileBytes = 0;
-  private dir: string;
-  private filesDir: string;
+  private doc: Doc<unknown>;
+  /** The start of every picture's key. */
+  private filesPrefix: string;
   private saveTimer?: NodeJS.Timeout;
 
   constructor(dataDir: string) {
-    this.dir = path.join(dataDir, 'whiteboard');
-    this.filesDir = path.join(this.dir, 'files');
+    this.doc = stateDoc(dataDir, 'whiteboard');
+    this.filesPrefix = docKey(dataDir, 'whiteboard/files/');
     this.load();
   }
 
@@ -76,15 +76,11 @@ export class Whiteboard {
     return { accepted, error };
   }
 
-  /** A picture on the board, from disk. */
+  /** A picture on the board. */
   file(id: string): WbFile | undefined {
     if (!this.files.has(id)) return undefined;
-    try {
-      const f = checkFile(JSON.parse(readFileSync(path.join(this.filesDir, `${id}.json`), 'utf8')));
-      return typeof f === 'string' ? undefined : f;
-    } catch {
-      return undefined;
-    }
+    const f = checkFile(stateDb().get<unknown>(this.filesPrefix + id));
+    return typeof f === 'string' ? undefined : f;
   }
 
   /** Keeps a picture someone put on the board. A picture with the same id is already there: it's the same picture. */
@@ -95,18 +91,13 @@ export class Whiteboard {
     const json = JSON.stringify(f);
     if (this.fileBytes + json.length > WB_MAX_FILES_BYTES) this.forgetUnusedFiles();
     if (this.fileBytes + json.length > WB_MAX_FILES_BYTES) return 'The whiteboard has too many pictures on it. Delete some first.';
-    try {
-      mkdirSync(this.filesDir, { recursive: true, mode: 0o700 });
-      writeFileSync(path.join(this.filesDir, `${f.id}.json`), json, { mode: 0o600 });
-    } catch {
-      return "Couldn't save the picture on the office's machine";
-    }
+    stateDb().set(this.filesPrefix + f.id, f);
     this.files.set(f.id, json.length);
     this.fileBytes += json.length;
     return undefined;
   }
 
-  /** Writes the drawing to disk now, if it has changed since. */
+  /** Saves the drawing now, if it has changed since. */
   flush() {
     if (!this.saveTimer) return;
     clearTimeout(this.saveTimer);
@@ -138,11 +129,7 @@ export class Whiteboard {
     for (const e of this.elements.values()) if (e.fileId) used.add(e.fileId);
     for (const [id, size] of this.files) {
       if (used.has(id)) continue;
-      try {
-        unlinkSync(path.join(this.filesDir, `${id}.json`));
-      } catch {
-        continue;
-      }
+      stateDb().delete(this.filesPrefix + id);
       this.files.delete(id);
       this.fileBytes -= size;
     }
@@ -156,41 +143,21 @@ export class Whiteboard {
   }
 
   private save() {
-    try {
-      mkdirSync(this.dir, { recursive: true, mode: 0o700 });
-      // Written aside and moved into place, so a crash mid-write can't leave half a drawing.
-      const file = path.join(this.dir, 'elements.json');
-      writeFileSync(`${file}.tmp`, JSON.stringify(this.scene()), { mode: 0o600 });
-      renameSync(`${file}.tmp`, file);
-    } catch {
-      // disk issues shouldn't take the office down
-    }
+    this.doc.write(this.scene());
   }
 
   private load() {
-    const file = path.join(this.dir, 'elements.json');
-    if (existsSync(file)) {
-      try {
-        const saved = JSON.parse(readFileSync(file, 'utf8')) as unknown;
-        const now = Date.now();
-        for (const item of Array.isArray(saved) ? saved : []) {
-          const el = checkElement(item);
-          if (!el || (el.isDeleted && now - (el.updated ?? 0) > TOMBSTONE_MS)) continue;
-          this.put(el, JSON.stringify(el).length);
-        }
-      } catch {
-        // a broken file just means a clean board
-      }
+    const saved = this.doc.read();
+    const now = Date.now();
+    for (const item of Array.isArray(saved) ? saved : []) {
+      const el = checkElement(item);
+      if (!el || (el.isDeleted && now - (el.updated ?? 0) > TOMBSTONE_MS)) continue;
+      this.put(el, JSON.stringify(el).length);
     }
-    try {
-      for (const name of readdirSync(this.filesDir)) {
-        if (!name.endsWith('.json')) continue;
-        const size = statSync(path.join(this.filesDir, name)).size;
-        this.files.set(name.slice(0, -5), size);
-        this.fileBytes += size;
-      }
-    } catch {
-      // no pictures yet
+    for (const key of stateDb().keys(this.filesPrefix)) {
+      const size = JSON.stringify(stateDb().get<unknown>(key) ?? null).length;
+      this.files.set(key.slice(this.filesPrefix.length), size);
+      this.fileBytes += size;
     }
     this.forgetUnusedFiles();
   }

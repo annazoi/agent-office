@@ -812,7 +812,7 @@ cmd_reset_password() {
   printf 'AGENT_OFFICE_CLAIM_TOKEN=%s\n' "$(cat "$CLAIM_FILE")" | fl secrets import -a "$APP" >/dev/null ||
     die "couldn't set the new claim token"
   wait_replaced "$was" || die "the office didn't come back — check: deploy/fly.sh logs$NAME_FLAG"
-  ok "Everyone has been signed out"
+  ok "The office password is new: it registers new accounts, and everyone keeps theirs"
   open_office
 }
 

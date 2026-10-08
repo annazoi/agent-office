@@ -1,6 +1,5 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
 import type { JailState, Prisoner, WorkerInfo } from '../../shared/protocol.js';
+import { stateDoc, type Doc } from '../db/state.js';
 
 /** How many prisoners are kept by name: the ones from before them are only a count, bones on the heap. */
 export const MAX_PRISONERS = 200;
@@ -9,18 +8,18 @@ export const MAX_PRISONERS = 200;
  * A floor's dungeon (see MapPlan.sendHome): every worker sent home on a map that keeps them, for
  * good, first to last: locked up in the castle's cells, or adrift outside the station's airlock
  * (it's one list, so they're in whichever the building's map has). The map works out how far each has
- * wasted away from when it went; this only remembers who and when. Saved in .agent-office/jail.json.
+ * wasted away from when it went; this only remembers who and when. Saved in the database.
  */
 export class Jail {
   private prisoners: Prisoner[] = [];
   private bones = 0;
-  private file: string;
+  private doc: Doc<unknown>;
 
   constructor(
     dataDir: string,
     private now = () => Date.now(),
   ) {
-    this.file = path.join(dataDir, 'jail.json');
+    this.doc = stateDoc(dataDir, 'jail');
     this.load();
   }
 
@@ -42,9 +41,9 @@ export class Jail {
   }
 
   private load() {
-    if (!existsSync(this.file)) return;
+    const s = this.doc.read() as Partial<JailState> | undefined;
+    if (s === undefined) return;
     try {
-      const s = JSON.parse(readFileSync(this.file, 'utf8')) as Partial<JailState>;
       const ok = (p: unknown): p is Prisoner => {
         const q = p as Prisoner;
         return !!q && typeof q.id === 'string' && typeof q.name === 'string' && typeof q.color === 'string' && typeof q.at === 'number' && Number.isFinite(q.at);
@@ -58,15 +57,11 @@ export class Jail {
       }));
       this.bones = typeof s.bones === 'number' && Number.isInteger(s.bones) && s.bones > 0 ? s.bones : 0;
     } catch {
-      // a broken file just means an empty dungeon
+      // a broken document just means an empty dungeon
     }
   }
 
   private save() {
-    try {
-      writeFileSync(this.file, JSON.stringify({ prisoners: this.prisoners, bones: this.bones }, null, 2), { mode: 0o600 });
-    } catch {
-      // disk issues shouldn't take the office down
-    }
+    this.doc.write({ prisoners: this.prisoners, bones: this.bones });
   }
 }

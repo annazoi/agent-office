@@ -4,9 +4,13 @@ Back to the [README](../README.md).
 
 ## Where the office keeps things
 
-The office keeps its data in `~/agent-office` (`--home` or `AGENT_OFFICE_HOME` to move it) and clones projects next to it, as `~/agent-office/<owner>/<repo>`. To clone them somewhere else, like `~/Workspace`, an admin picks the **Workspace folder** in ⚙️ Settings → **🏢 Building** (or start with `--projects` or `AGENT_OFFICE_PROJECTS`). Floors you already have stay where they are, and a checkout of the same repository that's already in the new folder is used as it is. The building's map is in `~/agent-office/.agent-office/map.json`, and maps of your own go in `~/agent-office/.agent-office/maps/` (see [Maps](maps.md)). The list of floors is `~/agent-office/.agent-office/floors.json`, and each account's own Claude and GitHub sign-ins are in `~/agent-office/.agent-office/homes/<account>/` (revoking the account deletes them). The office's Composio API key and the toolkits it shows are in `~/agent-office/.agent-office/composio.json` (mode 0600), and the `--mcp-config` files its Claude Code workers get for their owners' Composio tools in `~/agent-office/.agent-office/composio-mcp/`; the connections themselves live in Composio, per account (see the README's [Composio integrations](../README.md#composio-integrations)). Each floor keeps its workers, queue, pictures and worktrees in its own checkout's `.agent-office/`.
+**The database.** Everything the office remembers lives in its PostgreSQL database, which it won't start without: `--database-url`, or `DATABASE_URL` / `AGENT_OFFICE_DATABASE_URL` (a `.env` file in the folder it starts in is read too). A [Neon](https://neon.tech) database works, or any Postgres. In it are the office's config (the password's hash, the key sessions are signed with, the self-signed certificate), the accounts and open invites, **each account's own settings** (its character, sound and panels, board filters, best laps and the rest the browser used to keep for itself) and which logins it picked, the floors, the chat, the spend, the arcade's scores, and each floor's workers, queue, decor, plan, whiteboard, jukebox, meetings and so on. It's one table, `office_state`: a row of JSON per thing, keyed by the folder it belongs to and its name (`/home/me/agent-office/.agent-office|floors`, `…|users/<account>/config`), so several offices can share a database. Nothing of it is written to JSON files any more. The office reads it all as it starts and writes each change back as it happens, and the `agent-office accounts`, `setup` and `prune` commands use the same database. The tests use an in-memory stand-in (`tests/support/db.ts`).
 
-Already have a checkout? Pick its repository anyway: a checkout of it that's already where the workspace folder would clone it is used as it is. You can still start the office in a project, `agent-office ~/code/my-project`: that project becomes a floor, and the office keeps its data in `~/code/my-project/.agent-office` as it did before there were floors. An office that already ran in a project carries on in it when you start `agent-office` there again. An admin can take that project off the building in the elevator like any other floor.
+What stays on disk are things other programs read, or the work itself: workers' worktrees, the clones under way, each account's own Claude and GitHub logins (`.agent-office/homes/<account>/`, where `claude` and `gh` keep them), the hooks and MCP configs each agent CLI is started with, and maps of your own (`.agent-office/maps/`, files you write).
+
+**Folders.** The office keeps its folder in `~/agent-office` (`--home` or `AGENT_OFFICE_HOME` to move it) and clones projects next to it, as `~/agent-office/<owner>/<repo>`. To clone them somewhere else, like `~/Workspace`, an admin picks the **Workspace folder** in ⚙️ Settings → **🏢 Building** (or start with `--projects` or `AGENT_OFFICE_PROJECTS`). Floors you already have stay where they are, and a checkout of the same repository that's already in the new folder is used as it is. Maps of your own go in `~/agent-office/.agent-office/maps/` (see [Maps](maps.md)), and each account's own Claude and GitHub logins are in `~/agent-office/.agent-office/homes/<account>/` (revoking the account deletes them). The office's Composio API key and the toolkits it shows are in the database, and the `--mcp-config` files its Claude Code workers get for their owners' Composio tools in `~/agent-office/.agent-office/composio-mcp/`; the connections themselves live in Composio, per account (see the README's [Composio integrations](../README.md#composio-integrations)). Each floor's worktrees are in its own checkout's `.agent-office/`; its workers, queue and pictures are in the database, under that folder.
+
+Already have a checkout? Pick its repository anyway: a checkout of it that's already where the workspace folder would clone it is used as it is. You can still start the office in a project, `agent-office ~/code/my-project`: that project becomes a floor, and the office keeps its data in `~/code/my-project/.agent-office` as it did before there were floors. An office that already ran in a project carries on in it when you start `agent-office` there again (with the same database). An admin can take that project off the building in the elevator like any other floor.
 
 ## Command line
 
@@ -18,7 +22,11 @@ agent-office [dir] [options]
                           also settable from ⚙️ Settings)
   -p, --port <n>          Port (default 4600, env PORT)
   -H, --host <addr>       Bind address (default 127.0.0.1; 0.0.0.0 lets your network in)
-      --password <pw>     Office password (env AGENT_OFFICE_PASSWORD)
+      --database-url <url>
+                          The Postgres database the office keeps everything in; required
+                          (env DATABASE_URL or AGENT_OFFICE_DATABASE_URL, or a .env file)
+      --password <pw>     Office password, what people register their accounts with
+                          (env AGENT_OFFICE_PASSWORD; generated once when not given)
       --no-open           Don't open the office in your browser when it starts
       --agent <cmd>       Default agent command (default "claude")
       --agent-args <str>  Extra args for the configured agent, e.g. "--model opus"
@@ -40,10 +48,12 @@ agent-office [dir] [options]
       --weather <kind>    Pin the weather: clear, cloudy, rain, storm, snow or fog
       --real-time-sky     Start the sky on the real clock, not a day an hour (env AGENT_OFFICE_SKY_CLOCK=real; ⚙️ Settings can switch it)
 
-agent-office setup [--projects <dir>] [--project <owner/repo>]... [--home <dir>]
+agent-office setup [--projects <dir> | --default-projects <dir>] [--project <owner/repo>]... [--home <dir>]
 
   The first-start walkthrough again: the workspace folder, GitHub sign-in and
   repositories to clone as floors. With --projects / --project it asks nothing.
+  --default-projects sets the folder only if nobody has picked one yet (the
+  container runs it at every start).
   Run it while the office is stopped.
 
 agent-office prune [dir] [-n|--dry-run] [-f|--force]
@@ -53,10 +63,10 @@ agent-office prune [dir] [-n|--dry-run] [-f|--force]
   kept unless --force is given. A worker across several projects has worktrees of them in its
   own floor's workspace: prune each project to clear those out.
 
-agent-office accounts [list | invite [name] [--admin] | revoke <name> | role <name> admin|member | password on|off] [-d <dir>]
+agent-office accounts [list | invite [name] [--admin] | revoke <name> | role <name> admin|member | registration on|off] [-d <dir>]
 
-  Invite, list and revoke people's own accounts, and switch the shared password
-  off or on. Works while the office runs.
+  Invite, list and revoke people's accounts, and open or close registering with
+  the office password (invites work either way). Works while the office runs.
 
 agent-office tunnel [office@address | url] [--port <n>] [--office-port <n>] [--name <name>] [--password <pw>] [--no-open] [--insecure] [-- <ssh options>]
 
