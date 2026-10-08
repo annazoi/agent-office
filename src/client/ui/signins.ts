@@ -163,9 +163,3 @@ export function openSignIns(net: Net, why?: string) {
   render();
   net.send({ t: 'signins.get' });
 }
-
-/** Whether the panel should greet someone who just came in: their Claude sign-in still to do. */
-export function needsSigningIn(): boolean {
-  const s = store.signins;
-  return !!store.me.account && !!s && s.claude.status === 'none' && s.claude.how === 'login';
-}

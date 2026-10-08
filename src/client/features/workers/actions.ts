@@ -443,7 +443,7 @@ export function installWorkerActions(ctx: Ctx, core: CoreState, parts: WorkerAct
     };
   }
 
-  ctx.interactions.define('desk', {
+  ctx.interactions.define('desk', { needsProject: true,
     reach: 4.5,
     hint: (it) => (it.deskId ? deskHint(it.deskId) : { k: '', parts: [] }),
     use: (it, key) => {
@@ -461,7 +461,7 @@ export function installWorkerActions(ctx: Ctx, core: CoreState, parts: WorkerAct
       if (key === 'O' && w) return pullRequestFor(w);
     },
   });
-  ctx.interactions.define('station', {
+  ctx.interactions.define('station', { needsProject: true,
     reach: 4.5,
     hint: (it) => (it.deskId ? stationHint(it.deskId) : { k: '', parts: [] }),
     use: (it, key) => {

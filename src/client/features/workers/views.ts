@@ -349,7 +349,7 @@ export function installWorkerViews(ctx: Ctx, core: CoreState, parts: WorkerViews
     }
   }
   store.on('floorPlan', syncPlan);
-  ctx.interactions.define('expand', {
+  ctx.interactions.define('expand', { needsProject: true,
     reach: 8,
     hint: () => {
       const level = store.floorPlan.wing;
