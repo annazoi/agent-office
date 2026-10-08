@@ -75,9 +75,7 @@ export function connectionsSettings(net: Net, frame: Frame): { sections: HTMLEle
     );
     mineNote.textContent = !o.configured
       ? 'The office has no Composio API key yet; an admin sets one below.'
-      : !account
-        ? 'Connections need an account of your own: on the shared office password there is nobody to connect as. Ask an admin for an invite.'
-        : (m.blocked ?? 'Each connection is yours alone: the stations in the office and the workers you hire use it; nobody else sees it. Disconnecting removes it from Composio too.');
+      : (m.blocked ?? 'Each connection is yours alone: the stations in the office and the workers you hire use it; nobody else sees it. Disconnecting removes it from Composio too.');
 
     office.classList.toggle('hidden', !admin);
     keyInput.placeholder = o.configured ? '•••••••••• (set)' : 'ak_…';

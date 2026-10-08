@@ -9,6 +9,7 @@ import { inProgress } from './github/progress';
 import type { BoardActions } from './github/prompts';
 import { openPull } from './github/pull-window';
 import { providerLabel } from './provider';
+import { userStorage } from '../state/user-storage';
 
 const TILTS = ['-1.2deg', '0.8deg', '-0.4deg', '1.4deg', '0deg', '-0.9deg'];
 const NOTE_COLORS = ['#fff7b0', '#ffd6e0', '#caffbf', '#bde0fe', '#ffe5b4'];
@@ -46,7 +47,7 @@ function pullColumns(items: GhPull[]): Column<GhPull>[] {
   ];
 }
 
-/** The labels each column is filtered to (column key → label names), per floor and board, kept in this browser. */
+/** The labels each column is filtered to (column key → label names), per floor and board, kept with your account. */
 type LabelFilters = Record<string, string[]>;
 
 function filtersKey(kind: 'issues' | 'pulls'): string {
@@ -56,7 +57,7 @@ function filtersKey(kind: 'issues' | 'pulls'): string {
 function loadFilters(kind: 'issues' | 'pulls'): LabelFilters {
   const out: LabelFilters = {};
   try {
-    const saved = JSON.parse(localStorage.getItem(filtersKey(kind)) ?? 'null');
+    const saved = JSON.parse(userStorage.getItem(filtersKey(kind)) ?? 'null');
     if (saved && typeof saved === 'object') {
       for (const [k, v] of Object.entries(saved)) if (Array.isArray(v) && v.length) out[k] = v.filter((x): x is string => typeof x === 'string');
     }
@@ -68,7 +69,7 @@ function loadFilters(kind: 'issues' | 'pulls'): LabelFilters {
 
 function saveFilters(kind: 'issues' | 'pulls', filters: LabelFilters) {
   try {
-    localStorage.setItem(filtersKey(kind), JSON.stringify(filters));
+    userStorage.setItem(filtersKey(kind), JSON.stringify(filters));
   } catch {
     // storage blocked
   }

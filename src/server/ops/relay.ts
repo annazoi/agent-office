@@ -126,16 +126,14 @@ function page(res: http.ServerResponse, status: number, title: string, body: str
 /** Where the sign-in form below posts; the office answers it on service tunnels only. */
 export const RELAY_LOGIN = '/__agent-office/login';
 
-/** `opts` says which fields to ask for: a name when there are accounts, a password always. */
-export function signInPage(res: http.ServerResponse, port: number, opts: { accounts: boolean; shared: boolean }) {
-  const askName = opts.accounts || !opts.shared;
-  const how = !askName ? 'the office password' : opts.shared ? 'your name and password (or just the office password)' : 'your name and password';
+/** Asks for the name and password of an account in the office. */
+export function signInPage(res: http.ServerResponse, port: number) {
   page(
     res,
     401,
     '🔒 Sign in to the office',
-    `<p>This is a worker's server on port ${port}, reached through the office. Sign in with ${how} to see it.</p>
-<form id="f">${askName ? `<input id="name" placeholder="${opts.shared ? 'Your name (optional)' : 'Your name'}" autocomplete="username"${opts.shared ? '' : ' required'} autofocus>` : ''}<input id="pw" type="password" placeholder="${askName ? 'Password' : 'Office password'}" autocomplete="current-password"${askName ? '' : ' autofocus'}><button>Sign in</button></form><p class="err" id="err"></p>`,
+    `<p>This is a worker's server on port ${port}, reached through the office. Sign in with your name and password to see it.</p>
+<form id="f"><input id="name" placeholder="Your name" autocomplete="username" required autofocus><input id="pw" type="password" placeholder="Password" autocomplete="current-password"><button>Sign in</button></form><p class="err" id="err"></p>`,
     `document.getElementById('f').addEventListener('submit',async(e)=>{e.preventDefault();const err=document.getElementById('err');err.textContent='';const n=document.getElementById('name');
 try{const r=await fetch(${JSON.stringify(RELAY_LOGIN)},{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({name:n?n.value:'',password:document.getElementById('pw').value})});
 if(r.ok)location.reload();else err.textContent=(await r.json().catch(()=>({}))).error||'Sign-in failed'}catch{err.textContent='Could not reach the office'}})`,

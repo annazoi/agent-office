@@ -72,6 +72,8 @@ async function setup() {
 
   const salt = randomBytes(16);
   const accounts = new Accounts(mkdtempSync(path.join(os.tmpdir(), 'ao-tunnel-')));
+  // Everyone signs in with an account of their own: this is cody's.
+  assert.equal(typeof (await accounts.register('cody', 'hunter2-pw')), 'object');
   const cfg = { port: 0, trustProxy: false };
   const ctx = {
     cfg,
@@ -107,14 +109,14 @@ async function setup() {
   return { port, real, seen, running, office, forwarder, events, said, close, officePort: cfg.port };
 }
 
-test("it signs in with the office password and is told the workers' servers", async () => {
+test("it signs in with an account and is told the workers' servers", async () => {
   const t = await setup();
   try {
     assert.equal(await t.office.up(), true);
-    assert.deepEqual(await t.office.loginOptions(), { accounts: false, shared: true });
     assert.equal(await t.office.forwards(), 'signed-out');
-    assert.equal(await t.office.signIn('', 'wrong'), 'Wrong password');
-    assert.equal(await t.office.signIn('', 'hunter2'), '');
+    assert.equal(await t.office.signIn('', 'hunter2-pw'), 'Type your name too');
+    assert.equal(await t.office.signIn('cody', 'wrong'), 'Wrong name or password');
+    assert.equal(await t.office.signIn('cody', 'hunter2-pw'), '');
     assert.deepEqual(await t.office.forwards(), { port: t.officePort, items: [{ port: t.port, title: 'Vite App', command: 'vite', worker: 'Byte', floor: 'acme' }] });
   } finally {
     t.close();
@@ -124,7 +126,7 @@ test("it signs in with the office password and is told the workers' servers", as
 test("a worker's server opens on the same port here, for anything on this computer, and closes when it stops", async () => {
   const t = await setup();
   try {
-    await t.office.signIn('', 'hunter2');
+    await t.office.signIn('cody', 'hunter2-pw');
     const list = await t.office.forwards();
     assert.ok(typeof list === 'object');
     await t.forwarder.sync(list.items);
@@ -177,7 +179,7 @@ test("a request the client sends never gets the office's own pages", async () =>
   const t = await setup();
   const item = (port: number): Forward => ({ port, title: 'x', command: 'x' });
   try {
-    await t.office.signIn('', 'hunter2');
+    await t.office.signIn('cody', 'hunter2-pw');
     // A port no worker serves (the office forgot it, or never knew it), and the office's own.
     const stale = await freePort();
     await t.forwarder.sync([item(t.port), item(stale)]);
@@ -195,7 +197,7 @@ test("a request the client sends never gets the office's own pages", async () =>
     assert.equal((await direct({ 'x-agent-office-service': String(t.officePort) })).status, 503);
     assert.equal((await direct({ 'x-agent-office-service': 'nope' })).status, 503);
 
-    // Signed out (the password changed): the office asks who's there instead of relaying.
+    // Signed out (the account was revoked): the office asks who's there instead of relaying.
     t.office.token = 'not-a-session';
     const before = t.seen.length;
     const r = await get(t.port, '/hello');
@@ -211,7 +213,7 @@ test("a port something on this computer already has is left alone, and opens onc
   const t = await setup();
   const mine = http.createServer((_req, res) => res.end('mine'));
   try {
-    await t.office.signIn('', 'hunter2');
+    await t.office.signIn('cody', 'hunter2-pw');
     const port = await listen(mine);
     const items: Forward[] = [{ port, title: 'Next', command: 'next dev' }];
     await t.forwarder.sync(items);
@@ -233,7 +235,7 @@ test("a server that's off the list for a moment keeps its port, and the office a
   const forwarder = new Forwarder(t.office, t.said);
   const items: Forward[] = [{ port: t.port, title: 'Vite App', command: 'vite' }];
   try {
-    await t.office.signIn('', 'hunter2');
+    await t.office.signIn('cody', 'hunter2-pw');
     await forwarder.sync(items, 0);
     // Restarting, or the office missed it for one look: still open, with the office's page for it.
     t.running.clear();

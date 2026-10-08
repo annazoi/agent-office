@@ -1,6 +1,5 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
 import { JUKEBOX_TUNES, STREAM, checkStreamUrl, trackTitle, tuneById, type JukeboxState } from '../../shared/toys/jukebox.js';
+import { stateDoc, type Doc } from '../db/state.js';
 
 interface Saved {
   on: boolean;
@@ -12,15 +11,15 @@ interface Saved {
 }
 
 /**
- * The lounge jukebox on one floor, saved in .agent-office/jukebox.json. It only says what's on and
+ * The lounge jukebox on one floor, in the database. It only says what's on and
  * since when; every browser plays it for itself, from the same point.
  */
 export class Jukebox {
   private s: Saved = { on: false, track: JUKEBOX_TUNES[0].id, startedAt: Date.now() };
-  private file: string;
+  private doc: Doc<unknown>;
 
   constructor(dataDir: string) {
-    this.file = path.join(dataDir, 'jukebox.json');
+    this.doc = stateDoc(dataDir, 'jukebox');
     this.load();
   }
 
@@ -69,9 +68,9 @@ export class Jukebox {
   }
 
   private load() {
-    if (!existsSync(this.file)) return;
+    const s = this.doc.read() as Partial<Saved> | undefined;
+    if (s === undefined) return;
     try {
-      const s = JSON.parse(readFileSync(this.file, 'utf8')) as Partial<Saved>;
       const url = s.track === STREAM ? checkStreamUrl(s.url) : undefined;
       if (s.track === STREAM ? !url || 'error' in url : typeof s.track !== 'string' || !tuneById(s.track)) return;
       this.s = {
@@ -82,15 +81,11 @@ export class Jukebox {
         startedAt: typeof s.startedAt === 'number' && Number.isFinite(s.startedAt) ? s.startedAt : Date.now(),
       };
     } catch {
-      // a broken file just means a quiet lounge
+      // a broken document just means a quiet lounge
     }
   }
 
   private save() {
-    try {
-      writeFileSync(this.file, JSON.stringify(this.s, null, 2), { mode: 0o600 });
-    } catch {
-      // disk issues shouldn't take the office down
-    }
+    this.doc.write(this.s);
   }
 }

@@ -36,7 +36,7 @@ export function floorHelpers(ctx: Ctx): FloorHelpers {
   const arrivalFloor = (wanted: string | null): Floor | undefined => (wanted && ctx.floors.get(wanted)) || ctx.floors.values().next().value;
 
   /**
-   * Takes `floor` off the building (already out of floors.json): everyone on it rides the elevator to
+   * Takes `floor` off the building (already out of the floors document): everyone on it rides the elevator to
    * the next floor, or out to the lobby if it was the last (the roof goes with it), and its workers stop.
    */
   const closeFloor = (floor: Floor, who: string) => {
@@ -118,7 +118,7 @@ export async function openFloors(ctx: Ctx, hookPort: number): Promise<FloorsOpen
     lent: (floor) => [...floors.values()].some((f) => f !== floor && worksIn(f, floor)),
     locksUp: () => !!ctx.maps.plan().sendHome?.keeps,
     // Everyone's own sign-ins, and their own Composio tools for the workers they hire.
-    runAs: { claudeReady: (o) => ctx.signins.claudeReady(o), why: (w) => ctx.signins.why(w), apply: (o, env, dirs) => ctx.signins.apply(o, env, dirs), composioMcp: (o) => ctx.composio.mcpCached(o) },
+    runAs: { claudeReady: (o) => ctx.signins.claudeReady(o), why: (w) => ctx.signins.why(w), apply: (o, env) => ctx.signins.apply(o, env), composioMcp: (o) => ctx.composio.mcpCached(o) },
     ghAs: (owner) => (owner ? ctx.signins.ghAs(owner) : undefined),
   };
   /** Whether a worker on `from` works in `on`'s project too (see WorkerInfo.repos). */

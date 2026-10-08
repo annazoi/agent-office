@@ -20,6 +20,7 @@ import { clockWork } from './clock.js';
 import { childEnv } from './env.js';
 import { midTurn } from './lifecycle.js';
 import { restoreWorkers, saveWorkers } from './persist.js';
+import { stateDoc, type Doc } from '../db/state.js';
 import { WorkerPrs } from './pr.js';
 import { binScript, defaultShell, resolveCommand, writeOfficeCommands } from './process.js';
 import { CARRY_ON_PROMPT, WorkerTasks } from './tasks.js';
@@ -42,7 +43,7 @@ const SAVE_SCROLLBACK_MS = 15_000;
 
 export class WorkerManager {
   private workers = new Map<string, Worker>();
-  private statePath: string;
+  private doc: Doc<unknown>;
   private trees: Worktrees;
   private agentPath: string | null = null;
   readonly defaultProvider: AgentProvider;
@@ -92,7 +93,7 @@ export class WorkerManager {
   ) {
     this.defaultProvider = configuredProvider(agentCmd);
     this.trees = new Worktrees(dir);
-    this.statePath = path.join(dataDir, 'workers.json');
+    this.doc = stateDoc(dataDir, 'workers');
     // bin/office-workers.js is also the office's MCP server, for the agents that take one.
     const floor: ProviderFloor = { dataDir, mcpScript: binScript('office-workers.js'), dshProfile };
     for (const p of AGENT_PROVIDERS) this.setups[p] = PROVIDERS[p].prepare?.(floor);
@@ -128,7 +129,7 @@ export class WorkerManager {
     this.scrollback = new ScrollbackStore(dataDir);
     this.drops = new DropStore(dataDir);
     this.runs = new WorkerRuns(this.ctx, { worktrees: this.worktrees, watch: this.watch, host: () => this.host, scrollback: this.scrollback, hook: this.hook, runAs: this.runAs, defaultProvider: this.defaultProvider, agentPath: this.agentPath, agentArgs: this.agentArgs, setups: this.setups, officeBin: this.officeBin });
-    restoreWorkers(this.statePath, this.workers, this.defaultProvider, (deskId) => this.deskOccupied(deskId));
+    restoreWorkers(this.doc, this.workers, this.defaultProvider, (deskId) => this.deskOccupied(deskId));
     this.scrollback.prune(new Set(this.workers.keys()));
     this.drops.prune(new Set(this.workers.keys()));
     // A session may have ended (and written its final tally) while the office was down.
@@ -570,6 +571,6 @@ export class WorkerManager {
   }
 
   private persist() {
-    saveWorkers(this.statePath, this.workers.values(), this.stopping);
+    saveWorkers(this.doc, this.workers.values(), this.stopping);
   }
 }

@@ -111,7 +111,7 @@ export class Store {
   invites = false;
   queue: QueueState = { tasks: [], maxWorkers: 0 };
   /** Who you're signed in as (see /api/whoami). */
-  me: Me = { admin: false };
+  me: Me = { account: { name: '', role: 'member' }, admin: false };
   private subs = new Map<Topic, Set<() => void>>();
   // The slices, and each message type's handlers in their order. Kept in # fields, which aren't among
   // the store's keys: those are its state (window.__office.store).

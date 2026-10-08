@@ -51,7 +51,7 @@ export type ComposioConnection = 'connected' | 'pending' | 'off';
 /** One person's own connections, sent only to them. */
 export interface ComposioConnections {
   toolkits: Partial<Record<ComposioToolkit, ComposioConnection>>;
-  /** When they can't connect: on the shared password with no account, or the office has no key. */
+  /** When they can't connect: the office has no key, or Composio can't run here. */
   blocked?: string;
 }
 

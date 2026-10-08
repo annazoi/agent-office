@@ -35,7 +35,8 @@ $('copy').addEventListener('click', async () => {
 ($('saved') as HTMLInputElement).addEventListener('change', (e) => {
   ($('enter') as HTMLButtonElement).disabled = !(e.target as HTMLInputElement).checked;
 });
-$('enter').addEventListener('click', () => location.replace('/'));
+// Next: register the first account (the office password is what registers it).
+$('enter').addEventListener('click', () => location.replace('/login#register'));
 window.addEventListener('beforeunload', (e) => {
   if (!$('reveal').hidden && !($('saved') as HTMLInputElement).checked) e.preventDefault();
 });

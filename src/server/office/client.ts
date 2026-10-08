@@ -10,7 +10,7 @@ export interface Client {
   id: string;
   ws: WebSocket;
   peer: PeerInfo;
-  /** Signed in with this account; none means the shared office password. */
+  /** The account this connection is signed in with (every session has one). */
   accountId?: string;
   /** Whether this person was last told they're an admin (see `me`). */
   admin: boolean;

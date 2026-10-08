@@ -358,7 +358,7 @@ test('interactions: one definition per kind, with its reach, hint and use', () =
 function clientSources(): { file: string; src: string }[] {
   const root = path.join(import.meta.dirname, '../../src/client');
   const code = (src: string) => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/\/\/.*$/gm, '');
-  return (readdirSync(root, { recursive: true }) as string[]).filter((rel) => rel.endsWith('.ts')).map((file) => ({ file, src: code(readFileSync(path.join(root, file), 'utf8')) }));
+  return (readdirSync(root, { recursive: true }) as string[]).filter((rel) => rel.endsWith('.ts')).map((file) => ({ file: file.replaceAll('\\', '/'), src: code(readFileSync(path.join(root, file), 'utf8')) }));
 }
 
 /**
@@ -392,7 +392,7 @@ function definedKinds(): { kind: string; file: string }[] {
 }
 
 test('InteractKind is the kinds added to InteractKinds, and world/types.ts adds none itself', () => {
-  const src = readFileSync(path.join(import.meta.dirname, '../../src/client/world/types'), 'utf8');
+  const src = readFileSync(path.join(import.meta.dirname, '../../src/client/world/types.ts'), 'utf8');
   assert.match(src, /^export interface InteractKinds \{\}$/m);
   assert.match(src, /^export type InteractKind = keyof InteractKinds;$/m);
   assert.deepEqual(interactKinds().filter((k) => k.file === 'world/types.ts'), []);

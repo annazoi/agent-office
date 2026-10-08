@@ -1,15 +1,14 @@
 import { randomBytes } from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
 import { MAX_DECOR, checkImageUrl, sanitizePlacement, type Decoration } from '../../shared/building/decor.js';
+import { stateDoc, type Doc } from '../db/state.js';
 
-/** The pictures on the office walls, saved in .agent-office/decor.json. */
+/** The pictures on the office walls, in the database. */
 export class Decor {
   private items: Decoration[] = [];
-  private file: string;
+  private doc: Doc<unknown>;
 
   constructor(dataDir: string) {
-    this.file = path.join(dataDir, 'decor.json');
+    this.doc = stateDoc(dataDir, 'decor');
     this.load();
   }
 
@@ -48,25 +47,21 @@ export class Decor {
   }
 
   private load() {
-    if (!existsSync(this.file)) return;
+    const saved = this.doc.read() as Partial<Decoration>[] | undefined;
+    if (saved === undefined) return;
     try {
-      const saved = JSON.parse(readFileSync(this.file, 'utf8')) as Partial<Decoration>[];
       for (const s of Array.isArray(saved) ? saved : []) {
         const p = sanitizePlacement(s);
         if (typeof p === 'string' || typeof s.id !== 'string') continue;
         this.items.push({ ...p, id: s.id, by: typeof s.by === 'string' ? s.by : '?', at: typeof s.at === 'number' ? s.at : Date.now() });
       }
     } catch {
-      // a broken file just means bare walls
+      // a broken document just means bare walls
     }
   }
 
   private save() {
-    try {
-      writeFileSync(this.file, JSON.stringify(this.items, null, 2), { mode: 0o600 });
-    } catch {
-      // disk issues shouldn't take the office down
-    }
+    this.doc.write(this.items);
   }
 }
 

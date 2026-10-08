@@ -1,5 +1,4 @@
-// workers.json: every worker as the office last saw it, to pick them all back up after a restart.
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
+// The workers document: every worker as the office last saw it, to pick them all back up after a restart.
 import type { AgentProvider, WorkerInfo, WorkerStatus, WorkerTask } from '../../shared/protocol.js';
 import { DESK_BY_ID } from '../../shared/building/layout.js';
 import { isAgentProvider, savedEffort, savedModel } from '../../shared/agents/providers.js';
@@ -11,12 +10,13 @@ import { midTurn } from './lifecycle.js';
 import type { Worker } from './types.js';
 import { COLORS, newWorker } from './worker.js';
 import { validRepos } from './worktree.js';
+import type { Doc } from '../db/state.js';
 
 /** What a worker with a live terminal can be doing. */
 const RUNNING = new Set<unknown>(['starting', 'idle', 'working', 'done', 'needs_input'] satisfies WorkerStatus[]);
 
 /** Saves every worker; `stopping`: the office is closing for good, so nobody is in the middle of anything. */
-export function saveWorkers(file: string, workers: Iterable<Worker>, stopping: boolean) {
+export function saveWorkers(doc: Doc<unknown>, workers: Iterable<Worker>, stopping: boolean) {
   const saved = [...workers].map(({ info, owner, tracker, state, hookToken, pty, bootBlocked, interrupted }) => ({
     id: info.id,
     owner,
@@ -49,18 +49,14 @@ export function saveWorkers(file: string, workers: Iterable<Worker>, stopping: b
     // In the middle of something: if its terminal doesn't make it through a restart, it carries on after.
     midTurn: !stopping && (!!interrupted || midTurn({ info, bootBlocked })),
   }));
-  try {
-    writeFileSync(file, JSON.stringify(saved, null, 2), { mode: 0o600 });
-  } catch {
-    // disk issues shouldn't take the office down
-  }
+  doc.write(saved);
 }
 
-/** Takes back the workers saved in `file` into `workers`, each at its desk (while it is free), all of them offline. */
-export function restoreWorkers(file: string, workers: Map<string, Worker>, defaultProvider: AgentProvider, deskOccupied: (deskId: string) => boolean) {
-  if (!existsSync(file)) return;
+/** Takes back the workers saved in `doc` into `workers`, each at its desk (while it is free), all of them offline. */
+export function restoreWorkers(doc: Doc<unknown>, workers: Map<string, Worker>, defaultProvider: AgentProvider, deskOccupied: (deskId: string) => boolean) {
+  const saved = doc.read() as (Partial<WorkerInfo> & { owner?: unknown; tracker?: unknown; hookToken?: unknown; pty?: any; midTurn?: unknown } & Record<string, unknown>)[] | undefined;
+  if (!Array.isArray(saved)) return;
   try {
-    const saved = JSON.parse(readFileSync(file, 'utf8')) as (Partial<WorkerInfo> & { owner?: unknown; tracker?: unknown; hookToken?: unknown; pty?: any; midTurn?: unknown } & Record<string, unknown>)[];
     for (const s of saved) {
       if (!s.id || !s.deskId || !DESK_BY_ID.has(s.deskId) || deskOccupied(s.deskId)) continue;
       const tracker = restoreTracker(s.tracker);

@@ -2,8 +2,6 @@
 // server (bin/office-workers.js) get from the /office/workers endpoint on the loopback hook port, and
 // how their requests are read. The endpoint itself is in server.ts, next to the board agents' queue.
 
-import { writeFileSync } from 'node:fs';
-import path from 'node:path';
 import type { AgentEffort, AgentProvider, GhPull, QueueTask, WorkerInfo, WorkerStatus, WorktreeCleanup } from '../shared/protocol.js';
 import { isAgentEffort, isAgentProvider } from '../shared/protocol.js';
 import { DESK_BY_ID, STATION_AGENT } from '../shared/building/layout.js';
@@ -199,15 +197,12 @@ const MCP_ENV = ['AGENT_OFFICE_HOOK_URL', 'AGENT_OFFICE_WORKER_ID', 'AGENT_OFFIC
 export const MCP_READ_ONLY = [`mcp__${MCP_NAME}__list_workers`];
 
 /**
- * Writes Claude Code's --mcp-config file for the MCP server (bin/office-workers.js `mcp`, run by the
- * office's own node) and returns its path. The same for every worker: each one's identity is in its
+ * Claude Code's --mcp-config for the MCP server (bin/office-workers.js `mcp`, run by the office's own
+ * node), as JSON for its command line. The same for every worker: each one's identity is in its
  * environment, which Claude Code hands its MCP servers.
  */
-export function writeClaudeMcpConfig(dataDir: string, script: string): string {
-  const file = path.join(dataDir, 'agent-office-mcp.json');
-  const config = { mcpServers: { [MCP_NAME]: { type: 'stdio', command: process.execPath, args: [script, 'mcp'] } } };
-  writeFileSync(file, JSON.stringify(config, null, 2), { mode: 0o600 });
-  return file;
+export function claudeMcpConfig(script: string): string {
+  return JSON.stringify({ mcpServers: { [MCP_NAME]: { type: 'stdio', command: process.execPath, args: [script, 'mcp'] } } });
 }
 
 /** Codex's -c overrides for the MCP server, with the office's variables passed on to it. */

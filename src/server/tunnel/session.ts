@@ -1,43 +1,20 @@
-import { chmodSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
-import os from 'node:os';
-import path from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import type { Office } from './office.js';
 
-// Signing `agent-office tunnel` in to the office: with the session it kept from last time, or by
-// asking for the password in the terminal. The session is what a browser's cookie is, good for two
-// weeks, and is kept in a file only this user can read, so the password is asked for once.
+// Signing `agent-office tunnel` in to the office: by asking for your name and password in the
+// terminal (or taking them from the command line). The session is what a browser's cookie is; it's
+// kept in memory for as long as the tunnel runs, so a tunnel that reconnects doesn't ask again.
+// Nothing is written to disk: everything the office keeps is in its database, which this computer
+// has no part of.
 
-/** Where the sessions are kept, one per office. */
-export function sessionsFile(): string {
-  return path.join(process.env.XDG_CONFIG_HOME || path.join(os.homedir(), '.config'), 'agent-office', 'tunnel.json');
-}
-
-function saved(): Record<string, string> {
-  try {
-    const all = JSON.parse(readFileSync(sessionsFile(), 'utf8'));
-    return all && typeof all === 'object' && !Array.isArray(all) ? all : {};
-  } catch {
-    return {};
-  }
-}
+/** The sessions this run has, one per office. */
+const sessions = new Map<string, string>();
 
 /** Keeps the session for this office (or, without one, forgets it). */
 function keep(office: string, token: string | undefined) {
-  const all = saved();
-  if (token) all[office] = token;
-  else delete all[office];
-  const file = sessionsFile();
-  try {
-    mkdirSync(path.dirname(file), { recursive: true, mode: 0o700 });
-    writeFileSync(file, `${JSON.stringify(all, null, 2)}\n`, { mode: 0o600 });
-    chmodSync(file, 0o600);
-  } catch {
-    // Not kept: the password is asked for again next time.
-  }
+  if (token) sessions.set(office, token);
+  else sessions.delete(office);
 }
-
-const tildify = (file: string) => (file.startsWith(os.homedir() + path.sep) ? `~${file.slice(os.homedir().length)}` : file);
 
 /** Someone's at a terminal to answer questions. */
 const interactive = () => !!process.stdin.isTTY && !!process.stdout.isTTY;
@@ -89,18 +66,18 @@ function askHidden(question: string): Promise<string> {
 }
 
 export interface Credentials {
-  /** An account's name; without one the password is the shared office password. */
+  /** The account to sign in as; asked for when missing. */
   name?: string;
   password?: string;
 }
 
 /**
- * Signs in to the office: with the session kept from last time (`key` names the office in the
- * file), else the password given, else by asking. Resolves to why it couldn't, or '' when
+ * Signs in to the office: with the session this run already has (`key` names the office), else
+ * the password given, else by asking. Resolves to why it couldn't, or '' when
  * `office.token` is good.
  */
 export async function signIn(office: Office, key: string, given: Credentials, say: (line: string) => void): Promise<string> {
-  const kept = saved()[key];
+  const kept = sessions.get(key);
   if (kept) {
     office.token = kept;
     if ((await office.forwards()) !== 'signed-out') return '';
@@ -114,14 +91,12 @@ export async function signIn(office: Office, key: string, given: Credentials, sa
     if (!err || !interactive()) return err;
     say(`  ${err}`);
   }
-  if (!interactive()) return 'Not signed in. Run it in a terminal to type the password, or set AGENT_OFFICE_PASSWORD (and --name for an account of your own).';
+  if (!interactive()) return 'Not signed in. Run it in a terminal to type your name and password, or pass --name and set AGENT_OFFICE_PASSWORD to your account\'s password.';
 
-  const opts = await office.loginOptions();
-  const askName = given.name === undefined && (opts.accounts || !opts.shared);
-  say(`  Sign in to the office at ${office.origin} (asked once: the session is kept in ${tildify(sessionsFile())})`);
+  say(`  Sign in to the office at ${office.origin} (asked once while this tunnel runs)`);
   for (let tries = 0; tries < 3; tries++) {
-    const name = askName ? await ask(opts.shared ? '  Your name (Enter for the office password): ' : '  Your name: ') : (given.name ?? '');
-    const err = await office.signIn(name, await askHidden(name ? '  Password: ' : '  Office password: '));
+    const name = given.name ?? (await ask('  Your name: '));
+    const err = await office.signIn(name, await askHidden('  Password: '));
     if (!err) {
       keep(key, office.token);
       return '';

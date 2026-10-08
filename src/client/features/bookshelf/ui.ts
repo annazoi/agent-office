@@ -2,6 +2,7 @@ import './ui.css';
 import { isDocPath, resolveDocLink, type DocFile, type DocList, type DocText } from '../../../shared/building/docs';
 import { clip, h, openModal, setDoing, timeAgo, toast } from '../../ui/dom';
 import { markdownFile } from '../../ui/markdown';
+import { userStorage } from '../../state/user-storage';
 
 // The bookshelf: every Markdown file in the floor's project, to read without leaving the office.
 // The filter box over the list picks docs out as you type (the letters in order, not necessarily
@@ -127,7 +128,7 @@ function size(bytes: number): string {
 
 function lastRead(floor: string): string | undefined {
   try {
-    return JSON.parse(localStorage.getItem(LAST_KEY) ?? '{}')[floor];
+    return JSON.parse(userStorage.getItem(LAST_KEY) ?? '{}')[floor];
   } catch {
     return undefined;
   }
@@ -135,9 +136,9 @@ function lastRead(floor: string): string | undefined {
 
 function rememberRead(floor: string, path: string) {
   try {
-    const all = JSON.parse(localStorage.getItem(LAST_KEY) ?? '{}');
+    const all = JSON.parse(userStorage.getItem(LAST_KEY) ?? '{}');
     all[floor] = path;
-    localStorage.setItem(LAST_KEY, JSON.stringify(all));
+    userStorage.setItem(LAST_KEY, JSON.stringify(all));
   } catch {
     // Private mode, or storage is full: it just won't reopen where you were.
   }

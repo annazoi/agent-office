@@ -34,7 +34,7 @@ export const changesHandlers = {
     const who = c.peer.name;
     const w = workerOf(ctx, msg.workerId);
     // Committed as whoever pressed it: their GitHub name and email, once they've signed in to it.
-    const env = c.accountId ? ctx.signins.apply(c.accountId, childEnv(), [], 'github') : undefined;
+    const env = c.accountId ? ctx.signins.apply(c.accountId, childEnv(), 'github') : undefined;
     if (w) void w.floor.changes.commit(w.wid, str(msg.message, 5000), who, env, repoOf(msg.repo)).then((err) => ctx.warn(c, err));
   },
   'changes.discard'(ctx, c, msg) {

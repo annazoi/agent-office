@@ -1,75 +1,116 @@
 export {}; // a module, so its names don't clash with the other pages' scripts
 
-const form = document.getElementById('form') as HTMLFormElement;
-const nameRow = document.getElementById('name-row') as HTMLLabelElement;
-const nameInput = document.getElementById('name') as HTMLInputElement;
-const nameNote = document.getElementById('name-note') as HTMLParagraphElement;
-const sub = document.getElementById('sub') as HTMLParagraphElement;
-const input = document.getElementById('password') as HTMLInputElement;
-const error = document.getElementById('error') as HTMLParagraphElement;
-const submit = document.getElementById('submit') as HTMLButtonElement;
+// Signing in, and registering an account of your own. Everyone in the office has an account: the
+// first one registered is the office's admin; after that, anyone with the office password registers
+// (while an admin keeps registration open), or comes in with an invite link (/join).
 
-const NAME_KEY = 'agent-office.login-name';
+const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
+const form = $<HTMLFormElement>('form');
+const tabs = $<HTMLDivElement>('tabs');
+const tabSignIn = $<HTMLButtonElement>('tab-signin');
+const tabRegister = $<HTMLButtonElement>('tab-register');
+const sub = $<HTMLParagraphElement>('sub');
+const nameInput = $<HTMLInputElement>('name');
+const password = $<HTMLInputElement>('password');
+const officeRow = $<HTMLLabelElement>('office-row');
+const officePassword = $<HTMLInputElement>('office-password');
+const note = $<HTMLParagraphElement>('note');
+const error = $<HTMLParagraphElement>('error');
+const submit = $<HTMLButtonElement>('submit');
+
 /** Where to go once in: the 2D view if that's where you were headed (see loginUrl in net.ts), else the office. */
 const NEXT = new URLSearchParams(location.search).get('next') === '/lite' ? '/lite' : '/';
+const PASSWORD_MIN = 8;
 
-// A sign-in link from the office's terminal (/login#key=…): it works once, so take it out of the
-// address bar and trade it for a session. The key is after the #, so it never reaches a server log.
-const linkKey = new URLSearchParams(location.hash.slice(1)).get('key');
-if (linkKey) {
-  history.replaceState(null, '', location.pathname + location.search);
-  void fetch('/api/link', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ key: linkKey }) })
-    .then(async (res) => {
-      if (res.ok) return location.replace(NEXT);
-      error.textContent = ((await res.json().catch(() => ({}))) as { error?: string }).error ?? 'Could not sign in';
-    })
-    .catch(() => void (error.textContent = 'Server unreachable'));
+type Mode = 'signin' | 'register';
+let mode: Mode = 'signin';
+/** What the office says: whether anyone has an account yet, and whether the office password registers one. */
+let opts = { accounts: true, registration: true };
+/**
+ * A link from the office's terminal (/login#key=…): it registers one account without the office
+ * password. Taken out of the address bar at once; it's after the #, so it never reaches a server log.
+ */
+let linkKey = new URLSearchParams(location.hash.slice(1)).get('key') ?? '';
+const wantsRegister = location.hash === '#register';
+if (linkKey || wantsRegister) history.replaceState(null, '', location.pathname + location.search);
+
+function show(next: Mode) {
+  mode = next;
+  const registering = mode === 'register';
+  tabSignIn.setAttribute('aria-selected', String(!registering));
+  tabRegister.setAttribute('aria-selected', String(registering));
+  // Nobody can register: no account yet means registering is the only way in, so there's nothing to pick.
+  tabs.hidden = !opts.accounts || (!opts.registration && !linkKey);
+  officeRow.hidden = !registering || !!linkKey;
+  officePassword.required = registering && !linkKey;
+  password.autocomplete = registering ? 'new-password' : 'current-password';
+  password.minLength = registering ? PASSWORD_MIN : 0;
+  submit.textContent = registering ? 'Make my account' : 'Come on in';
+  sub.textContent = !registering
+    ? 'Knock knock. Who is it?'
+    : !opts.accounts
+      ? 'Welcome! Make the first account: it runs the office.'
+      : 'New here? Make an account of your own.';
+  note.hidden = !registering;
+  note.textContent = linkKey
+    ? `Opened from the office's own terminal, so no office password is needed. Pick a password of at least ${PASSWORD_MIN} characters.`
+    : `Pick a name and a password of at least ${PASSWORD_MIN} characters for yourself, and type the office password you were given.`;
+  error.textContent = '';
+  (nameInput.value ? password : nameInput).focus();
 }
 
-// Ask for a name once people have accounts; it's optional while the shared password still works.
-void fetch('/api/login', { cache: 'no-store' })
-  .then((r) => r.json())
-  .then(({ accounts, shared }: { accounts: boolean; shared: boolean }) => {
-    if (!accounts && shared) return;
-    nameRow.hidden = false;
-    nameInput.required = !shared;
-    nameNote.hidden = !shared;
-    sub.textContent = shared ? 'Knock knock. Who is it?' : 'Knock knock. Who is it? Sign in with your own account.';
-    try {
-      nameInput.value = localStorage.getItem(NAME_KEY) ?? '';
-    } catch {
-      // storage blocked
-    }
-    (nameInput.value ? input : nameInput).focus();
-  })
-  .catch(() => {});
+tabSignIn.addEventListener('click', () => show('signin'));
+tabRegister.addEventListener('click', () => show('register'));
+
+async function post(path: string, body: unknown): Promise<{ ok: boolean; body: { error?: string } }> {
+  const res = await fetch(path, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(body) });
+  return { ok: res.ok, body: (await res.json().catch(() => ({}))) as { error?: string } };
+}
 
 form.addEventListener('submit', async (e) => {
   e.preventDefault();
   error.textContent = '';
   submit.disabled = true;
-  const name = nameRow.hidden ? '' : nameInput.value.trim();
   try {
-    const res = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify({ name, password: input.value }),
-    });
-    if (res.ok) {
-      try {
-        localStorage.setItem(NAME_KEY, name);
-      } catch {
-        // storage blocked
-      }
-      location.href = NEXT;
-      return;
+    const name = nameInput.value.trim();
+    const r =
+      mode === 'signin'
+        ? await post('/api/login', { name, password: password.value })
+        : await post('/api/register', { name, password: password.value, ...(linkKey ? { key: linkKey } : { officePassword: officePassword.value }) });
+    if (r.ok) return location.replace(NEXT);
+    error.textContent = r.body.error ?? (mode === 'signin' ? 'Could not sign in' : 'Could not make the account');
+    // A used-up link: carry on with the office password.
+    if (/link was/i.test(error.textContent)) {
+      linkKey = '';
+      show(mode);
+      error.textContent = r.body.error ?? '';
     }
-    const body = await res.json().catch(() => ({}));
-    error.textContent = body.error ?? 'Could not sign in';
-    input.select();
+    password.select();
   } catch {
     error.textContent = 'Server unreachable';
   } finally {
     submit.disabled = false;
   }
 });
+
+async function start() {
+  try {
+    const o = (await (await fetch('/api/login', { cache: 'no-store' })).json()) as Partial<typeof opts>;
+    opts = { accounts: o.accounts === true, registration: o.registration !== false };
+  } catch {
+    // Server unreachable: the form says so when it's sent.
+  }
+  if (linkKey) {
+    const r = await post('/api/link', { key: linkKey }).catch(() => ({ ok: false, body: {} as { error?: string } }));
+    if (!r.ok) {
+      linkKey = '';
+      // An account already? Then sign in; the link was for registering.
+      show(opts.accounts ? 'signin' : 'register');
+      error.textContent = r.body.error ?? '';
+      return;
+    }
+    return show(opts.accounts ? 'signin' : 'register');
+  }
+  show(!opts.accounts || (wantsRegister && opts.registration) ? 'register' : 'signin');
+}
+void start();

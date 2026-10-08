@@ -1,7 +1,7 @@
 // The first-run wizard's optional Composio step (see setup.ts): paste an API key, or Enter to skip;
 // the office checks the key with Composio, asks which of Linear, Notion, Slack, Google Calendar and
 // Gmail to show, and says where everyone connects their own accounts. The key goes in
-// .agent-office/composio.json (mode 0600), as ⚙️ Settings → Connections would put it.
+// the office's database, as ⚙️ Settings → Connections would put it.
 import { ComposioHub } from './integrations/composio.js';
 import { COMPOSIO_TOOLKITS, COMPOSIO_TOOLKIT_META, type ComposioToolkit } from '../shared/protocol.js';
 
@@ -61,6 +61,5 @@ export async function composioStep(hub: ComposioHub, io: ComposioStepIo, officeU
   log();
   log('  🔗 Each person connects their own accounts, so nobody sees anyone else\'s:');
   log(`     open ${officeUrl}, then ☰ → ⚙️ Settings → Connections, or press E at a station in the office.`);
-  log('     (Connections need an account of your own: on the shared password alone there is nobody to connect as.)');
   return toolkits;
 }

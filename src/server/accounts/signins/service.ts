@@ -4,9 +4,9 @@ import os from 'node:os';
 import path from 'node:path';
 import * as pty from '@lydell/node-pty';
 import type { SignInKind, SignInState, SignInsState } from '../../../shared/protocol.js';
-import { seedClaude, trustProjects } from './claude-config.js';
 import { ACCOUNT_ID, API_KEY, CLAUDE_TOKEN, CLAUDE_VARS, FLOW_MS, GITHUB_TOKEN, GITHUB_VARS, HELP_WHERE, LOOK_GAP_MS } from './constants.js';
 import type { Flow, GhAs, Live, Saved } from './types.js';
+import { userDoc } from '../user-config.js';
 import { lastWords, plain, quote, run } from './util.js';
 
 /*
@@ -25,12 +25,13 @@ import { lastWords, plain, quote, run } from './util.js';
  * runs with the same folders, so `claude auth login` typed there works too. Admins may keep using
  * the office machine's own sign-ins.
  *
- * An office without accounts (you alone, on the shared password) never comes here: everything runs
+ * An admin may pick the office machine's own sign-ins instead (see mayUseOffice): everything then runs
  * on the machine's own `claude` and `gh`, exactly as before.
  */
 
 export class SignIns {
   private homes: string;
+  private dataDir: string;
   private live = new Map<string, Live>();
 
   constructor(
@@ -45,6 +46,7 @@ export class SignIns {
     private onChange: (accountId: string) => void,
   ) {
     this.homes = path.join(dataDir, 'homes');
+    this.dataDir = dataDir;
   }
 
   state(id: string): SignInsState {
@@ -94,16 +96,14 @@ export class SignIns {
 
   /**
    * Puts `id`'s own sign-ins in place of the office's in `env` (changed in place, and returned).
-   * `dirs` are where a worker is about to start, to carry over the office's folder trust.
    */
-  apply(id: string, env: Record<string, string>, dirs: string[] = [], only?: SignInKind): Record<string, string> {
+  apply(id: string, env: Record<string, string>, only?: SignInKind): Record<string, string> {
     const s = this.load(id);
     const home = this.prepare(id);
     if (only !== 'github' && this.how(id, s, 'claude') !== 'office') {
       for (const k of CLAUDE_VARS) delete env[k];
       env.CLAUDE_CONFIG_DIR = path.join(home, 'claude');
       if (s.claude?.use === 'token') env[API_KEY.test(s.claude.token) ? 'ANTHROPIC_API_KEY' : 'CLAUDE_CODE_OAUTH_TOKEN'] = s.claude.token;
-      if (dirs.length) trustProjects(env.CLAUDE_CONFIG_DIR, dirs, this.base());
     }
     if (only !== 'claude' && this.how(id, s, 'github') !== 'office') {
       for (const k of GITHUB_VARS) delete env[k];
@@ -118,7 +118,7 @@ export class SignIns {
     const s = this.load(id);
     if (this.how(id, s, 'github') === 'office') return undefined;
     if (!s.seen?.github) return this.why('github');
-    return { key: id, env: this.apply(id, this.base(), [], 'github') };
+    return { key: id, env: this.apply(id, this.base(), 'github') };
   }
 
   /** Looks at who `id` is signed in as, now if `force`, else unless it just did. */
@@ -166,14 +166,6 @@ export class SignIns {
       const s = this.load(id);
       s.claude = { use: 'token', token };
       this.save(id, s);
-      // Claude asks once before it uses an API key from the environment; this one is theirs, so it's approved.
-      if (API_KEY.test(token)) {
-        seedClaude(path.join(this.prepare(id), 'claude'), (c) => {
-          c.customApiKeyResponses ??= { approved: [], rejected: [] };
-          const tail = token.slice(-20);
-          if (!c.customApiKeyResponses.approved.includes(tail)) c.customApiKeyResponses.approved.push(tail);
-        });
-      }
       await this.look(id, true);
       return undefined;
     }
@@ -216,6 +208,7 @@ export class SignIns {
     this.stop(id, 'claude');
     this.stop(id, 'github');
     this.live.delete(id);
+    this.doc(id).remove();
     const home = path.join(this.homes, id);
     if (!existsSync(home)) return;
     // On a Mac, Claude keeps the login in the keychain, not the folder: sign out so it goes too.
@@ -280,28 +273,24 @@ export class SignIns {
     const home = this.home(id);
     if (!existsSync(path.join(home, 'gitconfig'))) {
       for (const d of [this.homes, home, path.join(home, 'claude'), path.join(home, 'gh')]) mkdirSync(d, { recursive: true, mode: 0o700 });
-      seedClaude(path.join(home, 'claude'));
       this.writeGitConfig(id);
     }
     return home;
   }
 
+  /** Which logins an account picked, kept with the rest of its settings in the database. */
+  private doc(id: string) {
+    return userDoc<Saved>(this.dataDir, id, 'signins');
+  }
+
   private load(id: string): Saved {
-    try {
-      const s = JSON.parse(readFileSync(path.join(this.home(id), 'signins.json'), 'utf8')) as Saved;
-      return s && typeof s === 'object' ? s : {};
-    } catch {
-      return {};
-    }
+    const s = this.doc(id).read();
+    return s && typeof s === 'object' ? s : {};
   }
 
   private save(id: string, s: Saved) {
     this.prepare(id);
-    try {
-      writeFileSync(path.join(this.home(id), 'signins.json'), JSON.stringify(s, null, 2), { mode: 0o600 });
-    } catch (err) {
-      console.error(`agent-office: couldn't save ${id}'s sign-ins: ${(err as Error).message}`);
-    }
+    this.doc(id).write(s);
   }
 
   private stop(id: string, which: SignInKind) {
@@ -454,7 +443,7 @@ export class SignIns {
       l.claude = how === 'token' ? { status: 'ok', who: 'a pasted token' } : { status: 'none', error: "Claude Code isn't installed on the office's machine" };
       return;
     }
-    const env = how === 'office' ? this.base() : this.apply(id, this.base(), [], 'claude');
+    const env = how === 'office' ? this.base() : this.apply(id, this.base(), 'claude');
     const r = await run(this.claude, ['auth', 'status', '--json'], env);
     let status: { loggedIn?: boolean; email?: string; subscriptionType?: string; authMethod?: string } = {};
     try {

@@ -1,7 +1,6 @@
-import { readFileSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
 import type { ThemePick, ThemeState } from '../../shared/protocol.js';
 import { activeTheme, isThemePick } from '../../shared/building/theme.js';
+import { stateDoc, type Doc } from '../db/state.js';
 
 /** How often 'auto' looks at the calendar again, so October 1st turns the pumpkins on by itself. */
 const CHECK_MS = 10 * 60_000;
@@ -14,11 +13,11 @@ interface Saved {
 
 /**
  * The building's holiday theme (Halloween, Christmas, none, or whichever the calendar says), picked
- * in ⚙️ Settings by anyone and kept in .agent-office/theme.json. Everyone sees the same one.
+ * in ⚙️ Settings by anyone and kept in the database. Everyone sees the same one.
  */
 export class Themes {
   private saved?: Saved;
-  private path: string;
+  private doc: Doc<unknown>;
   private timer?: NodeJS.Timeout;
   private told = '';
 
@@ -28,7 +27,7 @@ export class Themes {
     private utcOffset: () => number,
     private onState: (state: ThemeState) => void,
   ) {
-    this.path = path.join(dataDir, 'theme.json');
+    this.doc = stateDoc(dataDir, 'theme');
     this.restore();
     this.told = JSON.stringify(this.state());
   }
@@ -64,7 +63,7 @@ export class Themes {
 
   private restore() {
     try {
-      const s = JSON.parse(readFileSync(this.path, 'utf8')) as Partial<Saved>;
+      const s = this.doc.read() as Partial<Saved>;
       if (isThemePick(s.pick)) this.saved = { pick: s.pick, by: typeof s.by === 'string' ? s.by : 'someone', at: typeof s.at === 'number' ? s.at : 0 };
     } catch {
       // never set: it follows the calendar
@@ -72,10 +71,6 @@ export class Themes {
   }
 
   private persist() {
-    try {
-      writeFileSync(this.path, JSON.stringify(this.saved ?? {}, null, 2), { mode: 0o600 });
-    } catch {
-      // disk issues shouldn't take the office down
-    }
+    this.doc.write(this.saved ?? {});
   }
 }

@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync } from 'node:fs';
+import type { Doc } from '../db/state.js';
 import type { SkyState, Weather } from '../../shared/protocol.js';
 import { guessPlace } from '../../shared/building/sun.js';
 
@@ -113,7 +113,7 @@ export class Sky {
   private realTime: boolean;
 
   constructor(
-    private opts: { city?: string; weather?: Weather; realTime?: boolean; placeFile?: string; clockFile?: string },
+    private opts: { city?: string; weather?: Weather; realTime?: boolean; placeDoc?: Doc<unknown>; clockDoc?: Doc<unknown> },
     private onChange: (state: SkyState) => void,
   ) {
     this.realTime = this.savedClock() ?? !!opts.realTime;
@@ -128,15 +128,10 @@ export class Sky {
     if (known) this.place = { lat: known.lat, lon: known.lon, name: known.name };
   }
 
-  /** Where the last forecast for `city` put it (see placeFile), if it's that city. */
+  /** Where the last forecast for `city` put it (see placeDoc), if it's that city. */
   private knownPlace(city: string): { lat: number; lon: number; name: string; utcOffset: number } | undefined {
-    if (!this.opts.placeFile) return undefined;
-    try {
-      const p = JSON.parse(readFileSync(this.opts.placeFile, 'utf8'));
-      return p?.city === city && [p.lat, p.lon, p.utcOffset].every(Number.isFinite) && typeof p.name === 'string' ? p : undefined;
-    } catch {
-      return undefined;
-    }
+    const p = this.opts.placeDoc?.read() as { city?: unknown; lat: number; lon: number; name: string; utcOffset: number } | undefined;
+    return p?.city === city && [p.lat, p.lon, p.utcOffset].every(Number.isFinite) && typeof p.name === 'string' ? p : undefined;
   }
 
   start() {
@@ -157,28 +152,17 @@ export class Sky {
 
   /**
    * Which clock the sky keeps, picked in ⚙️ Settings: the real time of day (true), or a whole day and
-   * night every hour. Kept in clockFile, so it outlasts a restart; until someone picks, --real-time-sky says.
+   * night every hour. Kept in clockDoc, so it outlasts a restart; until someone picks, --real-time-sky says.
    */
   setClock(real: boolean) {
     this.realTime = real;
-    if (this.opts.clockFile) {
-      try {
-        writeFileSync(this.opts.clockFile, JSON.stringify({ realTime: real }));
-      } catch {
-        // It still changes for now.
-      }
-    }
+    this.opts.clockDoc?.write({ realTime: real });
     this.set({ ...this.state });
   }
 
   private savedClock(): boolean | undefined {
-    if (!this.opts.clockFile) return undefined;
-    try {
-      const saved = JSON.parse(readFileSync(this.opts.clockFile, 'utf8'));
-      return typeof saved?.realTime === 'boolean' ? saved.realTime : undefined;
-    } catch {
-      return undefined;
-    }
+    const saved = this.opts.clockDoc?.read() as { realTime?: unknown } | undefined;
+    return typeof saved?.realTime === 'boolean' ? saved.realTime : undefined;
   }
 
   private set(next: SkyState) {
@@ -218,13 +202,8 @@ export class Sky {
       if (this.warned) console.log(`agent-office: the weather for ${name} came through`);
       this.warned = false;
       this.misses = 0;
-      if (this.opts.placeFile) {
-        try {
-          writeFileSync(this.opts.placeFile, JSON.stringify({ city, lat, lon, name, utcOffset }));
-        } catch {
-          // Only a head start for the next restart.
-        }
-      }
+      // Only a head start for the next restart.
+      this.opts.placeDoc?.write({ city, lat, lon, name, utcOffset });
       this.later(FORECAST_MS, () => void this.forecast());
     } catch (err) {
       const e = err as Error & { cause?: { code?: string; message?: string } };

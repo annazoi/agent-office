@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { TaskQueue, type QueueWorkers } from '../../src/server/floor/queue.js';
 import type { AgentEffort, AgentProvider, WorkerInfo } from '../../src/shared/protocol.js';
+import { stateDoc } from '../../src/server/db/state.js';
 
 function fixture(defaultProvider: AgentProvider = 'claude') {
   const dir = mkdtempSync(path.join(tmpdir(), 'office-queue-'));
@@ -98,9 +99,9 @@ test('queued Cursor model survives restart and retry', (t) => {
 
 test('new and legacy tasks without a provider use the configured agent', (t) => {
   const f = fixture('custom'); t.after(() => f.close());
-  writeFileSync(path.join(f.dir, 'queue.json'), JSON.stringify({ maxWorkers: 0, tasks: [
+  stateDoc<any>(f.dir, 'queue').write({ maxWorkers: 0, tasks: [
     { id: 'legacy', title: 'Legacy', prompt: 'Legacy task', status: 'queued' },
-  ] }));
+  ] });
   const q = f.open();
   q.add('New task', 'Tester'); q.setLimit(2);
   assert.deepEqual(f.workers.map((w) => w.provider), ['custom', 'custom']);
@@ -241,13 +242,13 @@ test('queue preserves a Claude model and effort through seating, retry, and rest
   assert.equal(f.workers[2].effort, 'max');
 });
 
-test('queue takes Fable and restores it from queue.json', (t) => {
+test('queue takes Fable and restores it from the saved queue', (t) => {
   const f = fixture(); t.after(() => f.close());
   const q = f.open();
   q.setLimit(0);
   assert.equal(q.add('Big task', 'Tester', undefined, undefined, 'claude', 'fable', 'xhigh'), undefined);
   q.shutdown();
-  const saved = JSON.parse(readFileSync(path.join(f.dir, 'queue.json'), 'utf8'));
+  const saved = stateDoc<any>(f.dir, 'queue').read();
   assert.equal(saved.tasks[0].model, 'fable');
   const restored = f.open();
   assert.equal(restored.state().tasks[0].model, 'fable');

@@ -47,7 +47,7 @@ three work. Something has to change; the only question is what.
 
 DSH ships `@deepseek-ai/dsh-hooks-claude-code` and `@deepseek-ai/dsh-hooks-codex`. Each mounts a
 bridge that runs an existing Claude Code `hooks.json` or Codex hook config on DSH's interception
-seams. Pointing one at the office's own generated config (`claude-hooks.json`, written in
+seams. Pointing one at the office's own generated config (the `--settings` JSON built in
 `src/server/providers/claude.ts`) looks almost free: the hooks are shell commands that `curl` the
 office's loopback endpoint carrying `$AGENT_OFFICE_HOOK_URL`, `$AGENT_OFFICE_HOOK_TOKEN` and
 `$AGENT_OFFICE_WORKER_ID`, all of which the office already sets on the child environment.
@@ -127,9 +127,8 @@ Everything else reads those, and needs no change of its own:
   (`src/server/agents/models.ts`), which `GET /api/agents/<id>/models` serves; a test checks the two agree.
 - An adapter with a `hook` gets its route, `/hooks/<id>`, on the loopback hook server
   (`src/server/hooks/server.ts`).
-- An adapter whose CLI only reads its settings from the folder it runs in (Cursor's
-  `.cursor/hooks.json`) is handed that folder at `launch`, and is told by `exited` when the run is
-  over (the process ended, the worker was sent home, or the office stopped), to take them out again.
+- An adapter whose CLI only reads its hooks from a file (Cursor, Grok, Muse) gets none: the office
+  keeps nothing in files, so such a worker is followed by its terminal alone.
 
 Hook helpers longer than a few lines (a settings file, a plugin, a payload parser) go in a module
 of their own that the adapter imports, as `src/server/agents/codex.ts` and `src/server/agents/grok.ts` do. One

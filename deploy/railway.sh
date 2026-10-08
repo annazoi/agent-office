@@ -623,7 +623,7 @@ cmd_reset_password() {
   # A redeploy, so the office starts with the new claim token (and makes the new password).
   rw redeploy $(svc) --yes --json </dev/null >/dev/null || die "couldn't redeploy the office"
   wait_replaced "$was" || die "the office didn't come back — check: deploy/railway.sh logs$NAME_FLAG"
-  ok "Everyone has been signed out"
+  ok "The office password is new: it registers new accounts, and everyone keeps theirs"
   open_office
 }
 

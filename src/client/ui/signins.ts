@@ -141,7 +141,7 @@ export function openSignIns(net: Net, why?: string) {
     const typing = document.activeElement;
     cards.replaceChildren();
     if (!s) {
-      cards.append(h('p.empty', {}, store.me.account ? 'Loading…' : 'On the shared office password, workers run on the office’s own sign-ins.'));
+      cards.append(h('p.empty', {}, 'Loading…'));
       return;
     }
     cards.append(card('claude', s.claude, s.office), card('github', s.github, s.office));

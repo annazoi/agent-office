@@ -1,11 +1,10 @@
 import { randomBytes } from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
 import { isAgentProvider, type AgentChoice, type AgentEffort, type AgentProvider, type GhPull, type QueueState, type QueueTask, type WorkerInfo, type WorkerStatus } from '../../shared/protocol.js';
 import { DESK_BY_ID, SEATS, nextFreeSeat } from '../../shared/building/layout.js';
 import { validateWorkerEffort, validateWorkerModel } from '../agents/agents.js';
 import { savedEffort, savedModel, takesEffort, takesModel } from '../../shared/agents/providers.js';
 import { PROMPTS } from '../../shared/agents/prompts.js';
+import { stateDoc, type Doc } from '../db/state.js';
 
 /** What the queue needs from the worker manager. Narrow on purpose, so a smoke test can fake it. */
 export interface QueueWorkers {
@@ -56,7 +55,7 @@ const FINISHED = new Set<WorkerStatus>(['done', 'exited', 'offline']);
 export class TaskQueue {
   private tasks: QueueTask[] = [];
   private maxWorkers = DEFAULT_MAX_WORKERS;
-  private statePath: string;
+  private doc: Doc<unknown>;
   private timer: NodeJS.Timeout;
   private pumping = false;
   private again = false;
@@ -71,7 +70,7 @@ export class TaskQueue {
     private useWorktree: boolean,
     private events: QueueEvents,
   ) {
-    this.statePath = path.join(dataDir, 'queue.json');
+    this.doc = stateDoc(dataDir, 'queue');
     this.restore();
     this.timer = setInterval(() => this.pump(), PUMP_MS);
   }
@@ -368,17 +367,13 @@ export class TaskQueue {
   }
 
   private persist() {
-    try {
-      writeFileSync(this.statePath, JSON.stringify({ maxWorkers: this.maxWorkers, tasks: this.tasks }, null, 2), { mode: 0o600 });
-    } catch {
-      // disk issues shouldn't take the office down
-    }
+    this.doc.write({ maxWorkers: this.maxWorkers, tasks: this.tasks });
   }
 
   private restore() {
-    if (!existsSync(this.statePath)) return;
+    const saved = this.doc.read() as { maxWorkers?: number; tasks?: Partial<QueueTask>[] } | undefined;
+    if (saved === undefined) return;
     try {
-      const saved = JSON.parse(readFileSync(this.statePath, 'utf8')) as { maxWorkers?: number; tasks?: Partial<QueueTask>[] };
       if (typeof saved.maxWorkers === 'number' && Number.isFinite(saved.maxWorkers)) this.maxWorkers = Math.max(0, Math.min(SEATS.length, Math.floor(saved.maxWorkers)));
       for (const s of saved.tasks ?? []) {
         if (typeof s.id !== 'string' || typeof s.prompt !== 'string' || typeof s.title !== 'string') continue;

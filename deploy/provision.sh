@@ -7,7 +7,8 @@
 #
 #   ssh root@203.0.113.7 'curl -fsSL https://raw.githubusercontent.com/AgentSystemLabs/agent-office/main/deploy/provision.sh | bash'
 #
-# It installs Node.js, git, the GitHub CLI and Claude Code, and runs the office as a systemd service
+# It installs Node.js, git, the GitHub CLI, Claude Code and PostgreSQL (the office keeps everything in
+# a database: a local one, unless DATABASE_URL names another), and runs the office as a systemd service
 # that listens on the server's loopback only. You reach it through an SSH tunnel, or, given
 # `--domain office.example.com` (after `bash -s --`), on https://office.example.com through Caddy,
 # which gets the certificate by itself, or, given `--tailscale`, on your Tailscale network at
@@ -17,7 +18,7 @@
 #
 # deploy/aws.sh pipes this over SSH to the EC2 machine it creates, with these exported: APP_REPO
 # APP_REF PROJECT_REPO CLAIM_TOKEN PUBLIC_HOST GH_TOKEN CLAUDE_CODE_OAUTH_TOKEN ANTHROPIC_API_KEY
-# GIT_NAME GIT_EMAIL, and TAILSCALE TAILSCALE_AUTH_KEY TAILSCALE_HOSTNAME for --tailscale. They all
+# GIT_NAME GIT_EMAIL DATABASE_URL, and TAILSCALE TAILSCALE_AUTH_KEY TAILSCALE_HOSTNAME for --tailscale. They all
 # have defaults, and the options below set the common ones.
 #
 # deploy/container/install.sh copies four heredocs out of this file into the container image
@@ -44,6 +45,8 @@ Usage: provision.sh [options]      (curl … | bash -s -- [options])
   --project <repo>      Clone this GitHub repository (owner/name) as the first floor
   --public-host <addr>  The address teammates SSH to (default: --domain, else this server's public IP)
   --user <name>         Who runs the office when this runs as root (default agentoffice)
+  --database-url <url>  Keep the office in this Postgres database (e.g. Neon) instead of one
+                        installed on this server (env DATABASE_URL)
   -h, --help            Show this help
 
 Run in a terminal, it offers to sign the GitHub CLI in; otherwise run `gh auth login` in a shell at
@@ -56,6 +59,7 @@ TAILSCALE="${TAILSCALE:-}"
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --domain) DOMAIN="${2:?--domain needs a name}"; shift 2 ;;
+    --database-url) DATABASE_URL="${2:?--database-url needs a URL}"; shift 2 ;;
     --tailscale) TAILSCALE=1; shift ;;
     --tailscale-auth-key) TAILSCALE_AUTH_KEY="${2:?--tailscale-auth-key needs a key}"; TAILSCALE=1; shift 2 ;;
     --tailscale-hostname) TAILSCALE_HOSTNAME="${2:?--tailscale-hostname needs a name}"; shift 2 ;;
@@ -138,7 +142,7 @@ RUN_PATH="$RUN_HOME/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin
 # Runs a command as that user, in its home and with the service's PATH (Claude Code is in ~/.local/bin).
 as_user() {
   if [[ "$RUN_USER" == "$(id -un)" ]]; then env PATH="$RUN_PATH" "$@"
-  else sudo -u "$RUN_USER" -H --preserve-env=ANTHROPIC_API_KEY env PATH="$RUN_PATH" "$@"; fi
+  else sudo -u "$RUN_USER" -H --preserve-env=ANTHROPIC_API_KEY,DATABASE_URL env PATH="$RUN_PATH" "$@"; fi
 }
 
 if ! node_major=$(as_user node -p 'process.versions.node.split(".")[0]' 2>/dev/null) || [[ "$node_major" -lt 20 ]]; then
@@ -283,6 +287,29 @@ if [[ -z "${CLAUDE_CODE_OAUTH_TOKEN:-}" && -z "${ANTHROPIC_API_KEY:-}" ]]; then
   export CLAUDE_CODE_OAUTH_TOKEN ANTHROPIC_API_KEY
 fi
 
+# The office's database. Given one (DATABASE_URL, --database-url), that's it; run again, this keeps
+# the one from before; otherwise PostgreSQL on this server, which the office's user signs in to by
+# its Unix socket, with no password.
+if [[ -z "${DATABASE_URL:-}" ]]; then
+  DATABASE_URL=$(sudo sed -n 's/^DATABASE_URL="\(.*\)"$/\1/p' /etc/agent-office/env 2>/dev/null || true)
+fi
+if [[ -z "$DATABASE_URL" ]]; then
+  if ! command -v pg_ctlcluster >/dev/null 2>&1; then
+    step "Installing PostgreSQL (the office keeps everything in it)"
+    quiet "${APT[@]}" update
+    quiet "${APT[@]}" install postgresql
+  fi
+  sudo systemctl enable --now postgresql >/dev/null 2>&1 || true
+  step "Making the office's database"
+  for _ in $(seq 30); do sudo -u postgres psql -qtAc 'select 1' >/dev/null 2>&1 && break; sleep 1; done
+  sudo -u postgres psql -qtAc "select 1 from pg_roles where rolname = '$RUN_USER'" | grep -q 1 ||
+    quiet sudo -u postgres createuser "$RUN_USER"
+  sudo -u postgres psql -qtAc "select 1 from pg_database where datname = 'agent_office'" | grep -q 1 ||
+    quiet sudo -u postgres createdb --owner "$RUN_USER" agent_office
+  DATABASE_URL="postgresql://$RUN_USER@/agent_office?host=/var/run/postgresql"
+fi
+export DATABASE_URL
+
 step "Writing secrets to /etc/agent-office/env"
 sudo install -d -m 755 /etc/agent-office
 env_file=$(mktemp)
@@ -295,6 +322,7 @@ env_file=$(mktemp)
   [[ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]] && printf 'CLAUDE_CODE_OAUTH_TOKEN="%s"\n' "$CLAUDE_CODE_OAUTH_TOKEN"
   [[ -n "${ANTHROPIC_API_KEY:-}" ]] && printf 'ANTHROPIC_API_KEY="%s"\n' "$ANTHROPIC_API_KEY"
   [[ -n "$DEPLOY_SCRIPT" ]] && printf 'AGENT_OFFICE_DEPLOY_SCRIPT="%s"\n' "$DEPLOY_SCRIPT"
+  printf 'DATABASE_URL="%s"\n' "$DATABASE_URL"
   true
 } >"$env_file"
 sudo install -m 600 -o root -g root "$env_file" /etc/agent-office/env
@@ -332,7 +360,8 @@ echo "    at $(as_user git -C /opt/agent-office log -1 --format='%h %s')"
 step "npm install (builds the office)"
 quiet as_user sh -c 'cd /opt/agent-office && npm install --no-audit --no-fund'
 
-# The office keeps its data (password, accounts, the list of floors) in ~/agent-office and clones
+# The office keeps its data (password, accounts, the list of floors) in its database, its workers'
+# worktrees in ~/agent-office, and clones
 # projects into ~/workspace/<owner>/<repo>. It starts with no project: its elevator lists every
 # repository the GitHub token can see, and cloning one makes it the first floor.
 OFFICE_HOME="$RUN_HOME/agent-office"
@@ -343,7 +372,7 @@ as_user mkdir -p "$WORKSPACE"
 LEGACY_DIR=""
 if [[ -f /etc/agent-office/dir ]]; then
   legacy=$(cat /etc/agent-office/dir)
-  [[ -f "$legacy/.agent-office/config.json" ]] && LEGACY_DIR="$legacy"
+  [[ -d "$legacy/.agent-office" ]] && LEGACY_DIR="$legacy"
 fi
 if [[ -n "$LEGACY_DIR" ]]; then
   step "Keeping the office in $LEGACY_DIR (its accounts and floors are there)"
@@ -353,8 +382,8 @@ else
   RUN_DIR="$RUN_HOME"
   OFFICE_ARGS=""
   setup_args=()
-  # Once: after that, the folder is the admins' to move in ⚙️ Settings.
-  [[ -f "$OFFICE_HOME/.agent-office/projects-folder.json" ]] || setup_args+=(--projects "$WORKSPACE")
+  # Unless one was picked already: after the first time, the folder is the admins' to move in ⚙️ Settings.
+  setup_args+=(--default-projects "$WORKSPACE")
   [[ -n "${PROJECT_REPO:-}" ]] && setup_args+=(--project "$PROJECT_REPO")
   if [[ ${#setup_args[@]} -gt 0 ]]; then
     step "Setting up the office${PROJECT_REPO:+: cloning $PROJECT_REPO as a floor}"
@@ -366,6 +395,9 @@ else
   sudo rm -f /etc/agent-office/dir
 fi
 echo "$OFFICE_HOME" | sudo tee /etc/agent-office/home >/dev/null
+# The database, where `agent-office` run over ssh (accounts, --reset-password) finds it too.
+as_user mkdir -p "$OFFICE_HOME"
+as_user sh -c 'umask 077; f="$1/.env"; touch "$f"; grep -v "^DATABASE_URL=" "$f" >"$f.new" || true; printf "DATABASE_URL=\"%s\"\n" "$2" >>"$f.new"; mv "$f.new" "$f"' sh "$OFFICE_HOME" "$DATABASE_URL"
 [[ -n "$LEGACY_DIR" ]] && echo "$LEGACY_DIR" | sudo tee /etc/agent-office/dir >/dev/null
 
 step "Pre-accepting Claude Code onboarding and folder trust"
@@ -563,11 +595,12 @@ bold=$'\033[1m' reset=$'\033[0m'
 base="http://localhost:4600"
 [[ -z "$DOMAIN" ]] || base="https://$DOMAIN"
 [[ -z "$TS_HOST" ]] || base="https://$TS_HOST"
-if grep -qs '"claimedAt"' "${LEGACY_DIR:-$OFFICE_HOME}/.agent-office/config.json"; then
-  open_line="open ${bold}$base${reset} and sign in with the office password you saved."
+if ! curl -fs --max-time 4 http://127.0.0.1:4600/api/claim | grep -q '"claimable":true'; then
+  open_line="open ${bold}$base${reset} and sign in (or register, with the office password you saved)."
 else
   open_line="open ${bold}$base/claim?t=$CLAIM_TOKEN${reset}
-  It shows the office password ${bold}once${reset}: write it down."
+  It shows the office password ${bold}once${reset}: write it down, then register your account with it
+  (the first account is the office's admin)."
 fi
 echo
 echo "  🏢 Agent Office is running, as $RUN_USER, on 127.0.0.1:4600 only."

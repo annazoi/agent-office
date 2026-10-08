@@ -1,4 +1,3 @@
-import path from 'node:path';
 import { childEnv, resolveCommand } from '../workers.js';
 import { SignIns } from '../accounts/signins.js';
 import { agentProviders, configuredProvider } from '../agents/agents.js';
@@ -12,7 +11,6 @@ import { PlanLimitsReader } from '../usage/limits.js';
 import { Webhook } from '../ops/webhook.js';
 import { ComposioHub } from '../integrations/composio.js';
 import { ComposioGitHub } from '../integrations/github-composio.js';
-import { postgresStore } from '../accounts/store.js';
 import { Machine } from '../ops/machine.js';
 import type { Floor } from '../floor/floor.js';
 import { Sky } from '../floor/sky.js';
@@ -23,19 +21,20 @@ import { LeaveOnMerge } from '../floor/leave-on-merge.js';
 import type { ServiceInfo, ServicesState } from '../../shared/protocol.js';
 import type { BuildingServices, Ctx, LateServices } from './context.js';
 import type { Client } from './client.js';
+import { stateDoc } from '../db/state.js';
 
 /** What the whole building shares, made before any floor opens: the sky, ⚙️ Settings, spend, sign-ins, limits. */
 export function createServices(ctx: Ctx): BuildingServices {
   const { cfg, accounts, clients, floors } = ctx;
   // Day, night and the weather outside the windows, the same for everyone.
-  const sky = new Sky({ city: cfg.city, weather: cfg.weather, realTime: cfg.realTimeSky, placeFile: path.join(cfg.dataDir, 'sky-place.json'), clockFile: path.join(cfg.dataDir, 'sky-clock.json') }, (state) => ctx.broadcast({ t: 'sky', state }));
+  const sky = new Sky({ city: cfg.city, weather: cfg.weather, realTime: cfg.realTimeSky, placeDoc: stateDoc(cfg.dataDir, 'sky-place'), clockDoc: stateDoc(cfg.dataDir, 'sky-clock') }, (state) => ctx.broadcast({ t: 'sky', state }));
   sky.start();
   // Halloween or Christmas all over the building, the same for everyone (⚙️ Settings). On 'auto' it
   // goes by the calendar at the office, the sky's clock.
   const themes = new Themes(cfg.dataDir, () => sky.state.utcOffset, (state) => ctx.broadcast({ t: 'theme', state }));
   themes.start();
   // What the building looks like inside: the office, the castle, or a map of your own (⚙️ Settings).
-  const maps = new Maps(cfg.dataDir);
+  const maps = new Maps(cfg.dataDir, { watch: true });
   // The prompts the office writes for workers by itself, and the worker everyone starts on (⚙️ Settings).
   const configured = configuredProvider(cfg.agentCmd);
   const prompts = new OfficePrompts(cfg.dataDir, { list: agentProviders(configured), configured }, (state) => ctx.broadcast({ t: 'prompts', state }));
@@ -51,8 +50,8 @@ export function createServices(ctx: Ctx): BuildingServices {
   );
 
   const claudeBin = configuredProvider(cfg.agentCmd) === 'claude' ? resolveCommand(cfg.agentCmd) : resolveCommand('claude');
-  // Everyone with an account runs on their own Claude and GitHub sign-ins (see signins.ts). On the
-  // shared password, with no accounts, the office's own are used, as they always were.
+  // Everyone runs on their own Claude and GitHub sign-ins (see signins.ts), or, for admins who pick
+  // them, the office machine's own.
   const signins = new SignIns(
     cfg.dataDir,
     claudeBin,
@@ -64,7 +63,7 @@ export function createServices(ctx: Ctx): BuildingServices {
     },
   );
   // Accounts revoked from the terminal while the office was closed leave their sign-ins behind.
-  if (!accounts.unreadableFile) signins.prune(new Set(accounts.state(new Set()).accounts.map((a) => a.id)));
+  signins.prune(new Set(accounts.state(new Set()).accounts.map((a) => a.id)));
 
   // The Claude plan's 5-hour and weekly limits, for the meter under the workers: the office's own
   // plan, and each account's own once it runs on a Claude sign-in of its own.
@@ -87,7 +86,7 @@ export function createServices(ctx: Ctx): BuildingServices {
       a?.reader.close();
       const reader = new PlanLimitsReader(
         claudeBin,
-        signins.apply(id, childEnv(), [], 'claude'),
+        signins.apply(id, childEnv(), 'claude'),
         () => [...clients.values()].some((o) => o.accountId === id),
         (state) => {
           for (const o of clients.values()) if (o.accountId === id) ctx.sendTo(o, { t: 'limits', state });
@@ -114,8 +113,6 @@ export function createServices(ctx: Ctx): BuildingServices {
     (id, connections) => {
       for (const c of clients.values()) if (c.accountId === id && !c.out) ctx.sendTo(c, { t: 'composio.connections', connections });
     },
-    undefined,
-    cfg.databaseUrl ? postgresStore(cfg.databaseUrl) : undefined,
   );
   // Without the GitHub CLI, the elevator lists and clones repositories through the person's own GitHub on Composio.
   ctx.building.repoSource = new ComposioGitHub(composio);

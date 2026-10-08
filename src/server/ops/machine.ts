@@ -1,8 +1,7 @@
 import { execFile } from 'node:child_process';
-import { readFileSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
-import path from 'node:path';
 import type { MachineState } from '../../shared/protocol.js';
+import { stateDoc, type Doc } from '../db/state.js';
 
 /** How often the CPU and memory are read. */
 const SAMPLE_MS = 5_000;
@@ -66,11 +65,11 @@ function availableMemory(): Promise<number> {
  * The machine the office runs on: how busy its CPU and memory are (for the monitor on the wall, and
  * a warning before hiring while it's under pressure), and the most workers the office runs at once,
  * across every floor. That limit comes from --max-workers, or from ⚙️ Settings (kept in
- * .agent-office/machine.json), which can lower it but never raise it past --max-workers.
+ * the database), which can lower it but never raise it past --max-workers.
  */
 export class Machine implements Capacity {
   private saved?: Saved;
-  private path: string;
+  private doc: Doc<unknown>;
   private timer?: NodeJS.Timeout;
   private last = cpuTimes();
   private cpu = 0;
@@ -87,7 +86,7 @@ export class Machine implements Capacity {
     private count: () => number,
     private onState: (state: MachineState) => void,
   ) {
-    this.path = path.join(dataDir, 'machine.json');
+    this.doc = stateDoc(dataDir, 'machine');
     this.restore();
     this.memUsed = os.totalmem() - os.freemem();
   }
@@ -191,7 +190,7 @@ export class Machine implements Capacity {
 
   private restore() {
     try {
-      const s = JSON.parse(readFileSync(this.path, 'utf8')) as Partial<Saved>;
+      const s = this.doc.read() as Partial<Saved>;
       const limit = parseWorkerLimit(s.limit);
       if (limit !== undefined) this.saved = { limit, by: typeof s.by === 'string' ? s.by : 'someone', at: typeof s.at === 'number' ? s.at : 0 };
     } catch {
@@ -200,10 +199,6 @@ export class Machine implements Capacity {
   }
 
   private persist() {
-    try {
-      writeFileSync(this.path, JSON.stringify(this.saved ?? {}, null, 2), { mode: 0o600 });
-    } catch {
-      // disk issues shouldn't take the office down
-    }
+    this.doc.write(this.saved ?? {});
   }
 }

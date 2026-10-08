@@ -1,6 +1,7 @@
-// Boots the real office the way cli.ts does (a throwaway home and project, an ephemeral port), then
-// talks to it as a browser would: its HTTP routes before and after signing in, a WebSocket with
-// the welcome and a few messages each way, and the loopback hook server the workers call.
+// Boots the real office the way cli.ts does (a throwaway home and project, an ephemeral port, the
+// tests' in-memory database), then talks to it as a browser would: its HTTP routes before and after
+// registering and signing in, a WebSocket with the welcome and a few messages each way, and the
+// loopback hook server the workers call.
 import { after, before, test } from 'node:test';
 import assert from 'node:assert/strict';
 import { execFileSync } from 'node:child_process';
@@ -21,7 +22,11 @@ let office: Office;
 let base = '';
 let hooks = '';
 let cookie = '';
+/** Each person's session cookie, once they've registered. */
+const cookies: Record<string, string> = {};
 const PASSWORD = 'dispatch-test';
+/** Everyone's own password (they're each at least 8 characters). */
+const own = (name: string) => `${name.toLowerCase()}-password`;
 
 function freePort(): Promise<number> {
   return new Promise((resolve, reject) => {
@@ -46,6 +51,11 @@ class Browser {
       this.wake?.();
     });
     ws.on('close', () => (this.closed = true));
+  }
+
+  /** A browser signed in as `who` (Ada, the office's admin, when not given). */
+  static as(who: string, query = ''): Promise<Browser> {
+    return Browser.open(query, { cookie: cookies[who], origin: base });
   }
 
   static open(query = '', headers: Record<string, string> = { cookie, origin: base }): Promise<Browser> {
@@ -164,7 +174,7 @@ test('answers the open routes before anyone signs in', async () => {
   const health = await get('/api/health');
   assert.equal(health.status, 200);
   assert.deepEqual(await health.json(), { ok: true });
-  assert.deepEqual(await (await get('/api/login')).json(), { accounts: false, shared: true });
+  assert.deepEqual(await (await get('/api/login')).json(), { accounts: false, registration: true });
   assert.deepEqual(await (await get('/api/claim')).json(), { claimable: false });
 
   const login = await get('/login');
@@ -194,28 +204,74 @@ test('answers the open routes before anyone signs in', async () => {
   const put = await fetch(base + '/api/login', { method: 'PUT' });
   assert.equal(put.status, 401);
   assert.deepEqual(await put.json(), { error: 'Not logged in' });
-  assert.deepEqual(await (await post('/api/claim', { token: 'nope' })).json(), { error: 'This office has already been claimed. Sign in with the password you saved.' });
+  assert.deepEqual(await (await post('/api/claim', { token: 'nope' })).json(), { error: 'This office has already been claimed. Sign in, or register with the password you saved.' });
   assert.equal((await post('/api/link', { key: 'nope' })).status, 410);
   assert.equal((await post('/api/join', { token: 'nope' })).status, 410);
 });
 
-test('signs in with the office password', async () => {
-  const wrong = await post('/api/login', { password: 'nope' });
-  assert.equal(wrong.status, 401);
-  assert.deepEqual(await wrong.json(), { error: 'Wrong password' });
-  assert.equal((await post('/api/login', 'not json')).status, 400);
+const cookieOf = (res: Response) => {
+  const set = res.headers.get('set-cookie') ?? '';
+  assert.match(set, /^ao_session_\d+=/);
+  return set.split(';')[0];
+};
 
-  const ok = await post('/api/login', { password: PASSWORD });
+test('the first account is registered with the office password and runs the office; then everyone signs in', async () => {
+  // Nobody has an account yet: there's nobody to sign in as.
+  assert.deepEqual(await (await post('/api/login', { password: PASSWORD })).json(), { error: 'Nobody has an account yet: register the first one' });
+  const wrong = await post('/api/register', { name: 'Ada', password: own('Ada'), officePassword: 'nope' });
+  assert.equal(wrong.status, 401);
+  assert.deepEqual(await wrong.json(), { error: "That isn't the office password" });
+  assert.equal((await post('/api/register', 'not json')).status, 400);
+  assert.deepEqual(await (await post('/api/register', { name: 'Ada', password: 'short', officePassword: PASSWORD })).json(), { error: 'Pick a password of at least 8 characters' });
+  assert.deepEqual(await (await post('/api/register', { name: 'Ada', password: own('Ada'), key: 'nope' })).json(), { error: 'That link was already used. Register with the office password instead.' });
+
+  const ada = await post('/api/register', { name: 'Ada', password: own('Ada'), officePassword: PASSWORD });
+  assert.equal(ada.status, 200);
+  assert.deepEqual(await ada.json(), { ok: true, name: 'Ada', role: 'admin' });
+  cookie = cookies.Ada = cookieOf(ada);
+  // The rest register as members; a name can't be taken twice.
+  for (const name of ['Bo', 'Cy', 'Di', 'Eve']) {
+    const r = await post('/api/register', { name, password: own(name), officePassword: PASSWORD });
+    assert.deepEqual(await r.json(), { ok: true, name, role: 'member' });
+    cookies[name] = cookieOf(r);
+  }
+  assert.deepEqual(await (await post('/api/register', { name: 'ada', password: own('Ada'), officePassword: PASSWORD })).json(), { error: "There's already an account called ada" });
+  assert.deepEqual(await (await get('/api/login')).json(), { accounts: true, registration: true });
+
+  const nameless = await post('/api/login', { password: own('Ada') });
+  assert.deepEqual(await nameless.json(), { error: 'Type your name too' });
+  const bad = await post('/api/login', { name: 'Ada', password: 'nope' });
+  assert.equal(bad.status, 401);
+  assert.deepEqual(await bad.json(), { error: 'Wrong name or password' });
+  assert.equal((await post('/api/login', 'not json')).status, 400);
+  const ok = await post('/api/login', { name: 'ada', password: own('Ada') });
   assert.equal(ok.status, 200);
   assert.deepEqual(await ok.json(), { ok: true });
-  const set = ok.headers.get('set-cookie') ?? '';
-  assert.match(set, /^ao_session_\d+=/);
-  cookie = set.split(';')[0];
+  cookie = cookies.Ada = cookieOf(ok);
+});
+
+test('each account keeps its own settings in the database', async () => {
+  const ada = { cookie: cookies.Ada, origin: base };
+  const bo = { cookie: cookies.Bo, origin: base };
+  assert.deepEqual(await (await get('/api/me/config', ada)).json(), { config: {} });
+  assert.deepEqual(await (await post('/api/me/config', { 'agent-office.settings': '{"volume":0.5}', 'agent-office.floor': 'f1' }, ada)).json(), { ok: true });
+  assert.deepEqual(await (await post('/api/me/config', { 'agent-office.floor': null }, ada)).json(), { ok: true });
+  assert.deepEqual(await (await get('/api/me/config', ada)).json(), { config: { 'agent-office.settings': '{"volume":0.5}' } });
+  // Nobody else sees it.
+  assert.deepEqual(await (await get('/api/me/config', bo)).json(), { config: {} });
+  assert.equal((await post('/api/me/config', { 'not a key!': 'x' }, ada)).status, 400);
+  assert.equal((await post('/api/me/config', { 'agent-office.n': 3 }, ada)).status, 400);
+  assert.equal((await post('/api/me/config', '[]', ada)).status, 400);
+  assert.equal((await post('/api/me/config', { 'agent-office.big': 'x'.repeat(600 * 1024) }, ada)).status, 413);
+  assert.equal((await get('/api/me/config')).status, 401);
+  // Only from the office's own pages.
+  assert.equal((await post('/api/me/config', { 'agent-office.floor': 'x' }, { cookie: cookies.Ada })).status, 403);
+  assert.equal((await post('/api/me/config', { 'agent-office.floor': 'x' }, { cookie: cookies.Ada, origin: 'https://evil.example' })).status, 403);
 });
 
 test('answers the signed-in routes', async () => {
   const me = { cookie };
-  assert.deepEqual(await (await get('/api/whoami', me)).json(), { ok: true, me: { admin: true } });
+  assert.deepEqual(await (await get('/api/whoami', me)).json(), { ok: true, me: { account: { name: 'Ada', role: 'admin' }, admin: true } });
   assert.match(await (await get('/', me)).text(), /<title>index<\/title>/);
   assert.match(await (await get('/lite', me)).text(), /<title>lite<\/title>/);
   const floor = office.floors()[0].id;
@@ -236,7 +292,7 @@ test('answers the signed-in routes', async () => {
   await bad(await get('/api/changes/file', me), 400, 'Bad request');
   await bad(await get(`/api/docs/file?floor=${floor}`, me), 400, 'Bad request');
   await bad(await get(`/api/docs/other?floor=${floor}&path=x`, me), 404, 'Not found');
-  assert.deepEqual(await (await fetch(base + '/api/whoami', { method: 'POST', headers: me })).json(), { ok: true, me: { admin: true } });
+  assert.deepEqual(await (await fetch(base + '/api/whoami', { method: 'POST', headers: me })).json(), { ok: true, me: { account: { name: 'Ada', role: 'admin' }, admin: true } });
   for (const [method, p] of [['GET', '/nothing-here.txt'], ['PUT', '/api/login'], ['POST', '/api/docs'], ['POST', '/api/search']]) {
     const missing = await fetch(base + p, { method, headers: me });
     assert.equal(missing.status, 404, `${method} ${p}`);
@@ -255,11 +311,11 @@ test('refuses a WebSocket from another site or without a session', async () => {
 
 test('welcomes a browser and dispatches what it sends', async () => {
   const floor = office.floors()[0];
-  const a = await Browser.open('?name=Ada&color=%23ff8a5b');
+  const a = await Browser.open('?name=Someone&color=%23ff8a5b');
   const welcome = await a.take('welcome');
   assert.equal(welcome.floor, floor.id);
   assert.equal(welcome.project?.name, floor.project.name);
-  assert.deepEqual(welcome.me, { admin: true });
+  assert.deepEqual(welcome.me, { account: { name: 'Ada', role: 'admin' }, admin: true });
   assert.deepEqual(welcome.workers, []);
   assert.equal(welcome.floors.length, 1);
   assert.equal(welcome.floors[0].id, floor.id);
@@ -274,8 +330,8 @@ test('welcomes a browser and dispatches what it sends', async () => {
   assert.equal(pong.at, 42);
   assert.equal(typeof pong.now, 'number');
 
-  // Someone else walks in: each sees the other.
-  const b = await Browser.open('?name=Bo');
+  // Someone else walks in: each sees the other. Everyone goes by their account's name.
+  const b = await Browser.as('Bo');
   const bWelcome = await b.take('welcome');
   const joined = await a.take('peer.join');
   assert.equal(joined.peer.id, bWelcome.you);
@@ -293,26 +349,34 @@ test('welcomes a browser and dispatches what it sends', async () => {
   }
 
   a.send({ t: 'profile', name: 'Ada L', color: '#123456', look: {} });
-  for (const who of [a, b]) assert.equal((await who.take('peer.update', (m) => m.peer.id === welcome.you)).peer.name, 'Ada L');
+  for (const who of [a, b]) {
+    const { peer } = await who.take('peer.update', (m) => m.peer.id === welcome.you);
+    assert.deepEqual([peer.name, peer.color], ['Ada', '#123456']);
+  }
 
   // A sign over a desk: the floor sees the plan change and hears who hung it.
   a.send({ t: 'desk.label', deskId: 'desk-1', text: 'Payments' });
   assert.equal((await b.take('plan')).plan.labels['desk-1']?.text, 'Payments');
-  for (const who of [a, b]) assert.equal((await who.take('toast', (m) => m.text.includes('Payments'))).text, '🪧 Ada L hung a sign over Desk 1: “Payments”');
+  for (const who of [a, b]) assert.equal((await who.take('toast', (m) => m.text.includes('Payments'))).text, '🪧 Ada hung a sign over Desk 1: “Payments”');
 
   a.send({ t: 'leaveOnMerge.set', on: true });
   for (const who of [a, b]) {
     assert.equal((await who.take('leaveOnMerge')).state.on, true);
-    assert.match((await who.take('toast', (m) => m.text.includes('go home'))).text, /^🏠 Ada L set workers to go home/);
+    assert.match((await who.take('toast', (m) => m.text.includes('go home'))).text, /^🏠 Ada set workers to go home/);
   }
 
-  // Only for Ada: a floor that isn't there, sign-ins on the shared password, and the accounts list.
+  // Only for Ada: a floor that isn't there, her own sign-ins, and the accounts list (she's the admin).
   a.send({ t: 'floor.go', floor: 'nope' });
   assert.deepEqual(await a.take('toast', (m) => m.level === 'warn'), { t: 'toast', text: 'No such floor', level: 'warn' });
   a.send({ t: 'signins.get' });
-  assert.equal((await a.take('toast', (m) => m.level === 'warn')).text, "On the shared office password, workers run on the office's own sign-ins");
+  assert.ok((await a.take('signins')).state.claude);
   a.send({ t: 'accounts.get' });
-  assert.equal((await a.take('accounts')).state.sharedPassword, true);
+  const accounts = (await a.take('accounts')).state;
+  assert.equal(accounts.openRegistration, true);
+  assert.deepEqual(accounts.accounts.map((x) => [x.name, x.role]), [['Ada', 'admin'], ['Bo', 'member'], ['Cy', 'member'], ['Di', 'member'], ['Eve', 'member']]);
+  // A member can't manage accounts.
+  b.send({ t: 'accounts.get' });
+  assert.equal((await b.take('toast', (m) => m.level === 'warn')).text, 'Only admins can manage accounts');
 
   // Frames that aren't messages, or whose type isn't one, are dropped; the office carries on.
   for (const odd of ['not json', '42', 'null', '"text"', '[]', {}, { t: 'nope' }, { t: 'constructor' }, { t: '__proto__' }, { t: 'toString' }, { t: 'hasOwnProperty' }, { t: '__defineGetter__' }, { t: 7 }, { t: ['ping'], at: 99 }]) a.send(odd);
@@ -327,11 +391,13 @@ test('welcomes a browser and dispatches what it sends', async () => {
 
 test('the toys on a floor, and letting go of them on leaving the floor or the office', async () => {
   const floor = office.floors()[0];
-  const a = await Browser.open('?name=Cy');
+  const a = await Browser.as('Cy');
   const cy = (await a.take('welcome')).you;
-  const b = await Browser.open('?name=Di');
+  const b = await Browser.as('Di');
   await b.take('welcome');
   await a.take('peer.join');
+  // Their own sign-ins come in on their own, a moment after the welcome.
+  await b.drain();
 
   a.send({ t: 'jukebox.skip' });
   assert.equal((await b.take('jukebox')).state.on, true);
@@ -384,8 +450,10 @@ test('the toys on a floor, and letting go of them on leaving the floor or the of
   await b.close();
 });
 
-test('settings, accounts, sign-ins and the boards answer as before', async () => {
-  const a = await Browser.open('?name=Eve');
+test('settings, accounts and the boards answer as before', async () => {
+  // Eve is made an admin, so she may manage the accounts too.
+  office.accounts.setRole(office.accounts.byName('Eve')!.id, 'admin');
+  const a = await Browser.as('Eve');
   await a.take('welcome');
   const warned = async (text: string) => assert.equal((await a.take('toast', (m) => m.level === 'warn')).text, text);
   const told = async (start: string) => (await a.take('toast', (m) => m.level === 'info' && m.text.startsWith(start))).text;
@@ -412,14 +480,19 @@ test('settings, accounts, sign-ins and the boards answer as before', async () =>
   a.send({ t: 'accounts.invite', name: 'Fay', role: 'member' });
   const invite = (await a.take('accounts.invited')).invite;
   assert.equal(invite?.name, 'Fay');
-  assert.equal((await a.take('accounts')).state.invites.length, 1);
+  assert.equal((await a.take('accounts', (m) => m.state.invites.length > 0)).state.invites[0].name, 'Fay');
   a.send({ t: 'accounts.cancel', inviteId: invite?.id });
-  assert.equal((await a.take('accounts')).state.invites.length, 0);
+  await a.take('accounts', (m) => m.state.invites.length === 0);
   a.send({ t: 'accounts.revoke', accountId: 'nobody' });
-  for (const t of ['signins.start', 'signins.cancel', 'signins.signout'] as const) {
-    a.send({ t, which: 'github' });
-    await warned("On the shared office password, workers run on the office's own sign-ins");
-  }
+  a.send({ t: 'accounts.registration', on: false });
+  await a.take('accounts', (m) => !m.state.openRegistration);
+  assert.match(await told('🔑'), /^🔑 Eve closed registration/);
+  // Closed: the office password registers nobody, though everyone already in signs in as before.
+  assert.equal((await post('/api/register', { name: 'Gus', password: own('Gus'), officePassword: PASSWORD })).status, 403);
+  assert.equal((await post('/api/login', { name: 'Bo', password: own('Bo') })).status, 200);
+  a.send({ t: 'accounts.registration', on: true });
+  await a.take('accounts', (m) => m.state.openRegistration);
+  await told('Eve let people register');
 
   a.send({ t: 'gh.merge', number: 0, method: 'squash', deleteBranch: false });
   a.send({ t: 'gh.close', kind: 'nope', number: 3 });

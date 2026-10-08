@@ -32,8 +32,8 @@ export function onConnection(ctx: Ctx, ws: WebSocket, url: URL, session: Session
   const back = !gone && wanted !== null && (onRoof || floor?.id === wanted);
   const spot = (back && spotFrom(url.searchParams)) || { ...elevatorSpot(), y: 0, rotY: 0 };
   const account = session.account;
-  // An account's name is its own; on the shared password people pick one.
-  const name = account?.name ?? (str(url.searchParams.get('name'), 24).trim() || `Guest ${id.slice(0, 3)}`);
+  // Everyone goes by their account's name.
+  const name = account.name;
   const colorParam = url.searchParams.get('color') ?? '';
   const intParam = (k: string) => (url.searchParams.get(k) ? Number(url.searchParams.get(k)) : undefined);
   const me = meOf(account?.id);
@@ -51,7 +51,7 @@ export function onConnection(ctx: Ctx, ws: WebSocket, url: URL, session: Session
     voice: false,
     muted: true,
     sharing: false,
-    ...(account ? { account: true } : {}),
+    account: true,
     ...(url.searchParams.get('lite') === '1' ? { lite: true } : {}),
     ...(onRoof ? { floor: ROOF } : floor ? { floor: floor.id } : {}),
   });
@@ -59,7 +59,7 @@ export function onConnection(ctx: Ctx, ws: WebSocket, url: URL, session: Session
   const mapWas = maps.pick();
   if (maps.reload()) mapNews(ctx, mapWas);
   clients.set(id, client);
-  if (account) accounts.seen(account.id);
+  accounts.seen(account.id);
   ws.on('pong', () => (client.isAlive = true));
 
   sendTo(client, {

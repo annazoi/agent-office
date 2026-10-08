@@ -6,6 +6,7 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { Building, type FloorDef } from '../../src/server/floor/building.js';
 import { parseProgress, whyCloneFailed } from '../../src/server/integrations/clone.js';
+import { stateDoc } from '../../src/server/db/state.js';
 
 // A stand-in for gh: `repo view` and `repo clone` from bare repositories in $FAKE_GH_REPOS. It says
 // how far along it is the way git does, can wait first ($FAKE_GH_DELAY), hang ($FAKE_GH_HANG) or
@@ -63,11 +64,11 @@ function office(t: { after(fn: () => void): void }) {
   for (const k of ['FAKE_GH_DELAY', 'FAKE_GH_HANG', 'FAKE_GH_FAIL']) delete process.env[k];
   const projects = path.join(root, 'projects');
   /** The clones under way, as the office keeps them for the next one. */
-  const saved = () => (existsSync(path.join(dataDir, 'cloning.json')) ? (JSON.parse(readFileSync(path.join(dataDir, 'cloning.json'), 'utf8')) as (FloorDef & { pid: number })[]) : []);
+  const saved = () => (stateDoc<any>(dataDir, 'cloning').read() ?? []) as (FloorDef & { pid: number })[];
   const running = async () => {
     for (let i = 0; i < 200 && !saved().length; i++) await new Promise((r) => setTimeout(r, 25));
     const pid = saved()[0]?.pid;
-    assert.ok(pid, 'the clone is in cloning.json');
+    assert.ok(pid, 'the clone is in the cloning document');
     pids.push(pid);
     return pid;
   };
@@ -116,7 +117,7 @@ test('a clone shows how far along it is, then becomes a floor', async (t) => {
   assert.ok(existsSync(path.join(projects, 'acme', 'game', 'index.html')));
   assert.deepEqual(building.list().map((d) => d.repo), ['acme/game']);
   assert.deepEqual(building.pending(), []);
-  assert.deepEqual(saved(), [], "cloning.json is gone once it's done");
+  assert.deepEqual(saved(), [], "the cloning document is gone once it's done");
   assert.deepEqual(readdirSync(path.join(dataDir, 'clones')), [], 'and so is its log');
 });
 

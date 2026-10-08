@@ -1,13 +1,10 @@
 // Composio's tools for the workers: each agent CLI gets the hiring account's own Composio MCP
 // endpoint (see ComposioHub.mcpFor) the same way it gets the office's agent-office server
 // (office-workers.ts), as a second MCP server called "composio". The endpoint's header carries a
-// credential, so it never goes on a command line: Claude reads it from a file only the office's user
-// can read, Codex from an environment variable it's told the name of, and OpenCode from its config in
+// credential, so it never goes on a command line: Claude and Codex read it from an environment
+// variable they're told the name of (Claude expands ${…} in its --mcp-config), and OpenCode from its config in
 // the environment. Nothing here runs unless the office has a Composio key and the account connected
 // something, so a worker without it starts exactly as before.
-import { createHash } from 'node:crypto';
-import { mkdirSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
 import type { ComposioToolkit } from '../../shared/protocol.js';
 
 export const COMPOSIO_MCP_NAME = 'composio';
@@ -26,14 +23,19 @@ export interface ComposioForWorkers {
   mcpCached(owner: string): ComposioMcp | undefined;
 }
 
-/** Claude Code: a --mcp-config file per endpoint (one per account), in the office's data dir (mode 0600). */
-export function writeClaudeComposioMcp(dataDir: string, mcp: ComposioMcp): string {
-  const dir = path.join(dataDir, 'composio-mcp');
-  mkdirSync(dir, { recursive: true, mode: 0o700 });
-  const file = path.join(dir, `${createHash('sha256').update(mcp.url).digest('hex').slice(0, 16)}.json`);
-  const config = { mcpServers: { [COMPOSIO_MCP_NAME]: { type: mcp.type, url: mcp.url, headers: mcp.headers } } };
-  writeFileSync(file, JSON.stringify(config, null, 2), { mode: 0o600 });
-  return file;
+/**
+ * Claude Code: its --mcp-config as JSON for the command line, each header's value only named there
+ * (${AGENT_OFFICE_COMPOSIO_MCP_HEADER_<n>}, which Claude expands) and given in the environment.
+ */
+export function claudeComposioMcp(mcp: ComposioMcp): { config: string; env: Record<string, string> } {
+  const env: Record<string, string> = {};
+  const headers: Record<string, string> = {};
+  Object.entries(mcp.headers).forEach(([name, value], i) => {
+    const key = `${COMPOSIO_HEADER_ENV}_${i}`;
+    env[key] = value;
+    headers[name] = `\${${key}}`;
+  });
+  return { config: JSON.stringify({ mcpServers: { [COMPOSIO_MCP_NAME]: { type: mcp.type, url: mcp.url, headers } } }), env };
 }
 
 /**

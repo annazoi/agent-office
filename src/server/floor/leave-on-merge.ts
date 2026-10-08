@@ -1,22 +1,21 @@
-import { readFileSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
 import type { GhPull, LeaveOnMergeState, QueueTask, WorkerInfo } from '../../shared/protocol.js';
 import { DESK_BY_ID } from '../../shared/building/layout.js';
 import { isBusy, workerPr, type WorkerPr } from '../../shared/agents/status.js';
+import { stateDoc, type Doc } from '../db/state.js';
 
 /**
  * Whether a worker whose pull request merged goes home by itself, picked in ⚙️ Settings by anyone
- * and kept in .agent-office/leave-on-merge.json. The same on every floor; off until someone turns it on.
+ * and kept in the database. The same on every floor; off until someone turns it on.
  */
 export class LeaveOnMerge {
   private saved?: Required<LeaveOnMergeState>;
-  private path: string;
+  private doc: Doc<unknown>;
 
   constructor(
     dataDir: string,
     private onState: (state: LeaveOnMergeState) => void,
   ) {
-    this.path = path.join(dataDir, 'leave-on-merge.json');
+    this.doc = stateDoc(dataDir, 'leave-on-merge');
     this.restore();
   }
 
@@ -36,7 +35,7 @@ export class LeaveOnMerge {
 
   private restore() {
     try {
-      const s = JSON.parse(readFileSync(this.path, 'utf8')) as Partial<LeaveOnMergeState>;
+      const s = this.doc.read() as Partial<LeaveOnMergeState>;
       if (typeof s.on === 'boolean') this.saved = { on: s.on, by: typeof s.by === 'string' ? s.by : 'someone', at: typeof s.at === 'number' ? s.at : 0 };
     } catch {
       // never set: workers wait to be sent home
@@ -44,11 +43,7 @@ export class LeaveOnMerge {
   }
 
   private persist() {
-    try {
-      writeFileSync(this.path, JSON.stringify(this.saved ?? {}, null, 2), { mode: 0o600 });
-    } catch {
-      // disk issues shouldn't take the office down
-    }
+    this.doc.write(this.saved ?? {});
   }
 }
 

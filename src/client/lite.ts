@@ -5,7 +5,7 @@
 // anywhere in it.
 
 import { Net } from './shared/net';
-import { AVATAR_COLORS, loadProfile, loadSettings, saveProfile, store } from './state';
+import { AVATAR_COLORS, loadProfile, loadSettings, store } from './state';
 import { randomLook } from '../shared/people/avatar';
 import { cloneLabel } from '../shared/building/floors';
 import { ROOF } from '../shared/building/rooftop';
@@ -38,7 +38,7 @@ if (new URLSearchParams(location.search).get('why') === 'webgl') {
   toast("This browser can't draw the 3D office (WebGL is off or missing), so here's the 2D view", 'warn');
 }
 
-// Your name and color from the 3D office, if this browser has been in it. Nobody sees a character
+// Your name and color from the 3D office, if you've been in it. Nobody sees a character
 // of yours from here, so a look is only made up to connect with.
 const saved = loadProfile();
 store.profile = { name: saved?.name ?? 'Guest', color: saved?.color ?? AVATAR_COLORS[1], look: saved?.look ?? randomLook() };
@@ -379,27 +379,6 @@ bell.addEventListener('click', async () => {
 if (notifyPermission() === 'default' && settings.notify) $('to-3d').before(bell);
 
 // ---- In ----------------------------------------------------------------------------------------
-/** Your name, the first time this browser comes in on the shared password. */
-function askName(done: (name: string) => void) {
-  const input = h('input', { type: 'text', maxlength: 24, placeholder: 'Your name', 'aria-label': 'Your name', autocomplete: 'nickname' }) as HTMLInputElement;
-  const form = h(
-    'form.modal.lite-name',
-    {},
-    h('header', {}, h('h2', {}, '👋 Who is it?')),
-    h('div.body', {}, h('p', {}, 'Your teammates see this name on what you type and send.'), input),
-    h('footer', {}, h('button.btn.primary', { type: 'submit' }, 'Come on in')),
-  );
-  const modal = openModal(form, { escCloses: false, backdropCloses: false });
-  form.addEventListener('submit', (e) => {
-    e.preventDefault();
-    const name = input.value.trim();
-    if (!name) return input.focus();
-    modal.close();
-    done(name);
-  });
-  setTimeout(() => input.focus(), 30);
-}
-
 void (async () => {
   try {
     const res = await fetch('/api/whoami', { cache: 'no-store' });
@@ -409,15 +388,9 @@ void (async () => {
   } catch {
     // the welcome message says it too
   }
-  // With an account of your own, your name is that account's.
-  if (store.me.account) store.profile.name = store.me.account.name;
-  if (saved || store.me.account) return net.connect();
-  askName((name) => {
-    store.profile.name = name;
-    // No look: the 3D office still has you pick a character the first time you go in.
-    saveProfile({ name, color: store.profile.color });
-    net.connect();
-  });
+  // Your name is your account's.
+  if (store.me.account.name) store.profile.name = store.me.account.name;
+  net.connect();
 })();
 
 renderFloors();

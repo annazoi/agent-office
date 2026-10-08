@@ -98,12 +98,6 @@ export class Office {
     }
   }
 
-  /** Which fields its sign-in asks for: a name when there are accounts, the shared password while it's on. */
-  async loginOptions(): Promise<{ accounts: boolean; shared: boolean }> {
-    const o = parse((await this.call('GET', '/api/login')).body) as { accounts?: unknown; shared?: unknown } | undefined;
-    return { accounts: o?.accounts === true, shared: o?.shared !== false };
-  }
-
   /** Signs in; resolves to why it didn't work, or '' when it did (and `token` is set). */
   async signIn(name: string, password: string): Promise<string> {
     const r = await this.call('POST', '/api/login', { name, password });

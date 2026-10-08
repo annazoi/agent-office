@@ -1,14 +1,13 @@
 // The loopback-only server for the workers' own calls: their agents' hook events, and the office's
 // queue and workers for the board agents and the office-workers command.
 import http from 'node:http';
-import { readFileSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
 import type { Ctx } from '../office/context.js';
 import { readBody, send } from '../http/util.js';
 import { officeQueue } from './office-queue.js';
 import { officeWorkers } from './office-workers.js';
 import { providerHook } from '../providers/index.js';
 import type { AgentProvider } from '../../shared/agents/providers.js';
+import { stateDoc } from '../db/state.js';
 
 /** Starts the hook server, and says which port it listens on. */
 export async function startHookServer(ctx: Ctx): Promise<{ hookServer: http.Server; hookPort: number }> {
@@ -43,7 +42,7 @@ export async function startHookServer(ctx: Ctx): Promise<{ hookServer: http.Serv
   });
   // Workers' terminals outlive a restart of the office (see ptys.ts) with this address in their
   // environment, so listen where the last office did when that port is free.
-  const hookPortPath = path.join(ctx.cfg.dataDir, 'hook-port');
+  const portDoc = stateDoc<number>(ctx.cfg.dataDir, 'hook-port');
   const listenHooks = (port: number) =>
     new Promise<void>((resolve, reject) => {
       hookServer.once('error', reject);
@@ -52,14 +51,9 @@ export async function startHookServer(ctx: Ctx): Promise<{ hookServer: http.Serv
         resolve();
       });
     });
-  let lastHookPort = 0;
-  try {
-    lastHookPort = Number(readFileSync(hookPortPath, 'utf8')) || 0;
-  } catch {
-    // first start
-  }
+  const lastHookPort = Number(portDoc.read()) || 0;
   await listenHooks(lastHookPort).catch(() => listenHooks(0));
   const hookPort = (hookServer.address() as { port: number }).port;
-  writeFileSync(hookPortPath, String(hookPort), { mode: 0o600 });
+  portDoc.write(hookPort);
   return { hookServer, hookPort };
 }

@@ -1,10 +1,10 @@
 // Claude Code: hooks from a settings file the office writes (its own hook route, /hooks/claude),
 // usage read off the session transcript and booked in the budget, and tasks the office names.
-import { describeComposioTool, writeClaudeComposioMcp } from '../integrations/composio-mcp.js';
+import { claudeComposioMcp, describeComposioTool } from '../integrations/composio-mcp.js';
 import { writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { FAILS_TO_DESPAIR, outputFailed, toolAction } from '../../shared/agents/actions.js';
-import { MCP_READ_ONLY, writeClaudeMcpConfig } from '../office-workers.js';
+import { MCP_READ_ONLY, claudeMcpConfig } from '../office-workers.js';
 import { QUEUE_AGENT_DISALLOWED_TOOLS } from '../floor/stations.js';
 import { answered, notified, wantsPermission } from '../workers/lifecycle.js';
 import { shq } from '../workers/process.js';
@@ -23,17 +23,14 @@ const SETUP_PROMPT = /trust this folder|Do you trust the files|Select login meth
 const NOT_LOGGED_IN = /Not logged in\s*·\s*Run \/login|Invalid API key|Please run \/login/i;
 
 interface ClaudeSetup {
-  /** Its --settings: the office's hooks. */
+  /** Its --settings, as JSON on the command line: the office's hooks. */
   settings: string;
-  /** Its --mcp-config: the office's MCP server. */
+  /** Its --mcp-config, the same way: the office's MCP server. */
   mcp?: string;
-  /** Where a hiring account's Composio --mcp-config file goes (see composio-mcp.ts). */
-  dataDir: string;
 }
 
-/** Claude Code's --settings for every worker: each hook event posted to the office, with curl or else the office's own node. */
-function writeHookSettings(dataDir: string): string {
-  const settingsPath = path.join(dataDir, 'claude-hooks.json');
+/** Claude Code's --settings for every worker, as JSON: each hook event posted to the office, with curl or else the office's own node. */
+function hookSettings(dataDir: string): string {
   const events: [string, string | undefined][] = [
     ['SessionStart', undefined],
     ['UserPromptSubmit', undefined],
@@ -82,8 +79,7 @@ process.stdin.on('end', () => {
   }
   // Looking at the office's workers doesn't need anyone's say-so; hiring and sending home still asks.
   const permissions = { allow: MCP_READ_ONLY };
-  writeFileSync(settingsPath, JSON.stringify({ hooks, permissions }, null, 2), { mode: 0o600 });
-  return settingsPath;
+  return JSON.stringify({ hooks, permissions });
 }
 
 function describeTool(payload: any): string {
@@ -201,16 +197,16 @@ export const claude: ProviderAdapter<undefined, ClaudeSetup> = {
   scrubEnv: ['CLAUDECODE', 'CLAUDE_CODE_ENTRYPOINT', 'CLAUDE_CODE_SSE_PORT', 'CLAUDE_CODE_EXECPATH', 'CLAUDE_PID', 'CLAUDE_EFFORT'],
   scrubPrefixes: ['CLAUDE_CODE_SESSION', 'CLAUDE_CODE_CHILD', 'CLAUDE_CODE_MESSAGING'],
   prepare: ({ dataDir, mcpScript }) => ({
-    settings: writeHookSettings(dataDir),
-    mcp: mcpScript ? writeClaudeMcpConfig(dataDir, mcpScript) : undefined,
-    dataDir,
+    settings: hookSettings(dataDir),
+    mcp: mcpScript ? claudeMcpConfig(mcpScript) : undefined,
   }),
   launch({ h: { info }, args, prompt, resumeSessionId, station, setup, composio }) {
     args.unshift('--settings', setup.settings);
     // The office's MCP server: its workers, to list, hire, send home and tell (see office-workers.ts).
     // Ahead of --settings, which ends the list --mcp-config takes. The hiring account's Composio
-    // tools go on the same list, from a file of that account's own (see composio-mcp.ts).
-    const mcps = [setup.mcp, composio && writeClaudeComposioMcp(setup.dataDir, composio)].filter((f): f is string => !!f);
+    // tools go on the same list, with its credential in the environment (see composio-mcp.ts).
+    const tools = composio ? claudeComposioMcp(composio) : undefined;
+    const mcps = [setup.mcp, tools?.config].filter((c): c is string => !!c);
     if (mcps.length) args.unshift('--mcp-config', ...mcps);
     // A model/effort chosen for this worker overrides whatever --agent-args set office-wide.
     if (info.model) args.push('--model', info.model);
@@ -220,7 +216,7 @@ export const claude: ProviderAdapter<undefined, ClaudeSetup> = {
     if (resumeSessionId) args.push('--resume', resumeSessionId);
     // `--` so a prompt like "- fix login" is never parsed as a CLI option.
     if (prompt) args.push('--', prompt);
-    return { args };
+    return { args, ...(tools ? { env: tools.env } : {}) };
   },
   signIn: 'claude',
   // SessionStart fires as soon as Claude can take input: still silent, it's blocked on a human.

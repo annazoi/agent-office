@@ -1,18 +1,14 @@
-// Grok: its hooks live in a GROK_HOME of the office's own (see ../grok.ts), so a worker never edits
-// ~/.grok, and report on /hooks/grok. Its spend isn't metered by the office.
+// Grok: it runs on the person's own ~/.grok and sign-in. The office writes it no hooks (Grok only
+// reads them from JSON files, and the office keeps nothing in files), so it's followed by its
+// terminal; hooks of the person's own still report on /hooks/grok. Its spend isn't metered by the office.
 import { randomUUID } from 'node:crypto';
-import { existsSync } from 'node:fs';
-import { homedir } from 'node:os';
 import path from 'node:path';
-import { normalizeGrokHook, withoutGrokLaunchArgs, writeGrokHome } from '../agents/grok.js';
+import { normalizeGrokHook, withoutGrokLaunchArgs } from '../agents/grok.js';
 import { reduceLifecycle } from '../workers/lifecycle.js';
 import type { ProviderAdapter } from './types.js';
 
 interface GrokSetup {
-  home: string;
   socket: string;
-  /** The person's own Grok sign-in, when there is one. */
-  authPath?: string;
 }
 
 export const grok: ProviderAdapter<undefined, GrokSetup> = {
@@ -21,12 +17,7 @@ export const grok: ProviderAdapter<undefined, GrokSetup> = {
     'GROK_SESSION_ID', 'GROK_AGENT_ID', 'GROK_HOOK_EVENT', 'GROK_HOOK_NAME', 'GROK_WORKSPACE_ROOT',
     'GROK_PLUGIN_ROOT', 'GROK_PLUGIN_DATA', 'GROK_AUTH', 'GROK_AUTH_PATH',
   ],
-  prepare({ dataDir }) {
-    const { home, socket } = writeGrokHome(dataDir);
-    const userGrok = process.env.GROK_HOME || path.join(homedir(), '.grok');
-    const auth = path.join(userGrok, 'auth.json');
-    return { home, socket, authPath: existsSync(auth) ? auth : undefined };
-  },
+  prepare: ({ dataDir }) => ({ socket: path.join(dataDir, 'grok-leader.sock') }),
   launch({ h: { info }, args, prompt, resumeSessionId, setup }) {
     args = withoutGrokLaunchArgs(args);
     args.push('--no-alt-screen', '--trust', '--leader-socket', setup.socket);
@@ -39,9 +30,8 @@ export const grok: ProviderAdapter<undefined, GrokSetup> = {
       if (info.effort) args.push('--effort', info.effort);
     }
     if (prompt) args.push('--', prompt);
-    return { args, rotateToken: true, env: { GROK_HOME: setup.home, ...(setup.authPath ? { GROK_AUTH_PATH: setup.authPath } : {}) } };
+    return { args, rotateToken: true };
   },
-  bootHint: 'Open the terminal: complete login if Grok asks',
   titleNoise: /^grok( build)?$/i,
   hook: {
     strictJson: true,

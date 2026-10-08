@@ -1,7 +1,6 @@
 import { randomBytes } from 'node:crypto';
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
 import { CLEAR_POINTS, SCORES_KEPT, WELL_ROWS, checkScore, levelFor, type CabinetFrame, type HighScore } from '../../shared/toys/cabinet.js';
+import { stateDoc, type Doc } from '../db/state.js';
 
 const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 
@@ -10,14 +9,14 @@ const byScore = (a: HighScore, b: HighScore) => b.score - a.score || a.at - b.at
 
 /**
  * The arcade's high-score table: one for the whole building, on every floor's cabinet, saved in the
- * office's .agent-office/arcade.json so it's still there after a restart.
+ * office's database so it's still there after a restart.
  */
 export class HighScores {
   private list: HighScore[] = [];
-  private file: string;
+  private doc: Doc<unknown>;
 
   constructor(dataDir: string) {
-    this.file = path.join(dataDir, 'arcade.json');
+    this.doc = stateDoc(dataDir, 'arcade');
     this.load();
   }
 
@@ -47,9 +46,9 @@ export class HighScores {
   }
 
   private load() {
-    if (!existsSync(this.file)) return;
+    const saved = this.doc.read() as unknown | undefined;
+    if (saved === undefined) return;
     try {
-      const saved = JSON.parse(readFileSync(this.file, 'utf8')) as unknown;
       if (!Array.isArray(saved)) return;
       for (const e of saved as Partial<HighScore>[]) {
         const s = e && typeof e === 'object' ? checkScore(e) : null;
@@ -58,16 +57,12 @@ export class HighScores {
       }
       this.list = this.list.sort(byScore).slice(0, SCORES_KEPT);
     } catch {
-      // a broken file just means a fresh table
+      // a broken document just means a fresh table
     }
   }
 
   private save() {
-    try {
-      writeFileSync(this.file, JSON.stringify(this.list, null, 2), { mode: 0o600 });
-    } catch {
-      // disk issues shouldn't take the office down
-    }
+    this.doc.write(this.list);
   }
 }
 
@@ -86,14 +81,14 @@ export const GAME_EVERY = 20_000;
  * row) and then held, and this one hard-dropped the whole well (2 a row).
  */
 export const DROP_POINTS = 3 * (WELL_ROWS + 2);
-/** The high-score table changes (arcade.json written, every floor told) at most this often, in ms. */
+/** The high-score table changes (the arcade document written, every floor told) at most this often, in ms. */
 export const RECORD_EVERY = 2000;
 /** Games kept waiting for their players to come back to them, at most. */
 const GAMES_KEPT = 100;
 /** Players an Allowance keeps track of before it forgets the ones back to a full allowance. */
 const PLAYERS_KEPT = 256;
 
-/** Whose game it is (an account, or a name on the shared password) and how it shows on the table. */
+/** Whose game it is (an account) and how it shows on the table. */
 export interface Player {
   owner: string;
   name: string;

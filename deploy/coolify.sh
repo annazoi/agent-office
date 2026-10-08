@@ -929,7 +929,7 @@ cmd_reset_password() {
   remote "node /opt/agent-office/bin/agent-office.js --reset-password >/dev/null" || die "reset failed"
   # A restart, so the office starts with the new claim token (and makes the new password).
   deploy restart
-  ok "Everyone has been signed out"
+  ok "The office password is new: it registers new accounts, and everyone keeps theirs"
   open_office
 }
 

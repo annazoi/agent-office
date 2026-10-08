@@ -1,11 +1,12 @@
-import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
 import type { MapState } from '../../shared/protocol.js';
 import { OFFICE_MAP, checkCustomMaps, isMapChoice, planOf, type CustomMap, type MapPlan } from '../../shared/building/maps/index.js';
+import { docKey, stateDb, stateDoc, type Doc } from '../db/state.js';
 
-/** The most custom maps read, and the biggest file that's read as one. */
-const MAX_FILES = 24;
-const MAX_BYTES = 256 * 1024;
+/** The most custom maps read, and the biggest one that's read, as JSON. */
+export const MAX_MAPS = 24;
+export const MAX_MAP_BYTES = 256 * 1024;
+/** How often the office looks for maps another process added or removed. */
+const POLL_MS = 5000;
 
 interface Saved {
   pick: string;
@@ -13,29 +14,35 @@ interface Saved {
   at: number;
 }
 
+/** Where the maps of your own are kept: a document each, under this key. */
+export const customMapsKey = (dataDir: string) => docKey(dataDir, 'maps/');
+
 /**
  * The building's map (the office, the castle, or one of your own), picked in ⚙️ Settings by anyone
- * and kept in .agent-office/map.json. Everyone's on the same one. Maps of your own are JSON files in
- * .agent-office/maps/ (see docs/maps.md), read again whenever someone looks at the list.
+ * and kept in the database. Everyone's on the same one. Maps of your own are in the database too, a
+ * document each, under the office's `maps/` key (see docs/maps.md), read again whenever
+ * someone looks at the list.
  */
 export class Maps {
   private saved?: Saved;
-  private file: string;
-  private dir: string;
+  private doc: Doc<unknown>;
+  private prefix: string;
   private custom: CustomMap[] = [];
-  /** What the folder looked like when it was last read: each file's name, size and mtime. */
+  /** What the maps were when they were last read. */
   private stamp = '';
 
-  constructor(dataDir: string) {
-    this.file = path.join(dataDir, 'map.json');
-    this.dir = path.join(dataDir, 'maps');
+  constructor(dataDir: string, opts: { watch?: boolean } = {}) {
+    this.doc = stateDoc(dataDir, 'map');
+    this.prefix = customMapsKey(dataDir);
     this.restore();
     this.reload();
-  }
-
-  /** The folder custom maps go in. */
-  get folder(): string {
-    return this.dir;
+    if (opts.watch) {
+      setInterval(() => {
+        stateDb()
+          .refreshPrefix(this.prefix)
+          .catch((err: Error) => console.error(`agent-office: couldn't read the maps from the database: ${err.message}`));
+      }, POLL_MS).unref();
+    }
   }
 
   state(): MapState {
@@ -55,7 +62,7 @@ export class Maps {
     return planOf(this.pick(), this.custom);
   }
 
-  /** False when there's no such map (or it won't load). Read the folder first (reload), so a map just added counts. */
+  /** False when there's no such map (or it won't load). Read the maps first (reload), so a map just added counts. */
   set(pick: string, by: string): boolean {
     if (!isMapChoice(pick, this.custom)) return false;
     this.saved = { pick, by, at: Date.now() };
@@ -63,47 +70,30 @@ export class Maps {
     return true;
   }
 
-  /** Reads the custom maps again; true if anything in the folder changed. */
+  /** Reads the custom maps again; true if any of them changed. */
   reload(): boolean {
-    let names: string[] = [];
-    let extra: string[] = [];
-    try {
-      names = readdirSync(this.dir)
-        .filter((f) => f.endsWith('.json'))
-        .sort();
-      extra = names.slice(MAX_FILES);
-      names = names.slice(0, MAX_FILES);
-    } catch {
-      // no folder: no maps of your own
-    }
-    const stats = names.map((f) => {
-      try {
-        const s = statSync(path.join(this.dir, f));
-        return { f, size: s.size, mtime: s.mtimeMs };
-      } catch {
-        return { f, size: -1, mtime: 0 };
-      }
-    });
-    const stamp = JSON.stringify([stats, extra]);
+    const db = stateDb();
+    const names = db
+      .keys(this.prefix)
+      .map((k) => k.slice(this.prefix.length))
+      .sort();
+    const texts = names.map((name) => JSON.stringify(db.get<unknown>(this.prefix + name) ?? null));
+    const stamp = JSON.stringify([names, texts]);
     if (stamp === this.stamp) return false;
     this.stamp = stamp;
-    const files = stats.map(({ f, size }) => {
-      if (size > MAX_BYTES) return { file: f, json: undefined, error: `it's over ${MAX_BYTES / 1024} KB` };
-      try {
-        return { file: f, json: JSON.parse(readFileSync(path.join(this.dir, f), 'utf8')) as unknown };
-      } catch (e) {
-        return { file: f, json: undefined, error: `it isn't valid JSON (${(e as Error).message})` };
-      }
+    const read = names.slice(0, MAX_MAPS).map((file, i) => {
+      if (texts[i].length > MAX_MAP_BYTES) return { file, json: undefined, error: `it's over ${MAX_MAP_BYTES / 1024} KB` };
+      return { file, json: JSON.parse(texts[i]) as unknown };
     });
-    const checked = checkCustomMaps(files.filter((f) => !f.error));
-    this.custom = files.map((f) => (f.error ? { file: f.file, error: f.error } : checked.find((c) => c.file === f.file)!));
-    for (const f of extra) this.custom.push({ file: f, error: `only the first ${MAX_FILES} maps in the folder are read` });
+    const checked = checkCustomMaps(read.filter((f) => !f.error));
+    this.custom = read.map((f) => (f.error ? { file: f.file, error: f.error } : checked.find((c) => c.file === f.file)!));
+    for (const file of names.slice(MAX_MAPS)) this.custom.push({ file, error: `only the first ${MAX_MAPS} maps are read` });
     return true;
   }
 
   private restore() {
     try {
-      const s = JSON.parse(readFileSync(this.file, 'utf8')) as Partial<Saved>;
+      const s = this.doc.read() as Partial<Saved>;
       if (typeof s.pick === 'string') this.saved = { pick: s.pick, by: typeof s.by === 'string' ? s.by : 'someone', at: typeof s.at === 'number' ? s.at : 0 };
     } catch {
       // never set: the office
@@ -111,10 +101,6 @@ export class Maps {
   }
 
   private persist() {
-    try {
-      writeFileSync(this.file, JSON.stringify(this.saved ?? {}, null, 2), { mode: 0o600 });
-    } catch {
-      // disk issues shouldn't take the office down
-    }
+    this.doc.write(this.saved ?? {});
   }
 }

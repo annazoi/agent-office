@@ -104,7 +104,7 @@ export class WorkerRuns {
         this.startFailed(w, `whoever hired ${info.name} (${info.createdBy}) isn't signed in to Claude — they can sign in under ☰ → 🔐 Your sign-ins, then press R here`);
         return;
       }
-      this.env.runAs.apply(w.owner, env, [this.ctx.dir, cwd]);
+      this.env.runAs.apply(w.owner, env);
     }
     adapter?.usage?.locate?.(this.env.watch.handleOf(w), cwd, env);
 

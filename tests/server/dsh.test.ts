@@ -24,6 +24,7 @@ import {
   writeDshPatch,
   type DshLaunch,
 } from '../../src/server/agents/dsh.js';
+import { stateDoc } from '../../src/server/db/state.js';
 import { Ledger } from '../../src/server/usage/usage.js';
 import { WorkerManager, type WorkerEvents } from '../../src/server/workers.js';
 import type { Usage, WorkerAction, WorkerInfo, WorkerStatus } from '../../src/shared/protocol.js';
@@ -828,7 +829,7 @@ test('the office hires a DSH worker over ACP, and its desk shows the work', asyn
   // Usage and the session id survive in the floor's state file.
   await waitFor(() => mgr.get(id)?.usage, (u) => u !== undefined);
   assert.equal(mgr.get(id)?.usage?.contextSize, 200000);
-  const saved = JSON.parse(readFileSync(path.join(f.data, 'workers.json'), 'utf8')) as { provider?: string; sessionId?: string; usage?: { contextSize?: number } }[];
+  const saved = stateDoc<any>(f.data, 'workers').read() as { provider?: string; sessionId?: string; usage?: { contextSize?: number } }[];
   const row = saved.find((s) => s.provider === 'dsh');
   assert.equal(row?.sessionId, 'sess-1');
   assert.equal(row?.usage?.contextSize, 200000);
@@ -846,7 +847,7 @@ test('a DSH worker comes back offline after a restart, then resumes its session'
 
   // The office goes down. A DSH child dies with it, so nothing is left running.
   first.shutdown(true);
-  const afterShutdown = JSON.parse(readFileSync(path.join(f.data, 'workers.json'), 'utf8')) as { provider?: string; pty?: unknown }[];
+  const afterShutdown = stateDoc<any>(f.data, 'workers').read() as { provider?: string; pty?: unknown }[];
   assert.equal(afterShutdown.find((s) => s.provider === 'dsh')?.pty, undefined, 'a DSH worker is not a hosted terminal claim to pick back up');
 
   // The next office finds it offline, with the session and its usage still on the card.
@@ -856,7 +857,7 @@ test('a DSH worker comes back offline after a restart, then resumes its session'
   assert.equal(restored?.status, 'offline');
   assert.equal(restored?.sessionId, 'sess-1');
   assert.equal(restored?.usage?.contextSize, 200000);
-  assert.ok(!existsSync(path.join(f.data, 'pty-host.json')), 'the office ran no PTY host for a DSH worker');
+  assert.equal(stateDoc<any>(f.data, 'pty-host').read(), undefined, 'the office ran no PTY host for a DSH worker');
 
   // R: it resumes the remembered session instead of starting a new conversation, and waits for
   // the next prompt (the doc's R affordance, the same as an exited Claude worker).
@@ -879,7 +880,7 @@ test('a DSH board agent proves itself with its token, and a second question goes
   await waitFor(() => mgr.get(id)?.status, (s) => s === 'done');
 
   // office-queue authenticates with the token the office handed the child, though there is no PTY.
-  const saved = JSON.parse(readFileSync(path.join(f.data, 'workers.json'), 'utf8')) as { id: string; hookToken?: string }[];
+  const saved = stateDoc<any>(f.data, 'workers').read() as { id: string; hookToken?: string }[];
   const token = saved.find((s) => s.id === id)?.hookToken ?? '';
   assert.ok(token);
   assert.equal(mgr.authenticate(id, token)?.id, id);

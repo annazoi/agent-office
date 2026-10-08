@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { readFileSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { CASTLE } from '../../src/shared/building/maps/castle.js';
 import { STATION } from '../../src/shared/building/maps/station.js';
@@ -9,6 +10,9 @@ import { NavGrid, pathLength } from '../../src/shared/building/nav.js';
 import { BUILTIN_MAPS, DEFAULT_DAIS, OFFICE_PLAN, checkCustomMaps, mapChoices, planMap, planOf, seatHereOn, type MapConfig } from '../../src/shared/building/maps/index.js';
 import { clockWork, workedMs } from '../../src/server/workers.js';
 import type { WorkerInfo } from '../../src/shared/protocol.js';
+import { Maps } from '../../src/server/floor/maps.js';
+import { stateDb, stateDoc } from '../../src/server/db/state.js';
+import { OFFICE_MAP } from '../../src/shared/building/maps/index.js';
 
 test('every built-in map places every seat the office has, by the same ids', () => {
   for (const config of BUILTIN_MAPS) {
@@ -174,7 +178,7 @@ for (const [map, id, name] of [
   [CASTLE, 'my-castle', 'My castle'],
   [STATION, 'my-station', 'My station'],
 ] as const) {
-  test(`docs/maps/${map.id}.json is the ${map.name.toLowerCase()}, ready to copy into .agent-office/maps/ and change`, () => {
+  test(`docs/maps/${map.id}.json is the ${map.name.toLowerCase()}, ready to change`, () => {
     const file = path.join(import.meta.dirname, '..', '..', 'docs', 'maps', `${map.id}.json`);
     const want = mapJson(map, id, name);
     // After changing the castle or the station: UPDATE_CASTLE_JSON=1 node --import tsx --test tests/server/maps.test.ts
@@ -195,4 +199,27 @@ test('every map in docs/maps.md loads', () => {
   assert.ok(maps.length >= 2);
   const checked = checkCustomMaps(maps.map((json) => ({ file: `${json.id}.json`, json })));
   for (const m of checked) assert.equal(m.error, undefined, `${m.file}: ${m.error}`);
+});
+
+test('maps of your own are documents in the database, read again when they change', () => {
+  const dir = mkdtempSync(path.join(tmpdir(), 'ao-maps-'));
+  const data = path.join(dir, '.agent-office');
+  const maps = new Maps(data);
+  assert.deepEqual(maps.state().custom, []);
+  const hall = stateDoc<unknown>(data, 'maps/my-hall');
+  hall.write({ id: 'hall', name: 'My hall', extends: 'castle' });
+  assert.equal(maps.reload(), true);
+  assert.equal(maps.state().custom[0].config?.name, 'My hall');
+  assert.equal(maps.set('hall', 'Ada'), true);
+  assert.equal(maps.reload(), false, 'nothing changed');
+  // One that won't load is listed with why, and can't be picked.
+  stateDoc<unknown>(data, 'maps/bad').write({ id: 'castle', name: 'Mine' });
+  assert.equal(maps.reload(), true);
+  assert.ok(maps.state().custom.some((m) => m.file === 'bad' && m.error));
+  assert.equal(maps.pick(), 'hall', 'the one picked stays picked');
+  // Taken away: the building is back on the office.
+  hall.remove();
+  assert.equal(maps.reload(), true);
+  assert.equal(maps.pick(), OFFICE_MAP);
+  assert.equal(maps.set('hall', 'Ada'), false);
 });

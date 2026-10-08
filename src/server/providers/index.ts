@@ -36,7 +36,7 @@ export function titleNoise(title: string): boolean {
   return Object.values(PROVIDERS).some((p) => p.titleNoise?.test(title));
 }
 
-/** The adapter of `provider`, when it's one (workers.json and the wire can hold anything). */
+/** The adapter of `provider`, when it's one (the workers document and the wire can hold anything). */
 export function providerAdapter(provider: unknown): SomeAdapter | undefined {
   return typeof provider === 'string' && Object.hasOwn(PROVIDERS, provider) ? PROVIDERS[provider as AgentProvider] : undefined;
 }

@@ -1,5 +1,5 @@
 // A worker's record as the manager keeps it (see Worker in types.ts): what a new one is called, its
-// colour, and the record itself, fresh from hiring or from workers.json.
+// colour, and the record itself, fresh from hiring or from the workers document.
 import { randomBytes } from 'node:crypto';
 import type { WorkerInfo } from '../../shared/protocol.js';
 import { providerAdapter } from '../providers/index.js';

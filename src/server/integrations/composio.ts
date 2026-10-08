@@ -1,19 +1,17 @@
 // Composio: Linear, Notion, Slack, Google Calendar and Gmail for the office, through one API key the
 // admins set and a connection each person makes for themselves (docs.composio.dev). The key lives
-// in .agent-office/composio.json (mode 0600) and never leaves the server; browsers only hear
+// in the office's database and never leaves the server; browsers only hear
 // whether one is set. Each account is its own Composio user ("ao-<accountId>"), so coworkers
 // connect their own Linear, Slack or Gmail and nobody sees anyone else's.
 //
 // The SDK (@composio/core) is ESM and needs Node 22.22 or newer, while the office runs on 20+, so
 // it's loaded only when a key is set and the failure to load is just a state the office reports.
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
 import { COMPOSIO_TOOLKITS, isComposioToolkit, type ComposioConnection, type ComposioConnections, type ComposioState, type ComposioToolkit } from '../../shared/protocol.js';
 import type { ComposioForWorkers, ComposioMcp } from './composio-mcp.js';
-import type { RowStore } from '../accounts/store.js';
+import { stateDb, stateDoc, type Doc } from '../db/state.js';
 
-/** The row the office's key lives under when --database-url / DATABASE_URL is set. */
-const STORE_KEY = 'composio';
+/** The row the key lived under before every office kept everything in its database, read when there's no other. */
+const LEGACY_KEY = 'composio';
 
 const TIMEOUT_MS = 20_000;
 /** Composio project keys look like "ak_…"; anything printable and keylike is accepted, the API decides. */
@@ -59,7 +57,7 @@ export class ComposioHub implements ComposioForWorkers {
   private saved?: Saved;
   private error?: string;
   private available = true;
-  private path: string;
+  private doc: Doc<unknown>;
   private sdk?: Promise<ComposioSdk>;
   private sdkKey?: string;
   /** One session per account, made on first use; it's the account's connections and its MCP endpoint. */
@@ -70,38 +68,15 @@ export class ComposioHub implements ComposioForWorkers {
   /** Which toolkits each account has connected, as of its last look (see connectedTo). */
   private connectedToolkits = new Map<string, Set<ComposioToolkit>>();
 
-  private store?: RowStore;
-
   constructor(
     dataDir: string,
     private onState: (state: ComposioState) => void,
     /** Tells one account its connections changed. */
     private onConnections: (accountId: string, connections: ComposioConnections) => void,
     private load: SdkLoader = loadComposioSdk,
-    store?: RowStore,
   ) {
-    this.path = path.join(dataDir, 'composio.json');
-    this.store = store;
-    if (store) {
-      // Loads in the background: `state()` starts out unconfigured for the moment it takes, then
-      // `onState` pushes the real thing, the same way it does for every other change.
-      void this.restoreFromStore();
-    } else {
-      this.restore();
-    }
-  }
-
-  private async restoreFromStore(): Promise<void> {
-    try {
-      const s = await this.store!.read<Partial<Saved>>(STORE_KEY);
-      if (s && typeof s.apiKey === 'string' && KEY_RE.test(s.apiKey)) {
-        const toolkits = Array.isArray(s.toolkits) ? COMPOSIO_TOOLKITS.filter((t) => s.toolkits!.includes(t)) : [...COMPOSIO_TOOLKITS];
-        this.saved = { apiKey: s.apiKey, toolkits, by: typeof s.by === 'string' ? s.by : '?', at: typeof s.at === 'number' ? s.at : Date.now() };
-        this.onState(this.state());
-      }
-    } catch (err) {
-      console.error(`agent-office: couldn't read the Composio key from the database: ${(err as Error).message}`);
-    }
+    this.doc = stateDoc(dataDir, 'composio');
+    this.restore();
   }
 
   state(): ComposioState {
@@ -165,7 +140,7 @@ export class ComposioHub implements ComposioForWorkers {
   blocked(accountId: string | undefined): string | undefined {
     if (!this.saved) return 'The office has no Composio API key yet (an admin sets it in ⚙️ Settings → Connections)';
     if (!this.available) return this.error ?? 'Composio needs Node 22.22 or newer';
-    if (!accountId) return 'Sign in with an account of your own to connect your tools (the shared password has none)';
+    if (!accountId) return 'Sign in with your account to connect your tools';
     return undefined;
   }
 
@@ -320,29 +295,19 @@ export class ComposioHub implements ComposioForWorkers {
   }
 
   private persist() {
-    if (this.store) {
-      this.store.write(STORE_KEY, this.saved ?? {}).catch((err) => {
-        console.error(`agent-office: couldn't save the Composio key to the database: ${(err as Error).message}`);
-      });
-      return;
-    }
-    try {
-      writeFileSync(this.path, JSON.stringify(this.saved ?? {}, null, 2), { mode: 0o600 });
-    } catch {
-      // disk issues shouldn't take the office down
-    }
+    this.doc.write(this.saved ?? {});
   }
 
   private restore() {
-    if (!existsSync(this.path)) return;
+    const s = (this.doc.read() ?? stateDb().get(LEGACY_KEY)) as Partial<Saved> | undefined;
+    if (!s) return;
     try {
-      const s = JSON.parse(readFileSync(this.path, 'utf8')) as Partial<Saved>;
       if (typeof s.apiKey === 'string' && KEY_RE.test(s.apiKey)) {
         const toolkits = Array.isArray(s.toolkits) ? COMPOSIO_TOOLKITS.filter((t) => s.toolkits!.includes(t)) : [...COMPOSIO_TOOLKITS];
         this.saved = { apiKey: s.apiKey, toolkits, by: typeof s.by === 'string' ? s.by : '?', at: typeof s.at === 'number' ? s.at : Date.now() };
       }
     } catch {
-      // a broken file just means no key
+      // a broken document just means no key
     }
   }
 }

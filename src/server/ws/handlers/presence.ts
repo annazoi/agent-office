@@ -87,8 +87,7 @@ export const presenceHandlers = {
     ctx.broadcast({ t: 'peer.update', peer: c.peer }, c.id);
   },
   profile(ctx, c, msg) {
-    const name = str(msg.name, 24).trim();
-    if (name && !c.accountId) c.peer.name = name;
+    // The name stays the account's.
     if (COLOR_RE.test(msg.color)) c.peer.color = msg.color;
     c.peer.look = sanitizeLook(msg.look, c.peer.look);
     ctx.broadcast({ t: 'peer.update', peer: c.peer });

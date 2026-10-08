@@ -8,18 +8,14 @@ import { parked } from '../../src/shared/toys/garage.js';
 import { JUKEBOX_TUNES } from '../../src/shared/toys/jukebox.js';
 import type { ServerMsg } from '../../src/shared/protocol.js';
 
-// The store keeps the floor you're on in localStorage and times things by performance.now(): stand both
-// in, before the store's module makes the store.
-const storage = new Map<string, string>();
-Object.defineProperty(globalThis, 'localStorage', {
-  configurable: true,
-  value: { getItem: (k: string) => storage.get(k) ?? null, setItem: (k: string, v: string) => void storage.set(k, String(v)), removeItem: (k: string) => void storage.delete(k) },
-});
+// The store keeps the floor you're on with your account (userStorage, in memory here: no office to
+// save it to) and times things by performance.now(): stand that in, before the store's module makes the store.
 let clock = 1000;
 Object.defineProperty(performance, 'now', { configurable: true, writable: true, value: () => (clock += 10) });
 
 const state = await import('../../src/client/state/index.js');
 const { store } = state;
+const { userStorage } = await import('../../src/client/state/user-storage.js');
 
 const msg = (m: object) => m as ServerMsg;
 const peer = (id: string, extra: object = {}) => ({ id, name: id, color: '#fff', look: {}, x: 0, y: 0, z: 0, rotY: 0, moving: false, floor: 'f1', ...extra });
@@ -149,7 +145,7 @@ test('each message leaves the fields it always has', () => {
   assert.equal(store.floor, 'f1');
   assert.deepEqual([...store.workers.keys()], ['f1-w1']);
   assert.equal(store.carOf('p-b')?.seat, 'driver');
-  assert.equal(storage.get('agent-office.floor'), 'f1');
+  assert.equal(userStorage.getItem('agent-office.floor'), 'f1');
   // A screen that changes size starts over.
   store.apply(msg({ t: 'screen', workerId: 'f1-w1', cols: 80, rows: 24, lines: { 1: [['a', 1, -1, 0]] }, full: true, cursor: [1, 1] }));
   store.apply(msg({ t: 'screen', workerId: 'f1-w1', cols: 80, rows: 24, lines: { 2: [['b', 1, -1, 0]] }, full: false, cursor: [2, 2] }));
@@ -205,11 +201,11 @@ test('a listener sees the store as it was when its topic fired', () => {
 
 test('what the browser remembers keeps its keys and shapes', () => {
   state.saveProfile({ name: 'Ann', color: '#fff' });
-  assert.deepEqual(JSON.parse(storage.get('agent-office.profile')!), { name: 'Ann', color: '#fff' });
+  assert.deepEqual(JSON.parse(userStorage.getItem('agent-office.profile')!), { name: 'Ann', color: '#fff' });
   assert.deepEqual(state.loadProfile(), { name: 'Ann', color: '#fff', look: undefined });
   state.rememberSpot({ floor: 'f1', name: 'F', x: 1, y: 2, z: 3, facing: 4 });
   assert.deepEqual(state.lastSpot(), { floor: 'f1', name: 'F', x: 1, y: 2, z: 3, facing: 4 });
-  assert.ok(storage.has('agent-office.spot'));
+  assert.ok(userStorage.getItem('agent-office.spot') !== null);
   const settings = state.loadSettings();
   assert.deepEqual(settings, { view: 'first', volume: 0.7, muted: false, music: 0.5, musicMuted: false, pageTurns: true, pushToTalk: false, notify: true, needsYouSound: 'once', hud: state.HUD_DEFAULTS, pins: [] });
   state.saveSettings({ ...settings, volume: 2, view: 'third', needsYouSound: 'remind' });
@@ -240,7 +236,7 @@ test('a new store starts every field where it always has', async () => {
     {
       you: '', peers: [], workers: [], screens: [], project: null, floors: [], floor: null, projectsDir: { dir: '', custom: false },
       repos: { list: [], loading: false, at: 0 }, issues: { items: [], fetchedAt: 0, loading: true }, pulls: { items: [], fetchedAt: 0, loading: true },
-      ice: [], chat: [], invites: false, queue: { tasks: [], maxWorkers: 0 }, me: { admin: false },
+      ice: [], chat: [], invites: false, queue: { tasks: [], maxWorkers: 0 }, me: { account: { name: '', role: 'member' }, admin: false },
       upgrade: { available: false, phase: 'idle' },
       usage: { total: { input: 0, output: 0, cacheWrite: 0, cacheRead: 0, cost: 0, calls: 0 }, today: { input: 0, output: 0, cacheWrite: 0, cacheRead: 0, cost: 0, calls: 0 }, day: '', pauseHiring: false },
       limits: { windows: [], at: 0 }, notify: {}, machine: { cpu: 0, cores: 0, memUsed: 0, memTotal: 0, history: [], workers: 0 },

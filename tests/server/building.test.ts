@@ -5,6 +5,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { Building, type FloorDef } from '../../src/server/floor/building.js';
+import { stateDoc } from '../../src/server/db/state.js';
 
 function office(t: { after(fn: () => void): void }) {
   const root = mkdtempSync(path.join(tmpdir(), 'agent-office-building-'));
@@ -17,11 +18,11 @@ function office(t: { after(fn: () => void): void }) {
     return { id, name: id, repo: `acme/${id}`, dir, palette, addedBy: 'Sam', addedAt: 1 };
   };
   const defs = [floor('api', 0), floor('web', 1), floor('docs', 2)];
-  writeFileSync(path.join(dataDir, 'floors.json'), JSON.stringify(defs));
+  stateDoc<any>(dataDir, 'floors').write(defs);
   return { root, dataDir, defs };
 }
 
-const saved = (dataDir: string) => (JSON.parse(readFileSync(path.join(dataDir, 'floors.json'), 'utf8')) as FloorDef[]).map((d) => d.id);
+const saved = (dataDir: string) => (stateDoc<any>(dataDir, 'floors').read() as FloorDef[]).map((d) => d.id);
 
 test('a floor comes off the building and stays off, with its checkout left where it was', (t) => {
   const { root, dataDir, defs } = office(t);
@@ -76,7 +77,7 @@ test('the floor the office was started in comes off too, stays off after a resta
   assert.deepEqual(started, [defs[0].dir]);
   assert.ok(again.isLocal((back as FloorDef).id));
   assert.deepEqual(saved(dataDir), ['web', 'docs', 'api']);
-  assert.ok(!existsSync(path.join(dataDir, 'local-floor.json')));
+  assert.equal(stateDoc<any>(dataDir, 'local-floor').read(), undefined);
 
   // ...and it's a floor again at the next start.
   const third = new Building(dataDir, root);

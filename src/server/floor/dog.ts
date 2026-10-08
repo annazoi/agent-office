@@ -1,9 +1,8 @@
-import { existsSync, readFileSync, writeFileSync } from 'node:fs';
-import path from 'node:path';
 import { DESK_BY_ID, FLOOR, KIOSK, type DeskDef } from '../../shared/building/layout.js';
 import { DOG_BREEDS, DOG_COATS, cleanDogName, dogAt, dogDefaults, legSeconds, type DogAct, type DogBreed, type DogState } from '../../shared/toys/dog.js';
 import { deskPoint, nearestWalkable, route, walkable, type Pt } from '../../shared/building/nav.js';
 import type { PeerInfo, WorkerInfo } from '../../shared/protocol.js';
+import { stateDoc, type Doc } from '../db/state.js';
 
 // ---- Its day ------------------------------------------------------------------------------------
 
@@ -50,14 +49,14 @@ type Leg = Omit<DogState, 'name' | 'coat' | 'breed' | 'elapsed'> & { start: numb
  * A floor's dog. It naps under the desks of workers who are busy, trots after people for a while,
  * sniffs around and hangs out on the lounge rug. When a worker needs input it drops everything, runs
  * to that desk and barks (the browsers do the barking; see client/features/dog/world.ts). Its name is kept
- * in the floor's .agent-office/dog.json; its coat and breed come from the floor's id (see dogDefaults).
+ * in the database; its coat and breed come from the floor's id (see dogDefaults).
  */
 export class Dog {
   private name: string;
   private coat: number;
   private breed: DogBreed;
   private readonly fallbackName: string;
-  private readonly file: string;
+  private readonly doc: Doc<unknown>;
   private leg: Leg;
   private mode: Mode = 'lounge';
   private timer?: NodeJS.Timeout;
@@ -79,7 +78,7 @@ export class Dog {
     const d = dogDefaults(floorId);
     this.fallbackName = d.name;
     this.coat = d.coat;
-    this.file = path.join(dataDir, 'dog.json');
+    this.doc = stateDoc(dataDir, 'dog');
     const saved = this.load();
     this.name = saved.name ?? d.name;
     this.breed = saved.breed ?? d.breed;
@@ -177,7 +176,7 @@ export class Dog {
 
   private save() {
     try {
-      writeFileSync(this.file, JSON.stringify({ name: this.name, breed: this.breed, coat: this.coat }, null, 2), { mode: 0o600 });
+      this.doc.write({ name: this.name, breed: this.breed, coat: this.coat });
     } catch (err) {
       console.error(`agent-office: couldn't save the dog's name: ${(err as Error).message}`);
     }
@@ -189,9 +188,9 @@ export class Dog {
   }
 
   private load(): { name?: string; breed?: DogBreed; coat?: number } {
-    if (!existsSync(this.file)) return {};
+    const saved = this.doc.read() as { name?: unknown; breed?: unknown; coat?: unknown } | undefined;
+    if (saved === undefined) return {};
     try {
-      const saved = JSON.parse(readFileSync(this.file, 'utf8')) as { name?: unknown; breed?: unknown; coat?: unknown };
       return {
         name: typeof saved.name === 'string' ? cleanDogName(saved.name) || undefined : undefined,
         breed: DOG_BREEDS.find((b) => b === saved.breed),

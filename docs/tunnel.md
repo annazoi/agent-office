@@ -50,9 +50,9 @@ The office it talks to has to be new enough to list its workers' servers. If it 
 
 ## Signing in
 
-It signs in the way a browser does. The first time, it asks for the office password (or your name and your own password, if you have an account) in the terminal. It keeps the session, not the password, in `~/.config/agent-office/tunnel.json`, which only you can read, so it doesn't ask again for two weeks. Delete that file to sign it out.
+It signs in the way a browser does. The first time, it asks for your account's name and password in the terminal. It keeps the session, not the password, in memory while it runs, so a tunnel that drops and reconnects doesn't ask again; nothing is written to disk.
 
-For a script, set `AGENT_OFFICE_PASSWORD` (and `--name` or `AGENT_OFFICE_NAME` for an account).
+For a script, pass `--name` (or `AGENT_OFFICE_NAME`) and set `AGENT_OFFICE_PASSWORD` to your account's password.
 
 ## What it opens, and for whom
 
@@ -72,7 +72,7 @@ agent-office tunnel [where] [options] [-- <ssh options>]
                           (default: the same as --office-port)
       --office-port <n>   With an SSH address: the office's port on its own machine (default 4600)
       --name <name>       Sign in with this account (env AGENT_OFFICE_NAME)
-      --password <pw>     The password, instead of being asked for it (env AGENT_OFFICE_PASSWORD)
+      --password <pw>     Your account's password, instead of being asked for it (env AGENT_OFFICE_PASSWORD)
       --no-open           With an SSH address: don't open the office in a browser
       --insecure          Accept a certificate nobody vouches for (an office started with --self-signed)
 ```

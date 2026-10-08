@@ -4,9 +4,9 @@
  * that only its own token opens. It keeps a headless copy of each screen, so the next office
  * gets the scrollback back, and ends everything once no office has come back for a while.
  *
- *   node ptyhost.js <socket> <info.json>
+ *   AGENT_OFFICE_PTY_TOKEN=<token> node ptyhost.js <socket>
  */
-import { readFileSync, unlinkSync } from 'node:fs';
+import { unlinkSync } from 'node:fs';
 import net from 'node:net';
 import * as pty from '@lydell/node-pty';
 import headless from '@xterm/headless';
@@ -35,8 +35,11 @@ interface Session {
   exitCode?: number;
 }
 
-const [socketPath, infoPath] = process.argv.slice(2);
-const token: string = JSON.parse(readFileSync(infoPath, 'utf8')).token;
+const [socketPath] = process.argv.slice(2);
+// The office's token comes in the environment (it keeps it in its database), and goes no further:
+// the terminals this host starts mustn't see it.
+const token = process.env.AGENT_OFFICE_PTY_TOKEN ?? '';
+delete process.env.AGENT_OFFICE_PTY_TOKEN;
 const sessions = new Map<string, Session>();
 let office: net.Socket | null = null;
 let stopping = false;
