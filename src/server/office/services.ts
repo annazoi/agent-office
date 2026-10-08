@@ -105,7 +105,8 @@ export function createServices(ctx: Ctx): BuildingServices {
     if (err) console.error(`agent-office: --webhook: ${err}`);
   }
 
-  // Linear, Notion, Slack, Google Calendar and Gmail stations (--composio-key, or ⚙️ Settings → Connections).
+  // GitHub for the elevator, and the Linear, Notion, Slack, Google Calendar and Gmail stations, through the
+  // key in the server's environment (COMPOSIO_API_KEY, or --composio-key).
   // The office's one key; everyone connects their own accounts, and only hears about their own.
   const composio = new ComposioHub(
     cfg.dataDir,
@@ -116,11 +117,11 @@ export function createServices(ctx: Ctx): BuildingServices {
   );
   // The elevator lists, checks and clones repositories through each person's own GitHub on Composio.
   ctx.building.repoSource = new ComposioGitHub(composio);
-  if (cfg.composioKey !== undefined) {
-    void composio.setKey(cfg.composioKey, 'the command line', cfg.composioToolkits).then((err) => {
-      if (err) console.error(`agent-office: --composio-key: ${err}`);
+  if (cfg.composioKey) {
+    void composio.setKey(cfg.composioKey, 'the server', cfg.composioToolkits).then((err) => {
+      if (err) console.error(`agent-office: COMPOSIO_API_KEY: ${err}`);
     });
-  }
+  } else console.log("  🔌 No COMPOSIO_API_KEY in the server's environment: nobody can connect GitHub or add projects until it's set");
 
   // The machine's CPU and memory, for the monitor on the wall and a warning before hiring, and the
   // most workers the office runs at once, across every floor (--max-workers, or ⚙️ Settings).

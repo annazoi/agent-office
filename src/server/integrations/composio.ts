@@ -1,7 +1,7 @@
-// Composio: Linear, Notion, Slack, Google Calendar and Gmail for the office, through one API key the
-// admins set and a connection each person makes for themselves (docs.composio.dev). The key lives
-// in the office's database and never leaves the server; browsers only hear
-// whether one is set. Each account is its own Composio user ("ao-<accountId>"), so coworkers
+// Composio: GitHub, Linear, Notion, Slack, Google Calendar and Gmail for the office, through one API
+// key in the server's environment (COMPOSIO_API_KEY) and a connection each person makes for
+// themselves (docs.composio.dev). The key is never stored, never leaves the server, and browsers only
+// hear whether one is set; the database keeps just which toolkits the admins switched on. Each account is its own Composio user ("ao-<accountId>"), so coworkers
 // connect their own Linear, Slack or Gmail and nobody sees anyone else's.
 //
 // The SDK (@composio/core) is ESM and needs Node 22.22 or newer, while the office runs on 20+, so
@@ -56,6 +56,8 @@ export const composioUserId = (accountId: string) => `ao-${accountId}`;
 
 export class ComposioHub implements ComposioForWorkers {
   private saved?: Saved;
+  /** Which toolkits the admins switched on, as the database keeps it. */
+  private picked?: ComposioToolkit[];
   private error?: string;
   private available = true;
   private doc: Doc<unknown>;
@@ -104,7 +106,7 @@ export class ComposioHub implements ComposioForWorkers {
    * Sets the office's key ('' removes it), checking it against Composio first. Resolves to why it
    * can't, if it can't.
    */
-  async setKey(raw: string, by: string, toolkits: readonly ComposioToolkit[] = this.saved?.toolkits ?? COMPOSIO_TOOLKITS): Promise<string | undefined> {
+  async setKey(raw: string, by: string, toolkits: readonly ComposioToolkit[] = this.saved?.toolkits ?? this.picked ?? COMPOSIO_TOOLKITS): Promise<string | undefined> {
     const apiKey = raw.trim();
     if (!apiKey) {
       this.saved = undefined;
@@ -139,7 +141,7 @@ export class ComposioHub implements ComposioForWorkers {
 
   /** Why `accountId` can't use the integrations right now, if they can't. */
   blocked(accountId: string | undefined): string | undefined {
-    if (!this.saved) return 'The office has no Composio API key yet (an admin sets it in ⚙️ Settings → Connections)';
+    if (!this.saved) return "The office has no Composio API key: set COMPOSIO_API_KEY in the server's environment (or its .env) and restart it";
     if (!this.available) return this.error ?? 'Composio needs Node 22.22 or newer';
     if (!accountId) return 'Sign in with your account to connect your tools';
     return undefined;
@@ -313,20 +315,16 @@ export class ComposioHub implements ComposioForWorkers {
     return msg.replace(this.saved?.apiKey ?? '\u0000', '***').split('\n')[0].slice(0, 200);
   }
 
+  /** Keeps the admins' toolkit pick, never the key (a key an older office stored is dropped here). */
   private persist() {
-    this.doc.write(this.saved ?? {});
+    if (!this.saved) return;
+    this.picked = [...this.saved.toolkits];
+    this.doc.write({ toolkits: this.picked, by: this.saved.by, at: this.saved.at });
   }
 
+  /** The toolkits the admins picked last time, for when the key comes from the environment. */
   private restore() {
     const s = (this.doc.read() ?? stateDb().get(LEGACY_KEY)) as Partial<Saved> | undefined;
-    if (!s) return;
-    try {
-      if (typeof s.apiKey === 'string' && KEY_RE.test(s.apiKey)) {
-        const toolkits = Array.isArray(s.toolkits) ? COMPOSIO_TOOLKITS.filter((t) => s.toolkits!.includes(t)) : [...COMPOSIO_TOOLKITS];
-        this.saved = { apiKey: s.apiKey, toolkits, by: typeof s.by === 'string' ? s.by : '?', at: typeof s.at === 'number' ? s.at : Date.now() };
-      }
-    } catch {
-      // a broken document just means no key
-    }
+    if (s && Array.isArray(s.toolkits)) this.picked = COMPOSIO_TOOLKITS.filter((t) => s.toolkits!.includes(t));
   }
 }

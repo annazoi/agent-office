@@ -7,7 +7,6 @@ import { store } from '../state';
 import { h, openModal, timeAgo, toast, type Modal } from './dom';
 import { confirmDialog } from './prompt';
 import { connect } from './integrations/api';
-import { openSettingsAt } from './settings-link';
 
 // The elevator's panel: a button for every floor (every project), and "add a project", which clones
 // one of the repositories your own GitHub (connected through Composio) shows and makes it a new floor. The first time
@@ -309,12 +308,6 @@ export function openElevator(opts: ElevatorOptions): void {
           h('p.note', {}, 'You can close this and carry on: everyone hears when the new floor opens.'),
         ]
       : [h('p.note', {}, `Cloned into ${dest} with your own GitHub access. Everything on the new floor works in that checkout.`, change)];
-    // No Composio key yet, so nobody can connect GitHub: an admin gives it one in Settings.
-    const setupBtn = !store.composio.office.configured && store.me.admin ? h('button.btn.primary', { type: 'button' }, '⚙️ Give the office its Composio key') : null;
-    setupBtn?.addEventListener('click', () => {
-      modal.close();
-      openSettingsAt('connections');
-    });
     // GitHub isn't connected for you yet: the way to do it is right here.
     const connectBtn = r.error && store.composio.office.configured && store.composio.mine.toolkits.github !== 'connected' ? h('button.btn.primary', { type: 'button' }, '🔌 Connect GitHub') : null;
     connectBtn?.addEventListener('click', () => {
@@ -323,7 +316,7 @@ export function openElevator(opts: ElevatorOptions): void {
         (err: Error) => toast(`🛗 ${err.message}`, 'warn'),
       );
     });
-    statusEl.replaceChildren(...lines.filter((l): l is HTMLElement => !!l), ...[r.error, error].filter(Boolean).map((e) => h('p.err', {}, e)), ...(connectBtn ? [connectBtn] : []), ...(setupBtn ? [setupBtn] : []));
+    statusEl.replaceChildren(...lines.filter((l): l is HTMLElement => !!l), ...[r.error, error].filter(Boolean).map((e) => h('p.err', {}, e)), ...(connectBtn ? [connectBtn] : []));
     addBtn.disabled = !!adding || !pick || store.floors.some((f) => sameRepo(f.repo, pick));
     addBtn.textContent = adding ? '⏳ Cloning…' : pick ? `🛗 Add ${pick}` : '🛗 Add floor';
     input.disabled = !!adding;

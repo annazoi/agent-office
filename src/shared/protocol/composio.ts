@@ -34,7 +34,7 @@ export function isComposioToolkit(x: unknown): x is ComposioToolkit {
  * set, who set it, and which toolkits are switched on.
  */
 export interface ComposioState {
-  /** An API key is set (from setup, --composio-key, or ⚙️ Settings). */
+  /** The server has an API key (COMPOSIO_API_KEY in its environment). */
   configured: boolean;
   /** The SDK could be loaded on this machine (it needs Node 22.22+). */
   available: boolean;
@@ -58,8 +58,6 @@ export interface ComposioConnections {
 export type ComposioClientMsg =
   /** Asks for the office's state and your own connections. */
   | { t: 'composio.get' }
-  /** Admins: set (or '' to remove) the office's Composio API key. */
-  | { t: 'composio.key'; apiKey: string }
   /** Admins: which toolkits the office shows. */
   | { t: 'composio.toolkits'; toolkits: ComposioToolkit[] };
 

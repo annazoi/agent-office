@@ -46,6 +46,8 @@ Usage: provision.sh [options]      (curl … | bash -s -- [options])
   --user <name>         Who runs the office when this runs as root (default agentoffice)
   --database-url <url>  Keep the office in this Postgres database (e.g. Neon) instead of one
                         installed on this server (env DATABASE_URL)
+  --composio-key <key>  The office's Composio API key, for everyone's GitHub and the stations
+                        (env COMPOSIO_API_KEY; kept from the last run when not given)
   -h, --help            Show this help
 
 Run in a terminal, it offers to sign the GitHub CLI in; otherwise run `gh auth login` in a shell at
@@ -59,6 +61,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --domain) DOMAIN="${2:?--domain needs a name}"; shift 2 ;;
     --database-url) DATABASE_URL="${2:?--database-url needs a URL}"; shift 2 ;;
+    --composio-key) COMPOSIO_API_KEY="${2:?--composio-key needs a key}"; shift 2 ;;
     --tailscale) TAILSCALE=1; shift ;;
     --tailscale-auth-key) TAILSCALE_AUTH_KEY="${2:?--tailscale-auth-key needs a key}"; TAILSCALE=1; shift 2 ;;
     --tailscale-hostname) TAILSCALE_HOSTNAME="${2:?--tailscale-hostname needs a name}"; shift 2 ;;
@@ -267,6 +270,10 @@ if [[ -z "${CLAIM_TOKEN:-}" ]]; then
   CLAIM_TOKEN=$(sudo sed -n 's/^AGENT_OFFICE_CLAIM_TOKEN="\(.*\)"$/\1/p' /etc/agent-office/env 2>/dev/null || true)
   [[ -n "$CLAIM_TOKEN" ]] || CLAIM_TOKEN=$(od -An -N24 -tx1 /dev/urandom | tr -d ' \n')
 fi
+# The office's Composio key lives in the service's environment only. Run again, this keeps it.
+if [[ -z "${COMPOSIO_API_KEY:-}" ]]; then
+  COMPOSIO_API_KEY=$(sudo sed -n 's/^COMPOSIO_API_KEY="\(.*\)"$/\1/p' /etc/agent-office/env 2>/dev/null || true)
+fi
 if [[ -z "${PUBLIC_HOST:-}" ]]; then
   PUBLIC_HOST="$DOMAIN"
   [[ -n "$PUBLIC_HOST" ]] || PUBLIC_HOST=$(curl -fsS --max-time 5 https://checkip.amazonaws.com 2>/dev/null | tr -d '[:space:]' || true)
@@ -322,6 +329,7 @@ env_file=$(mktemp)
   [[ -n "${ANTHROPIC_API_KEY:-}" ]] && printf 'ANTHROPIC_API_KEY="%s"\n' "$ANTHROPIC_API_KEY"
   [[ -n "$DEPLOY_SCRIPT" ]] && printf 'AGENT_OFFICE_DEPLOY_SCRIPT="%s"\n' "$DEPLOY_SCRIPT"
   printf 'DATABASE_URL="%s"\n' "$DATABASE_URL"
+  [[ -n "${COMPOSIO_API_KEY:-}" ]] && printf 'COMPOSIO_API_KEY="%s"\n' "$COMPOSIO_API_KEY"
   true
 } >"$env_file"
 sudo install -m 600 -o root -g root "$env_file" /etc/agent-office/env
