@@ -4,16 +4,14 @@ import { mkdir, rename, rm } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import type { UpgradeState, VersionInfo } from '../../shared/protocol.js';
+import { APP_VERSION } from '../version.js';
 
 /** The install this server runs from (deploy/provision.sh makes it a git checkout). */
 function findAppDir(): string | undefined {
   let dir = path.dirname(fileURLToPath(import.meta.url));
   for (let i = 0; i < 5; i++, dir = path.dirname(dir)) {
-    try {
-      if (JSON.parse(readFileSync(path.join(dir, 'package.json'), 'utf8')).name === 'agent-office') return dir;
-    } catch {
-      // keep looking
-    }
+    // The install's own launcher is how it's told from any other folder up the tree.
+    if (existsSync(path.join(dir, 'bin', 'agent-office.js'))) return dir;
   }
   return undefined;
 }
@@ -98,13 +96,7 @@ export class Upgrader {
     private restart: () => void,
   ) {
     const current = existsSync(path.join(APP_DIR, '.git')) ? parseVersion(gitSync(['log', '-1', VERSION_FORMAT, 'HEAD'])) : undefined;
-    let pkg = '0.0.0';
-    try {
-      pkg = JSON.parse(readFileSync(path.join(APP_DIR, 'package.json'), 'utf8')).version ?? pkg;
-    } catch {
-      // keep the default
-    }
-    this.version = current?.sha ?? pkg;
+    this.version = current?.sha ?? APP_VERSION;
     const branch = current ? gitSync(['rev-parse', '--abbrev-ref', 'HEAD']) : undefined;
     // Only deploy/provision.sh's systemd unit sets this, and it restarts the office whenever it exits.
     // A checkout on a tag (detached HEAD) has no branch to follow.

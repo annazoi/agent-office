@@ -31,7 +31,7 @@ A long pressurised deck in orbit: white hull panels and dark plating, ribs overh
 
 ## Maps of your own
 
-A map is plain JSON, which you write and then add to the office's database with `agent-office maps add my-hall.json` (on the office's machine, with its `DATABASE_URL`; `-d <dir>` for an office started in a project). It's checked on the way in, and a map that won't load says why and isn't added. Adding one with the same name replaces it; `agent-office maps` lists them and `agent-office maps remove <name>` takes one away. The running office picks up the change within seconds, so there's nothing to restart: open Settings and it's in the list.
+A map is plain JSON (the shape is described below). The office keeps maps of your own in its database, as one document each under its `maps/` key, and reads them again whenever someone opens ⚙️ Settings or joins; a map that won't load is listed with why. Nothing in the office adds one yet: the office keeps nothing in JSON files, and there's no command or screen for putting one in, so for now only the built-in maps can be picked. The rest of this page is the schema, for when there is.
 
 The easy way is to start from the castle and change only what you want. This one moves the issues board, and the Issues agent's lectern under it, three bays down the west wall, and makes the line shorter:
 
@@ -71,7 +71,7 @@ The station works the same way. This one has a quieter crew: no First Officer, a
 }
 ```
 
-To change the lists (move a pillar, resize the hall and everything in it), start from a copy of the whole map instead: [`docs/maps/castle.json`](maps/castle.json) is the castle, as a map of your own called *My castle*, and [`docs/maps/station.json`](maps/station.json) the station, as *My station*. Copy one, change what you like, and `agent-office maps add` it.
+To change the lists (move a pillar, resize the hall and everything in it), start from a copy of the whole map instead: [`docs/maps/castle.json`](maps/castle.json) is the castle, as a map of your own called *My castle*, and [`docs/maps/station.json`](maps/station.json) the station, as *My station*. Start from one of them and change what you like.
 
 Or write one from nothing. This is about the least a map can be: a hall, a door, tables to seat 32, the board agents, a meeting table and the four boards. Everything else (the throne, the line, the herald, the props) is optional:
 

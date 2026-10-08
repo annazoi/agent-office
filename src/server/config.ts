@@ -82,7 +82,6 @@ Usage:
   agent-office setup [--projects <dir>] [--project <owner/repo>]...
   agent-office prune [dir] [--dry-run] [--force]
   agent-office accounts [list|invite|revoke|role|registration] ...
-  agent-office maps [list|add|remove] ...
   agent-office tunnel [office@address | url]
 
 Runs the office. Every project is a floor of the building: ride the elevator,
@@ -107,8 +106,6 @@ Commands:
                           changes or unpushed commits is kept unless --force is given.
   accounts                Invite, list and revoke people's accounts, and open or
                           close registering with the office password (see accounts --help)
-  maps                    Add, list and remove the building's maps of your own, kept in
-                          the database (see maps --help)
   tunnel                  On your own computer, for an office that runs somewhere
                           else: every web server a worker starts there opens on the
                           same port here, by itself (see tunnel --help)

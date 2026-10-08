@@ -416,7 +416,7 @@ export interface CustomMap {
 }
 
 /**
- * Checks the custom maps (JSON the office keeps in its database, see agent-office maps) against the built-in ones and
+ * Checks the custom maps (JSON documents the office keeps in its database, see docs/maps.md) against the built-in ones and
  * each other: each comes back with its whole config (what it extends filled in), or why it can't be used.
  */
 export function checkCustomMaps(files: { file: string; json: unknown }[]): CustomMap[] {

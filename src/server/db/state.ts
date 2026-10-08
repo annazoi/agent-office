@@ -91,7 +91,7 @@ export class StateDb {
 
   /**
    * Re-reads every key under `prefix` from the database, so documents another process added or
-   * removed (`agent-office maps add`) show up; changes of ours still on their way are left alone.
+   * removed by another process show up; changes of ours still on their way are left alone.
    */
   async refreshPrefix(prefix: string): Promise<void> {
     const rows = await this.backend.loadPrefix(prefix);

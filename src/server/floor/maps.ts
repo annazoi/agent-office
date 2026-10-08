@@ -5,7 +5,7 @@ import { docKey, stateDb, stateDoc, type Doc } from '../db/state.js';
 /** The most custom maps read, and the biggest one that's read, as JSON. */
 export const MAX_MAPS = 24;
 export const MAX_MAP_BYTES = 256 * 1024;
-/** How often the office looks for maps added or removed by `agent-office maps` (a separate process). */
+/** How often the office looks for maps another process added or removed. */
 const POLL_MS = 5000;
 
 interface Saved {
@@ -17,13 +17,10 @@ interface Saved {
 /** Where the maps of your own are kept: a document each, under this key. */
 export const customMapsKey = (dataDir: string) => docKey(dataDir, 'maps/');
 
-/** A map's name as `agent-office maps` keeps it: letters, digits, - and _. */
-export const MAP_NAME_RE = /^[\w-]{1,40}$/;
-
 /**
  * The building's map (the office, the castle, or one of your own), picked in ⚙️ Settings by anyone
  * and kept in the database. Everyone's on the same one. Maps of your own are in the database too, a
- * document each, added with `agent-office maps add` (see docs/maps.md) and read again whenever
+ * document each, under the office's `maps/` key (see docs/maps.md), read again whenever
  * someone looks at the list.
  */
 export class Maps {

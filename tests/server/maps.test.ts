@@ -11,7 +11,6 @@ import { BUILTIN_MAPS, DEFAULT_DAIS, OFFICE_PLAN, checkCustomMaps, mapChoices, p
 import { clockWork, workedMs } from '../../src/server/workers.js';
 import type { WorkerInfo } from '../../src/shared/protocol.js';
 import { Maps } from '../../src/server/floor/maps.js';
-import { mapsCommand } from '../../src/server/floor/maps-command.js';
 import { stateDb, stateDoc } from '../../src/server/db/state.js';
 import { OFFICE_MAP } from '../../src/shared/building/maps/index.js';
 
@@ -179,7 +178,7 @@ for (const [map, id, name] of [
   [CASTLE, 'my-castle', 'My castle'],
   [STATION, 'my-station', 'My station'],
 ] as const) {
-  test(`docs/maps/${map.id}.json is the ${map.name.toLowerCase()}, ready to change and add with agent-office maps add`, () => {
+  test(`docs/maps/${map.id}.json is the ${map.name.toLowerCase()}, ready to change`, () => {
     const file = path.join(import.meta.dirname, '..', '..', 'docs', 'maps', `${map.id}.json`);
     const want = mapJson(map, id, name);
     // After changing the castle or the station: UPDATE_CASTLE_JSON=1 node --import tsx --test tests/server/maps.test.ts
@@ -202,28 +201,25 @@ test('every map in docs/maps.md loads', () => {
   for (const m of checked) assert.equal(m.error, undefined, `${m.file}: ${m.error}`);
 });
 
-test('maps of your own are documents in the database, added and taken away with agent-office maps', async () => {
+test('maps of your own are documents in the database, read again when they change', () => {
   const dir = mkdtempSync(path.join(tmpdir(), 'ao-maps-'));
   const data = path.join(dir, '.agent-office');
-  stateDoc(data, 'config').write({}); // an office ran there
   const maps = new Maps(data);
-  // What you wrote, in a file of your own: added once, then it's the database's.
-  const hall = path.join(dir, 'my-hall.json');
-  writeFileSync(hall, JSON.stringify({ id: 'hall', name: 'My hall', extends: 'castle' }));
-  assert.equal(await mapsCommand(['add', hall, '-d', dir]), 0);
-  assert.deepEqual(stateDb().get(stateDb().keys().find((k) => k.endsWith('|maps/my-hall'))!), { id: 'hall', name: 'My hall', extends: 'castle' });
+  assert.deepEqual(maps.state().custom, []);
+  const hall = stateDoc<unknown>(data, 'maps/my-hall');
+  hall.write({ id: 'hall', name: 'My hall', extends: 'castle' });
   assert.equal(maps.reload(), true);
   assert.equal(maps.state().custom[0].config?.name, 'My hall');
   assert.equal(maps.set('hall', 'Ada'), true);
   assert.equal(maps.reload(), false, 'nothing changed');
-  // One that won't load isn't added.
-  const bad = path.join(dir, 'bad.json');
-  writeFileSync(bad, JSON.stringify({ id: 'castle', name: 'Mine' }));
-  assert.equal(await mapsCommand(['add', bad, '-d', dir]), 1);
-  assert.equal(await mapsCommand(['add', hall, 'no spaces', '-d', dir]), 2);
+  // One that won't load is listed with why, and can't be picked.
+  stateDoc<unknown>(data, 'maps/bad').write({ id: 'castle', name: 'Mine' });
+  assert.equal(maps.reload(), true);
+  assert.ok(maps.state().custom.some((m) => m.file === 'bad' && m.error));
+  assert.equal(maps.pick(), 'hall', 'the one picked stays picked');
   // Taken away: the building is back on the office.
-  assert.equal(await mapsCommand(['remove', 'my-hall', '-d', dir]), 0);
+  hall.remove();
   assert.equal(maps.reload(), true);
   assert.equal(maps.pick(), OFFICE_MAP);
-  assert.equal(await mapsCommand(['remove', 'my-hall', '-d', dir]), 1);
+  assert.equal(maps.set('hall', 'Ada'), false);
 });
