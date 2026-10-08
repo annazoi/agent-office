@@ -10,6 +10,7 @@ import { Worktrees } from '../../src/server/workers/worktrees.js';
 import type { AgentProvider, WorkerInfo } from '../../src/shared/protocol.js';
 import type { PromptSource } from '../../src/server/floor/prompts.js';
 import { PROMPTS } from '../../src/shared/agents/prompts.js';
+import { stateDoc } from '../../src/server/db/state.js';
 
 type Invocation = {
   kind: string;
@@ -1263,7 +1264,7 @@ test('a Claude worker that opens a pull request itself has it as its own', async
   hook('PostToolUse', { ...create, tool_response: { stdout: 'https://github.com/acme/app/pull/12\n', stderr: 'Creating pull request for fix-login into main in acme/app' } });
   assert.deepEqual(pr(), { number: 12, url: 'https://github.com/acme/app/pull/12' });
   assert.deepEqual(toasts, [`${worker.name} opened PR #12`]);
-  assert.equal(JSON.parse(readFileSync(path.join(f.data, 'workers.json'), 'utf8')).find((w: { id: string }) => w.id === worker.id).pr.number, 12, 'kept across a restart');
+  assert.equal(stateDoc<any>(f.data, 'workers').read().find((w: { id: string }) => w.id === worker.id).pr.number, 12, 'kept across a restart');
   // A follow-up whose branch already had one: gh fails, and says which.
   hook('PostToolUseFailure', { ...create, error: 'Exit code 1\na pull request for branch "fix-more" into branch "main" already exists:\nhttps://github.com/acme/app/pull/14' });
   assert.equal(pr()?.number, 14);
@@ -1384,7 +1385,7 @@ test('a worker whose terminal outlives the office is picked back up mid-turn, no
 
 test('a worker whose terminal was in the host when an older office went down carries on if the host is gone', async (t) => {
   const f = carryOnFixture(t);
-  // workers.json as the office before midTurn left it: only the host terminal's status says it was mid-turn.
+  // the workers document as the office before midTurn left it: only the host terminal's status says it was mid-turn.
   const saved = (id: string, deskId: string, sessionId: string, status: string) => ({
     id,
     kind: 'agent',
@@ -1395,7 +1396,7 @@ test('a worker whose terminal was in the host when an older office went down car
     hookToken: `${id}-token`,
     pty: { id: `${id}-pty`, status, acked: true },
   });
-  writeFileSync(path.join(f.data, 'workers.json'), JSON.stringify([saved('upgraded', 'desk-1', 'was-working', 'working'), saved('idle', 'desk-2', 'was-done', 'done')]));
+  stateDoc<any>(f.data, 'workers').write([saved('upgraded', 'desk-1', 'was-working', 'working'), saved('idle', 'desk-2', 'was-done', 'done')]);
   const workers = manager(f, f.claude, []);
   t.after(() => workers.shutdown());
   await workers.start();
@@ -1452,7 +1453,7 @@ test('a worktree worker that makes its own branch is followed there: O finds the
   assert.equal(info.worktree!.made, office);
   assert.equal(updates.at(-1)?.worktree?.branch, 'fix-x');
   // Saved, for a restarted office and for `agent-office prune`.
-  const saved = JSON.parse(readFileSync(path.join(f.data, 'workers.json'), 'utf8')) as WorkerInfo[];
+  const saved = stateDoc<any>(f.data, 'workers').read() as WorkerInfo[];
   assert.deepEqual(saved.find((w) => w.id === worker.id)?.worktree, info.worktree);
   // O at the desk: the PR it opened, not "has no commits on office/… yet".
   const pr = await workers.openPr(worker.id, 'Cody');
