@@ -288,8 +288,8 @@ Output: a short findings note appended to this document, and a decision on usage
 - [x] Cover the usage-label branches in `terminal.ts`, `workers-panel.ts`, `queue.ts`, `usage.ts`
       (a shared `providerWaitingLabel` replaces the per-provider ternaries).
 - [x] Thread provider/model through `queue.ts` and `meetings.ts`.
-- [x] Tests: extend `tests/agents.test.ts`, `tests/queue.test.ts` (worker persistence is covered in
-      `tests/dsh.test.ts`, since the PTY-based `tests/workers.test.ts` cannot run without a PTY).
+- [x] Tests: extend `tests/server/agents.test.ts`, `tests/server/queue.test.ts` (worker persistence is covered in
+      `tests/server/dsh.test.ts`, since the PTY-based `tests/server/workers.test.ts` cannot run without a PTY).
 
 ### Phase 2 — the ACP worker runtime
 
@@ -302,7 +302,7 @@ Output: a short findings note appended to this document, and a decision on usage
 - [x] Restart path: mark DSH workers `offline` on boot and resume from the persistence root.
 - [x] Config: `--dsh-profile`, `AGENT_OFFICE_DSH_PROFILE`, per-floor patch with an office-owned
       persistence root, `--agent dsh` as a default.
-- [x] Tests: `tests/dsh.test.ts` driving a fake ACP agent over stdio, so the suite needs no DSH
+- [x] Tests: `tests/server/dsh.test.ts` driving a fake ACP agent over stdio, so the suite needs no DSH
       install. Cover status transitions, permission → `needs_input`, tool kinds → actions, cancel,
       and resume.
 
@@ -356,15 +356,15 @@ client window type. Independent of Phases 1–4.
 
 ## Testing strategy
 
-The office's suite runs with `node --test` over `tests/*.test.ts` and never needs a real agent
-installed — `tests/opencode.test.ts` and `tests/codex.test.ts` test the generated bridge and
+The office's suite runs with `node --test` over `tests/**/*.test.ts` and never needs a real agent
+installed — `tests/server/opencode.test.ts` and `tests/server/codex.test.ts` test the generated bridge and
 payload normalisation, not the upstream CLI. DSH should follow that convention:
 
-- **`tests/dsh.test.ts`** — a fake ACP agent process speaking JSON-RPC over stdio, driven through
+- **`tests/server/dsh.test.ts`** — a fake ACP agent process speaking JSON-RPC over stdio, driven through
   the real `DshSession`. Assert status transitions, permission handling, tool-kind to action
   mapping, cancel and resume.
-- **`tests/agents.test.ts`** — the new provider and validation rules.
-- **`tests/workers.test.ts`** — persistence and restore of a `dsh` worker, including the `offline`
+- **`tests/server/agents.test.ts`** — the new provider and validation rules.
+- **`tests/server/workers.test.ts`** — persistence and restore of a `dsh` worker, including the `offline`
   boot path.
 - Keep all new parsing defensive and non-fatal, matching `actions.ts` and `usage.ts`: an update the
   office does not understand is skipped, never fatal.

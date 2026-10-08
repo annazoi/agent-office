@@ -6,7 +6,7 @@
 // prompts are rendered into it here, as ANSI lines.
 //
 // This module owns the wire. The translation core above the connection is pure, so the test suite
-// can drive a fake ACP agent over stdio without a DSH install (tests/dsh.test.ts).
+// can drive a fake ACP agent over stdio without a DSH install (tests/server/dsh.test.ts).
 
 export { DSH_PROFILE_DEFAULT, DSH_SESSIONS_DIR, DSH_PATCH_FILE, configOptionValues, resolveConfigValue, dshEffort, dshSessionsRoot, dshArgs, writeDshPatch, type DshLaunch } from './dsh/config.js';
 export { permissionOptions, permissionChoice, renderPermission, type DshPermissionOption } from './dsh/permission.js';

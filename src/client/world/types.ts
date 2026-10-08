@@ -28,7 +28,7 @@ export interface Collider {
  *     }
  *   }
  *
- * tests/client-registry.test.ts checks that every kind added is defined once, in the file that adds it.
+ * tests/client/client-registry.test.ts checks that every kind added is defined once, in the file that adds it.
  */
 export interface InteractKinds {}
 
