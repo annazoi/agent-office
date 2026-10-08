@@ -78,7 +78,9 @@ Nothing is asked in the terminal. The office opens in your browser on a link tha
 
 1. **Composio** (an admin, once). Paste a Composio API key in **⚙️ Settings → 🔌 Connections** (or start the office with `--composio-key`). It's how the office reaches GitHub, Linear, Notion, Slack, Google Calendar and Gmail for each person ([Composio integrations](#composio-integrations)).
 2. **Your GitHub** (everyone). Ride the elevator, press **🔌 Connect GitHub** and approve it on github.com. Composio keeps the connection under your account, so nobody uses anyone else's access.
-3. **Your project.** Pick one of the repositories your GitHub shows (or type `owner/name`) and the office clones it into the projects folder as a floor. An admin can change that folder in **⚙️ Settings**.
+3. **Your project.** Pick one of the repositories your GitHub shows (or type `owner/name`) and the office clones it into the projects folder as a floor. It's **your own floor**: only you and admins see it in the elevator, until you share it with everyone (**👥** beside it; **🔒** keeps it to yourself again). An admin can change the projects folder in **⚙️ Settings**.
+
+An admin who opens the elevator before the office has a Composio key gets a **⚙️ Give the office its Composio key** button there, straight to Connections.
 
 Then walk to an empty desk, press **E** and hire a worker.
 

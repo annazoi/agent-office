@@ -50,6 +50,12 @@ export interface FloorInfo {
   local?: boolean;
   addedBy: string;
   addedAt: number;
+  /** It's someone's own floor (added with their GitHub), seen only by them, admins, and everyone once it's shared. */
+  personal?: boolean;
+  /** You added it: you can share it, or take it off the building. */
+  mine?: boolean;
+  /** Its owner shared it with everyone in the office. */
+  shared?: boolean;
   /**
    * For the elevator panel: who's there and what they're up to. `workers` counts the ones hired onto
    * desks, bean bags and the meeting room's table, not the board agents at their kiosks.
@@ -141,6 +147,8 @@ export type FloorClientMsg =
   | { t: 'floor.cancel'; floor: string }
   /** Take a floor off the building (admins only). Its checkout stays on disk; everyone on it rides to another floor. */
   | { t: 'floor.remove'; floor: string }
+  /** Share your own floor with everyone in the office, or keep it to yourself again (its owner, or admins). */
+  | { t: 'floor.share'; floor: string; shared: boolean }
   /** Where new floors are cloned from now on (admins only); '' goes back to the default. */
   | { t: 'floor.projectsDir'; dir: string };
 

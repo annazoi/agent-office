@@ -34,7 +34,7 @@ function peersOf(ctx: Ctx, accountId: string, floorId: string | undefined): Clie
 function announce(ctx: Ctx, r: Req, toolkit: ComposioToolkit, summary: string) {
   const account = r.session.account;
   if (!account) return;
-  const floor = floorParam(ctx, r.url);
+  const floor = floorParam(ctx, r.url, r.session);
   if (!floor) return;
   const me = peersOf(ctx, account.id, floor.id)[0];
   ctx.toFloor(floor, { t: 'composio:activity', user: account.name, peer: me?.id, toolkit, summary });

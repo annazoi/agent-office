@@ -7,6 +7,7 @@ import { store } from '../state';
 import { h, openModal, timeAgo, toast, type Modal } from './dom';
 import { confirmDialog } from './prompt';
 import { connect } from './integrations/api';
+import { openSettingsAt } from './settings-link';
 
 // The elevator's panel: a button for every floor (every project), and "add a project", which clones
 // one of the repositories your own GitHub (connected through Composio) shows and makes it a new floor. The first time
@@ -139,7 +140,7 @@ export function openElevator(opts: ElevatorOptions): void {
         'span.floor-text',
         {},
         h('span.floor-name', {}, f.name, here ? h('span.here-tag', {}, 'you are here') : mine ? h('span.here-tag', {}, 'your floor') : null),
-        h('span.floor-sub', {}, [f.repo ?? f.dir, f.cloning ? f.clone?.detail : ''].filter(Boolean).join(' · ')),
+        h('span.floor-sub', {}, [f.repo ?? f.dir, f.cloning ? f.clone?.detail : '', whose(f)].filter(Boolean).join(' · ')),
         f.cloning ? cloneBar(f.clone) : null,
       ),
       h('span.floor-stats', {}, ...stats.flatMap((s, j) => (j ? [' ', s] : [s]))),
@@ -152,6 +153,13 @@ export function openElevator(opts: ElevatorOptions): void {
     return btn;
   };
 
+  /** Whose floor it is: everyone's says nothing. */
+  const whose = (f: FloorInfo) => {
+    if (!f.personal) return '';
+    if (f.mine) return f.shared ? '👥 yours, shared with everyone' : '🔒 yours alone';
+    return f.shared ? `👥 ${f.addedBy}'s, shared` : `🔒 ${f.addedBy}'s own`;
+  };
+
   /** The floor's button, with a 🗑 beside it for admins to take it off the building (⏹ to stop it while it's cloned). */
   const floorRow = (f: FloorInfo, i: number) => {
     const btn = floorButton(f, i);
@@ -161,10 +169,17 @@ export function openElevator(opts: ElevatorOptions): void {
       stop.addEventListener('click', () => confirmDialog(`Stop cloning ${f.repo ?? f.name}?`, "What's come down so far is thrown away. You can add it again any time.", '⏹️ Stop cloning', () => net.send({ t: 'floor.cancel', floor: f.id })));
       return h('div.floor-row', {}, btn, stop);
     }
-    if (!store.me.admin) return btn;
-    const off = h('button.btn.floor-off', { type: 'button', title: `Take ${f.name} off the building`, 'aria-label': `Remove ${f.name}` }, '🗑');
-    off.addEventListener('click', () => confirmRemove(f));
-    return h('div.floor-row', {}, btn, off);
+    // Your own floor: share it with everyone, or keep it to yourself again (admins can for anyone's).
+    const share = f.personal && (f.mine || store.me.admin) ? h('button.btn.floor-off', { type: 'button', title: f.shared ? `Keep ${f.name} to ${f.mine ? 'yourself' : f.addedBy}` : `Share ${f.name} with everyone in the office`, 'aria-label': f.shared ? `Stop sharing ${f.name}` : `Share ${f.name}` }, f.shared ? '🔒' : '👥') : null;
+    share?.addEventListener('click', () => {
+      if (!f.shared) return net.send({ t: 'floor.share', floor: f.id, shared: true });
+      confirmDialog(`Stop sharing ${f.name}?`, 'Only its owner and admins see it again: anyone else on it rides the elevator to another floor. Their workers there keep running.', '🔒 Stop sharing', () => net.send({ t: 'floor.share', floor: f.id, shared: false }));
+    });
+    const mayRemove = store.me.admin || (f.mine && !f.shared);
+    if (!share && !mayRemove) return btn;
+    const off = mayRemove ? h('button.btn.floor-off', { type: 'button', title: `Take ${f.name} off the building`, 'aria-label': `Remove ${f.name}` }, '🗑') : null;
+    off?.addEventListener('click', () => confirmRemove(f));
+    return h('div.floor-row', { class: share && off ? 'two' : '' }, btn, ...(share ? [share] : []), ...(off ? [off] : []));
   };
 
   const confirmRemove = (f: FloorInfo) => {
@@ -294,6 +309,12 @@ export function openElevator(opts: ElevatorOptions): void {
           h('p.note', {}, 'You can close this and carry on: everyone hears when the new floor opens.'),
         ]
       : [h('p.note', {}, `Cloned into ${dest} with your own GitHub access. Everything on the new floor works in that checkout.`, change)];
+    // No Composio key yet, so nobody can connect GitHub: an admin gives it one in Settings.
+    const setupBtn = !store.composio.office.configured && store.me.admin ? h('button.btn.primary', { type: 'button' }, '⚙️ Give the office its Composio key') : null;
+    setupBtn?.addEventListener('click', () => {
+      modal.close();
+      openSettingsAt('connections');
+    });
     // GitHub isn't connected for you yet: the way to do it is right here.
     const connectBtn = r.error && store.composio.office.configured && store.composio.mine.toolkits.github !== 'connected' ? h('button.btn.primary', { type: 'button' }, '🔌 Connect GitHub') : null;
     connectBtn?.addEventListener('click', () => {
@@ -302,7 +323,7 @@ export function openElevator(opts: ElevatorOptions): void {
         (err: Error) => toast(`🛗 ${err.message}`, 'warn'),
       );
     });
-    statusEl.replaceChildren(...lines.filter((l): l is HTMLElement => !!l), ...[r.error, error].filter(Boolean).map((e) => h('p.err', {}, e)), ...(connectBtn ? [connectBtn] : []));
+    statusEl.replaceChildren(...lines.filter((l): l is HTMLElement => !!l), ...[r.error, error].filter(Boolean).map((e) => h('p.err', {}, e)), ...(connectBtn ? [connectBtn] : []), ...(setupBtn ? [setupBtn] : []));
     addBtn.disabled = !!adding || !pick || store.floors.some((f) => sameRepo(f.repo, pick));
     addBtn.textContent = adding ? '⏳ Cloning…' : pick ? `🛗 Add ${pick}` : '🛗 Add floor';
     input.disabled = !!adding;

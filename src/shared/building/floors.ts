@@ -55,6 +55,15 @@ export function normalizeRepo(value: unknown): string | undefined {
   return `${owner}/${repo}`;
 }
 
+/**
+ * Whether someone sees a floor (and can go there): one they added, one its owner shared with
+ * everyone, one with no owner (from before floors had owners, or the checkout the office was
+ * started in), or any of them for an admin.
+ */
+export function seesFloor(f: { owner?: string; shared?: boolean }, accountId: string | undefined, admin: boolean): boolean {
+  return admin || !f.owner || f.shared === true || (!!accountId && f.owner === accountId);
+}
+
 export function sameRepo(a: string | undefined, b: string | undefined): boolean {
   return !!a && !!b && a.toLowerCase() === b.toLowerCase();
 }

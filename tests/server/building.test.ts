@@ -84,3 +84,27 @@ test('the floor the office was started in comes off too, stays off after a resta
   assert.equal(third.ensureLocal(defs[0].dir, 'the office')?.id, 'api');
   assert.deepEqual(third.list().map((d) => d.id), ['web', 'docs', 'api']);
 });
+
+test("someone's own floor: only they and admins see it until they share it, and only they or an admin may", async (t) => {
+  const { dataDir, root, defs } = office(t);
+  const { seesFloor } = await import('../../src/shared/building/floors.js');
+  stateDoc<any>(dataDir, 'floors').write([{ ...defs[0], owner: 'sam' }, defs[1]]);
+  const building = new Building(dataDir, root);
+  const [api, web] = building.list();
+  assert.equal(api.owner, 'sam', 'the owner is kept');
+  assert.ok(seesFloor(api, 'sam', false));
+  assert.ok(!seesFloor(api, 'ann', false), "not Ann's to see");
+  assert.ok(seesFloor(api, 'ann', true), 'admins see every floor');
+  assert.ok(seesFloor(web, 'ann', false), "one with no owner is everyone's");
+  // Ann can't share it, and adding its repository again tells her whose it is.
+  assert.match(String(building.share('api', true, 'ann', false)), /Only whoever added a floor/);
+  assert.match(String(await building.add('acme/api', 'Ann', () => {}, 'ann')), /already a floor, Sam's own: ask them to share it/);
+  assert.match(String(building.share('web', true, 'sam', false)), /everyone's already/);
+  // Sam shares it: everyone sees it, and it's saved that way.
+  assert.equal(typeof building.share('api', true, 'sam', false), 'object');
+  assert.ok(seesFloor(new Building(dataDir, root).list()[0], 'ann', false));
+  assert.match(String(await building.add('acme/api', 'Ann', () => {}, 'ann')), /already has a floor$/);
+  // And keeps it to himself again (an admin could too).
+  assert.equal(typeof building.share('api', false, 'boss', true), 'object');
+  assert.ok(!seesFloor(new Building(dataDir, root).list()[0], 'ann', false));
+});

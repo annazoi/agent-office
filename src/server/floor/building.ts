@@ -18,6 +18,10 @@ export interface FloorDef {
   palette: number;
   addedBy: string;
   addedAt: number;
+  /** The account that added it with their own GitHub: only they (and admins) see it, until it's shared. */
+  owner?: string;
+  /** Its owner shared it with everyone in the office. */
+  shared?: boolean;
 }
 
 /** A projects folder picked in ⚙️ Settings (or with --projects), as the projects-folder document keeps it. */
@@ -185,7 +189,7 @@ export class Building {
         dropLog(s.log);
         continue;
       }
-      const def = this.newDef(s.name, repo, s.dir, s.addedBy);
+      const def = this.newDef(s.name, repo, s.dir, s.addedBy, s.owner);
       const pending: Pending = { def, owner: s.owner, empty: !!s.empty };
       const run = CloneRun.adopt(s.pid, s.log, { ...this.opts.clone, changed: () => this.cloneChanged?.() });
       if (!run) {
@@ -281,7 +285,8 @@ export class Building {
   async add(input: string, by: string, started: (def: FloorDef) => void, account?: string): Promise<FloorDef | string> {
     const wanted = normalizeRepo(input);
     if (!wanted) return 'Pick a repository, or type it as owner/name';
-    if (this.defs.some((d) => sameRepo(d.repo, wanted))) return `${wanted} already has a floor`;
+    const there = this.defs.find((d) => sameRepo(d.repo, wanted));
+    if (there) return this.taken(there, wanted, account);
     if (this.cloning.has(wanted.toLowerCase())) return `${wanted} is already being cloned`;
     if (this.defs.length + this.cloning.size >= MAX_FLOORS) return `The building is full (${MAX_FLOORS} floors)`;
     // The office's own checkout, taken off before: it moves back in where it is, not into a second clone.
@@ -307,12 +312,13 @@ export class Building {
       return `Couldn't find ${wanted} on your GitHub: ${(e as Error).message}`;
     }
     const key = repo.toLowerCase();
-    if (this.defs.some((d) => sameRepo(d.repo, repo))) return `${repo} already has a floor`;
+    const again = this.defs.find((d) => sameRepo(d.repo, repo));
+    if (again) return this.taken(again, repo, account);
     if (this.cloning.has(key)) return `${repo} is already being cloned`;
     const [owner, name] = repo.split('/');
     const dest = path.join(this.projectsDir, owner, name);
     if (this.defs.some((d) => path.resolve(d.dir) === dest)) return `${dest} is already a floor`;
-    const def = this.newDef(name, repo, dest, by);
+    const def = this.newDef(name, repo, dest, by, account);
     const pending: Pending = { def, owner: account, empty };
     this.cloning.set(key, pending);
     started(def);
@@ -385,7 +391,25 @@ export class Building {
     return repos;
   }
 
-  private newDef(name: string, repo: string | undefined, dir: string, by: string): FloorDef {
+  /** Why `repo` can't be added again: it's a floor already, maybe someone else's that isn't shared. */
+  private taken(def: FloorDef, repo: string, account: string | undefined): string {
+    if (def.owner && def.owner !== account && !def.shared) return `${repo} is already a floor, ${def.addedBy}'s own: ask them to share it with everyone`;
+    return `${repo} already has a floor`;
+  }
+
+  /** Shares a floor with everyone, or keeps it to its owner again: only its owner or an admin may. Returns the floor, or why not. */
+  share(id: string, shared: boolean, account: string | undefined, admin: boolean): FloorDef | string {
+    const def = this.defs.find((d) => d.id === id);
+    if (!def) return 'No such floor';
+    if (!def.owner) return "That floor is everyone's already";
+    if (!admin && def.owner !== account) return 'Only whoever added a floor, or an admin, can share it';
+    if (shared) def.shared = true;
+    else delete def.shared;
+    this.save();
+    return def;
+  }
+
+  private newDef(name: string, repo: string | undefined, dir: string, by: string, owner?: string): FloorDef {
     const taken = new Set([...this.defs, ...this.pending()].map((d) => d.id));
     const base = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 32) || 'floor';
     let id = base;
@@ -394,7 +418,7 @@ export class Building {
     const used = new Set([...this.defs, ...this.pending()].map((d) => d.palette));
     const free = FLOOR_PALETTES.findIndex((_, i) => !used.has(i));
     const palette = free >= 0 ? free : (this.defs.length + this.cloning.size) % FLOOR_PALETTES.length;
-    return { id, name, repo, dir, palette, addedBy: by, addedAt: Date.now() };
+    return { id, name, repo, dir, palette, addedBy: by, addedAt: Date.now(), ...(owner ? { owner } : {}) };
   }
 
   private load() {
@@ -413,6 +437,8 @@ export class Building {
           palette: Number.isInteger(s.palette) && (s.palette as number) >= 0 ? (s.palette as number) : 0,
           addedBy: typeof s.addedBy === 'string' ? s.addedBy : '?',
           addedAt: typeof s.addedAt === 'number' ? s.addedAt : Date.now(),
+          ...(typeof s.owner === 'string' && s.owner ? { owner: s.owner } : {}),
+          ...(s.shared === true ? { shared: true } : {}),
         });
       }
     } catch (err) {

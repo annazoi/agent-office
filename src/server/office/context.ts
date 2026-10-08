@@ -109,18 +109,29 @@ export interface Messaging {
   warn(c: Client, error: string | undefined): void;
 }
 
+/** Who's looking at the building: their account, and whether they're an admin. */
+export interface Viewer {
+  accountId?: string;
+  admin: boolean;
+}
+
 /** The building's floors (office/floors.ts). */
 export interface FloorHelpers {
   floorOf(c: Client): Floor | undefined;
   /** The floor a worker sits on. Worker ids are unique across the building. */
   workerFloor(workerId: string): Floor | undefined;
-  floorInfos(): FloorInfo[];
+  /** The floors `who` sees (theirs, shared ones and everyone's; all of them for an admin), for their elevator. */
+  floorInfos(who: Viewer): FloorInfo[];
+  /** Whether `who` sees a floor, and may go there or use it (see seesFloor). */
+  sees(who: Viewer, def: FloorDef): boolean;
+  /** A toast for everyone who sees the floor. */
+  toastSeers(def: FloorDef, text: string, level?: 'info' | 'warn'): void;
   /** The elevator's counts change with every worker update; tell everyone at most a few times a second. */
   floorsChanged(): void;
   /** Drops a `floorsChanged` still waiting to go out (the office is closing). */
   cancelFloorsChanged(): void;
-  /** Where someone arriving goes: the floor they asked for, else the first one there is. */
-  arrivalFloor(wanted: string | null): Floor | undefined;
+  /** Where someone arriving goes: the floor they asked for, else the first one they see. */
+  arrivalFloor(wanted: string | null, who: Viewer): Floor | undefined;
   /**
    * Takes `floor` off the building (already out of the floors document): everyone on it rides the elevator to
    * the next floor, or out to the lobby if it was the last (the roof goes with it), and its workers stop.
