@@ -24,7 +24,6 @@ import { openTeam } from '../../ui/team';
 import { openUpgrade } from '../../ui/upgrade';
 import { openWhiteboard } from '../whiteboard/ui';
 import { describeSky } from '../../world/sky';
-import { setSettingsOpener } from '../../ui/settings-link';
 
 export type HudParts = Pick<Parts, 'worlds' | 'place' | 'travel' | 'you' | 'actions' | 'waiting' | 'meeting' | 'bookshelf' | 'hanging' | 'talk' | 'notifier'>;
 
@@ -184,6 +183,5 @@ export function installHud(ctx: Ctx, core: CoreState, parts: HudParts) {
     });
   }
 
-  setSettingsOpener(showSettings);
   return { hud, showSettings, editProfile };
 }

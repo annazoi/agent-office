@@ -76,11 +76,11 @@ This puts an `agent-office` command on your PATH, so next time just run `agent-o
 
 Nothing is asked in the terminal. The office opens in your browser on a link that works once, to **register your account**: the first one is the office's admin. The terminal also prints the office password: it's what teammates register their own accounts with (it's kept in the database, and only as a hash once it's been claimed). Everything else is set up inside the office, as yourself:
 
-1. **Composio** (an admin, once). Paste a Composio API key in **⚙️ Settings → 🔌 Connections** (or start the office with `--composio-key`). It's how the office reaches GitHub, Linear, Notion, Slack, Google Calendar and Gmail for each person ([Composio integrations](#composio-integrations)).
+1. **Composio** (whoever runs the server, once). Put a Composio project API key in the server's environment as `COMPOSIO_API_KEY` (or in the `.env` file next to `DATABASE_URL`, or `--composio-key`) and start the office. It's how the office reaches GitHub, Linear, Notion, Slack, Google Calendar and Gmail for each person ([Composio integrations](#composio-integrations)). It's never stored or shown, and nobody sets it from the office.
 2. **Your GitHub** (everyone). Ride the elevator, press **🔌 Connect GitHub** and approve it on github.com. Composio keeps the connection under your account, so nobody uses anyone else's access.
 3. **Your project.** Pick one of the repositories your GitHub shows (or type `owner/name`) and the office clones it into the projects folder as a floor. It's **your own floor**: only you and admins see it in the elevator, until you share it with everyone (**👥** beside it; **🔒** keeps it to yourself again). An admin can change the projects folder in **⚙️ Settings**.
 
-An admin who opens the elevator before the office has a Composio key gets a **⚙️ Give the office its Composio key** button there, straight to Connections.
+Until the server has its `COMPOSIO_API_KEY`, the elevator says so instead of listing repositories.
 
 Then walk to an empty desk, press **E** and hire a worker.
 
@@ -324,7 +324,7 @@ Whatever anyone does through a station (*📐 created Linear issue "Fix login"*,
 
 **Setup.** The office needs one Composio API key, and every person connects their own accounts:
 
-1. An admin makes a project API key at [app.composio.dev](https://app.composio.dev) and gives it to the office: in **⚙️ Settings → 🔌 Connections**, or with `--composio-key <key>` (env `AGENT_OFFICE_COMPOSIO_API_KEY`). The office checks it with Composio before saving it. `--composio-toolkits linear,gmail` (env `AGENT_OFFICE_COMPOSIO_TOOLKITS`) narrows which stations the office shows; admins can switch toolkits on and off in Connections too.
+1. Make a project API key at [app.composio.dev](https://app.composio.dev) and give it to the server: `COMPOSIO_API_KEY` in its environment or `.env` (`AGENT_OFFICE_COMPOSIO_API_KEY` works too), or `--composio-key <key>`; `deploy/provision.sh --composio-key <key>` puts it in the service's environment. The office checks it with Composio as it starts, keeps it in memory only, and keeps it out of the workers' environment. `--composio-toolkits linear,gmail` (env `AGENT_OFFICE_COMPOSIO_TOOLKITS`) narrows which stations the office shows; admins can switch toolkits on and off in Connections too.
 2. Everyone connects their own Linear, Notion, Slack, Google Calendar and Gmail: press **E** at a station and **Connect**, or open **⚙️ Settings → 🔌 Connections**. Composio's consent page opens in a new tab and comes back to the office when it's done. Each person connects as their own [account](#add-users).
 
 **GitHub, per person.** Composio's GitHub toolkit is a sixth connection, with no station of its own, and it's how projects are added: the elevator lists your repositories, checks the one you typed, and clones it with `git` over https, all through your own connected GitHub, never the office machine's `gh` login. A private repository clones with your own token, which the office asks Composio for and hands to git in its environment only (never on a command line, in a `.git/config` or in a log); if your Composio project masks connection secrets (a setting in its dashboard), only public repositories clone. The issue and PR boards, merging and the rest still use `gh` (the machine's, or each account's own in **🔐 Your sign-ins**).

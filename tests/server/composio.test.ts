@@ -76,20 +76,34 @@ test('the hub keeps the key to itself, checks it before saving, and tells browse
   assert.equal(state.by, 'Sam');
   assert.deepEqual(state.toolkits, ['linear', 'notion', 'slack', 'googlecalendar', 'gmail', 'github']);
   assert.ok(!JSON.stringify(state).includes(KEY), 'the state never carries the key');
-  // In the office's database, and read back by a fresh hub.
-  const saved = stateDoc<{ apiKey?: string }>(dir, 'composio');
-  assert.equal(saved.read()?.apiKey, KEY);
-  const again = new ComposioHub(dir, () => {}, () => {}, async () => sdk);
-  assert.equal(again.configured, true);
-  // Toolkits can be narrowed, never to something that isn't one.
+  // Never in the database: the key is the server's environment's. A fresh hub has none until it's given one.
+  const saved = stateDoc<{ apiKey?: string; toolkits?: string[] }>(dir, 'composio');
+  assert.equal(saved.read()?.apiKey, undefined);
+  assert.ok(!JSON.stringify(saved.read()).includes(KEY));
+  assert.equal(new ComposioHub(dir, () => {}, () => {}, async () => sdk).configured, false);
+  // Toolkits can be narrowed, never to something that isn't one, and that pick is kept for the next start.
   assert.equal(hub.setToolkits(['gmail', 'bogus', 'linear']), undefined);
   assert.deepEqual(hub.state().toolkits, ['linear', 'gmail']);
+  const again = new ComposioHub(dir, () => {}, () => {}, async () => sdk);
+  assert.equal(await again.setKey(KEY, 'the server'), undefined);
+  assert.deepEqual(again.state().toolkits, ['linear', 'gmail']);
   assert.match(hub.blocked(undefined)!, /Sign in with your account/);
   assert.equal(hub.blocked('a1'), undefined);
   // '' removes it.
   assert.equal(await hub.setKey('', 'Sam'), undefined);
   assert.equal(hub.configured, false);
-  assert.equal(saved.read()?.apiKey, undefined);
+  assert.match(hub.blocked('a1')!, /COMPOSIO_API_KEY/);
+});
+
+test("a key an older office stored in the database isn't used, and is gone once the server's key is set", async () => {
+  const dir = tmp('hub-old');
+  const { sdk } = fakeSdk();
+  stateDoc<unknown>(dir, 'composio').write({ apiKey: KEY, toolkits: ['slack'], by: 'Sam', at: 1 });
+  const hub = new ComposioHub(dir, () => {}, () => {}, async () => sdk);
+  assert.equal(hub.configured, false, 'only the environment gives the office its key');
+  assert.equal(await hub.setKey('ak_from_the_environment_42', 'the server'), undefined);
+  assert.deepEqual(hub.state().toolkits, ['slack'], 'the toolkit pick carries on');
+  assert.ok(!JSON.stringify(stateDoc<unknown>(dir, 'composio').read()).includes(KEY), 'the old key is dropped');
 });
 
 test("a key Composio refuses isn't saved, and an SDK that won't load is a state, not a crash", async () => {
@@ -289,6 +303,9 @@ async function office() {
     composio: hub,
     clients,
     floors: new Map([['f1', floor]]),
+    // Everyone sees the one floor (see floorParam).
+    meOf: () => ({ admin: false }),
+    sees: () => true,
     toFloor: (f: unknown, msg: ServerMsg) => sent.push({ to: (f as { id: string }).id, msg }),
   } as unknown as Ctx;
   const server = http.createServer(requestHandler(ctx, [authRoutes.login, authRoutes.loginOptions, composioRoutes.composio]));

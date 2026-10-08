@@ -41,7 +41,7 @@ agent-office [dir] [options]
       --budget-pause      ...and nobody can hire a new worker until the next day
       --max-workers <n>   Run at most n workers at once, across every floor (env AGENT_OFFICE_MAX_WORKERS)
       --webhook <url>     Post to this Slack / Discord webhook when a worker needs input or finishes
-      --composio-key <k>  Composio API key for the Linear, Notion, Slack, Calendar and Gmail stations (env AGENT_OFFICE_COMPOSIO_API_KEY; "" removes it)
+      --composio-key <k>  Composio API key: everyone's GitHub for adding projects, and the Linear, Notion, Slack, Calendar and Gmail stations (env COMPOSIO_API_KEY or AGENT_OFFICE_COMPOSIO_API_KEY, or the .env file). Only ever from the server: never stored in the database, never set from the office
       --composio-toolkits <list>
                           Which of linear, notion, slack, googlecalendar, gmail to show (env AGENT_OFFICE_COMPOSIO_TOOLKITS; default all)
       --city <name>       Put the office in a real city: its sun and live weather (open-meteo.com)

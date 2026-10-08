@@ -86,7 +86,7 @@ Usage:
 Runs the office. Nothing is asked in the terminal: open it in a browser, register
 (the first account is the admin), and from there everything is set up in the office.
 Every project is a floor of the building: ride the elevator, connect your own GitHub
-(through Composio, which an admin gives an API key in ⚙️ Settings → Connections),
+(through Composio, whose API key is COMPOSIO_API_KEY in the server's environment),
 pick one of the repositories you can see, and the office clones it into the projects
 folder as a new floor. Workers, terminals, boards and the task queue on a floor all
 belong to that floor's checkout.
@@ -154,10 +154,11 @@ Options:
       --webhook <url>     Post to this Slack or Discord webhook when a worker
                           needs input or finishes (env AGENT_OFFICE_WEBHOOK).
                           Also settable from ⚙️ Settings in the office; "" turns it off
-      --composio-key <k>  Composio API key for the Linear, Notion, Slack,
-                          Calendar and Gmail stations (env
-                          AGENT_OFFICE_COMPOSIO_API_KEY). Also settable from
-                          ⚙️ Settings → Connections; "" turns it off
+      --composio-key <k>  Composio API key: everyone's GitHub for adding projects,
+                          and the Linear, Notion, Slack, Calendar and Gmail
+                          stations (env COMPOSIO_API_KEY or
+                          AGENT_OFFICE_COMPOSIO_API_KEY, or the .env file).
+                          Only ever from the server: it isn't stored
       --composio-toolkits <list>
                           Comma list of the toolkits to show: linear, notion,
                           slack, googlecalendar, gmail (default all; env
@@ -278,7 +279,7 @@ export function loadConfig(argv: string[]): Config {
   let budgetPause = !!process.env.AGENT_OFFICE_BUDGET_PAUSE && process.env.AGENT_OFFICE_BUDGET_PAUSE !== '0';
   let maxWorkers = process.env.AGENT_OFFICE_MAX_WORKERS || '';
   let webhook = process.env.AGENT_OFFICE_WEBHOOK;
-  let composioKey = process.env.AGENT_OFFICE_COMPOSIO_API_KEY;
+  let composioKey = (process.env.COMPOSIO_API_KEY || process.env.AGENT_OFFICE_COMPOSIO_API_KEY || '').trim() || undefined;
   let composioToolkits = process.env.AGENT_OFFICE_COMPOSIO_TOOLKITS;
   let city = process.env.AGENT_OFFICE_CITY || '';
   let weather = process.env.AGENT_OFFICE_WEATHER || '';
