@@ -7,7 +7,6 @@ import { WEATHERS, isComposioToolkit, type ComposioToolkit, type Weather } from 
 import { AGENT_PROVIDERS, PROVIDER_META } from '../shared/agents/providers.js';
 import { MAX_WORKER_LIMIT, parseWorkerLimit } from './ops/machine.js';
 import { docKey, stateDb, stateDoc } from './db/state.js';
-import { migrateLegacyOffice } from './db/migrate.js';
 
 export interface Config {
   /** The office's own folder: the building's data lives in its .agent-office. */
@@ -84,7 +83,6 @@ Usage:
   agent-office prune [dir] [--dry-run] [--force]
   agent-office accounts [list|invite|revoke|role|registration] ...
   agent-office maps [list|add|remove] ...
-  agent-office migrate [dir]
   agent-office tunnel [office@address | url]
 
 Runs the office. Every project is a floor of the building: ride the elevator,
@@ -109,8 +107,6 @@ Commands:
                           changes or unpushed commits is kept unless --force is given.
   accounts                Invite, list and revoke people's accounts, and open or
                           close registering with the office password (see accounts --help)
-  migrate                 Bring an office's JSON files from before the database over
-                          into it (done by itself at the first start; see migrate --help)
   maps                    Add, list and remove the building's maps of your own, kept in
                           the database (see maps --help)
   tunnel                  On your own computer, for an office that runs somewhere
@@ -256,12 +252,8 @@ interface Stored {
   claimedAt?: number;
 }
 
-/**
- * Whether an office has run with `dir` as its folder (its config is in the database). One from before
- * the database, with its JSON files still there, is brought over into it first (see db/migrate.ts).
- */
+/** Whether an office has run with `dir` as its folder (its config is in the database). */
 export function officeRanIn(dir: string): boolean {
-  migrateLegacyOffice(dir);
   return stateDb().has(docKey(path.join(dir, '.agent-office'), 'config'));
 }
 
@@ -426,8 +418,6 @@ export function loadConfig(argv: string[]): Config {
   }
 
   const dataDir = path.join(dir, '.agent-office');
-  // An office from before the database: its JSON files come over into it, once.
-  migrateLegacyOffice(dir);
   mkdirSync(dataDir, { recursive: true, mode: 0o700 });
   if (project) excludeFromGit(dir);
 

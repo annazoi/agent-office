@@ -31,10 +31,6 @@ if (argv[0] === 'accounts') {
   const { accountsCommand } = await import('./accounts/accounts.js');
   await done(await accountsCommand(argv.slice(1)));
 }
-if (argv[0] === 'migrate') {
-  const { migrateCommand } = await import('./db/migrate-command.js');
-  await done(await migrateCommand(argv.slice(1)));
-}
 if (argv[0] === 'maps') {
   const { mapsCommand } = await import('./floor/maps-command.js');
   await done(await mapsCommand(argv.slice(1)));
