@@ -2,11 +2,11 @@
  * Golf off the balcony: the tee (a club out, a swing, the camera following the ball), everyone's balls
  * in the air or lying where they stopped, and your records, kept in this browser.
  */
-import { GOLF_HOLE } from '../../../shared/layout';
+import { GOLF_HOLE } from '../../../shared/building/layout';
 import type { Ctx } from '../../core/context';
 import { aside, hintTitle, key, onE } from '../../core/hint';
 import { Golfer } from './controller';
-import { DESK_KEYS } from '../../interaction';
+import { DESK_KEYS } from '../../input/interaction';
 import { store } from '../../state';
 import { clip, h, toast } from '../../ui/dom';
 import { BACKSWING_TIME, IMPACT, type Person } from '../../world/character';

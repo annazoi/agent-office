@@ -3,7 +3,7 @@
 // "github" toolkit, connected in ⚙️ Settings → Connections). Cloning itself is git's (clone.ts):
 // Composio never hands out the account's token, so a private repository still needs git to have a
 // way in of its own (an ssh key, or a credential helper), as the error says when it doesn't.
-import { normalizeRepo } from '../../shared/floors.js';
+import { normalizeRepo } from '../../shared/building/floors.js';
 import type { RepoChoice } from '../../shared/protocol.js';
 import type { ComposioHub } from './composio.js';
 

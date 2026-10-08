@@ -1,7 +1,7 @@
 // The building's floors: riding the elevator between them and up to the roof, and adding and taking
 // off floors.
 import type { FloorClientMsg } from '../../../shared/protocol.js';
-import { ROOF } from '../../../shared/rooftop.js';
+import { ROOF } from '../../../shared/building/rooftop.js';
 import { arrivalSpot, str } from '../../office/input.js';
 import type { HandlerMap, ViewPieces } from './types.js';
 

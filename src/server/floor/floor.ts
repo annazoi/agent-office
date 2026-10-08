@@ -2,8 +2,8 @@ import { execFileSync } from 'node:child_process';
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
 import type { ChangesState, FloorInfo, PeerInfo, ProjectInfo, ServerMsg, WorkerInfo } from '../../shared/protocol.js';
-import { isBusy } from '../../shared/status.js';
-import { DESK_BY_ID } from '../../shared/layout.js';
+import { isBusy } from '../../shared/agents/status.js';
+import { DESK_BY_ID } from '../../shared/building/layout.js';
 import type { FloorDef } from './building.js';
 import { excludeFromGit } from '../config.js';
 import { agentProviders, configuredProvider } from '../agents/agents.js';
@@ -34,7 +34,7 @@ type ToastLevel = 'info' | 'warn' | 'error';
 export interface FloorContext {
   agentCmd: string;
   agentArgs: string[];
-  /** The DSH profile DeepSeek Harness workers boot (see server/dsh.ts). */
+  /** The DSH profile DeepSeek Harness workers boot (see server/agents/dsh.ts). */
   dshProfile: string;
   hook: HookEnv;
   /** Spend, across every floor. */

@@ -3,9 +3,9 @@
 // and bookshelf are (toon.ts), with a label over it and a little light that's green once you've
 // connected that toolkit and grey until you have. Walk up and press E to open its panel (ui/integrations/).
 import * as THREE from 'three';
-import { CALENDAR_WALL, LINEAR_BOARD, MAILROOM, NOTION_SHELF, SLACK_TV, STATION_SPOTS, stationFootprint, type StationSpot } from '../../shared/integrations';
+import { CALENDAR_WALL, LINEAR_BOARD, MAILROOM, NOTION_SHELF, SLACK_TV, STATION_SPOTS, stationFootprint, type StationSpot } from '../../shared/integrations/integrations';
 import { COMPOSIO_TOOLKIT_META, type ComposioConnection, type ComposioStationToolkit, type ComposioToolkit } from '../../shared/protocol';
-import { wallFacing } from '../../shared/decor';
+import { wallFacing } from '../../shared/building/decor';
 import type { Ctx } from '../core/context';
 import { aside, hintTitle, key, onE } from '../core/hint';
 import { store } from '../state';

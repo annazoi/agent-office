@@ -1,6 +1,6 @@
 import './repos.css';
 import type { WorkerInfo } from '../../shared/protocol';
-import { isBusy } from '../../shared/status';
+import { isBusy } from '../../shared/agents/status';
 import { store } from '../state';
 import { h, openModal } from './dom';
 

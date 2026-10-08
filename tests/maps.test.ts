@@ -2,11 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { CASTLE } from '../src/shared/maps/castle.js';
-import { STATION } from '../src/shared/maps/station.js';
-import { DESK_BY_ID } from '../src/shared/layout.js';
-import { NavGrid, pathLength } from '../src/shared/nav.js';
-import { BUILTIN_MAPS, DEFAULT_DAIS, OFFICE_PLAN, checkCustomMaps, mapChoices, planMap, planOf, seatHereOn, type MapConfig } from '../src/shared/maps/index.js';
+import { CASTLE } from '../src/shared/building/maps/castle.js';
+import { STATION } from '../src/shared/building/maps/station.js';
+import { DESK_BY_ID } from '../src/shared/building/layout.js';
+import { NavGrid, pathLength } from '../src/shared/building/nav.js';
+import { BUILTIN_MAPS, DEFAULT_DAIS, OFFICE_PLAN, checkCustomMaps, mapChoices, planMap, planOf, seatHereOn, type MapConfig } from '../src/shared/building/maps/index.js';
 import { clockWork, workedMs } from '../src/server/workers.js';
 import type { WorkerInfo } from '../src/shared/protocol.js';
 

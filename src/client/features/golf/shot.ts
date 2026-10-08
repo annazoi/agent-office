@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GOLF_HOLE, GOLF_TEE } from '../../../shared/layout';
+import { GOLF_HOLE, GOLF_TEE } from '../../../shared/building/layout';
 
 // A golf shot and the tee it's hit from: what a shot is, and where the golfer stands. Where it goes from
 // there is worked out in flight.ts.

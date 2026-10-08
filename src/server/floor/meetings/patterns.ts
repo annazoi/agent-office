@@ -1,7 +1,7 @@
 import path from 'node:path';
-import { MEETING_PATTERNS, slugify } from '../../../shared/meetings.js';
+import { MEETING_PATTERNS, slugify } from '../../../shared/agents/meetings.js';
 import type { Meeting } from '../../../shared/protocol.js';
-import type { PromptId, PromptVars } from '../../../shared/prompts.js';
+import type { PromptId, PromptVars } from '../../../shared/agents/prompts.js';
 import type { Part } from './types.js';
 import { list } from './util.js';
 

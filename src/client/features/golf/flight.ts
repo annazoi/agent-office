@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BALCONY, GOLF_HOLE, SLAB, STOREY, STREET_Y, WALL_HEIGHT } from '../../../shared/layout';
+import { BALCONY, GOLF_HOLE, SLAB, STOREY, STREET_Y, WALL_HEIGHT } from '../../../shared/building/layout';
 import { neighbourBoxes } from '../../world/outside';
 import { B, CUP, CUP_SPEED, GROUND, lieAt, type Lie } from './course';
 import { AIM_MAX, BALL_R, LOFT_MAX, LOFT_MIN, SPEED, TEE_BALL, type Shot } from './shot';

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { BarGame } from '../../../shared/bargames';
+import type { BarGame } from '../../../shared/toys/bargames';
 import { DOWN, type PersonRig } from './rig';
 
 const hands = new THREE.Vector3();

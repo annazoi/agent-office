@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { mulberry32 } from '../src/shared/rng.js';
+import { mulberry32 } from '../src/shared/util/rng.js';
 
 // The scenic loop's trees, the city round the roof, the holiday trees and the jukebox's and the DJ's
 // tunes are all laid out from these numbers: a change here moves every one of them.

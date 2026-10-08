@@ -3,7 +3,7 @@
  * and letting it fly, baskets and streaks, and the ball in everyone's hands.
  */
 import * as THREE from 'three';
-import { HOOP, SWEET, idealSpeed, lookAtRim, meter, shotSpeed, throwPitch, tossSpeed, underCeiling } from '../../../shared/hoop';
+import { HOOP, SWEET, idealSpeed, lookAtRim, meter, shotSpeed, throwPitch, tossSpeed, underCeiling } from '../../../shared/toys/hoop';
 import type { Ctx, Hint } from '../../core/context';
 import { aside, hintTitle, key, onE } from '../../core/hint';
 import { store } from '../../state';

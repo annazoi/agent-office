@@ -1,4 +1,4 @@
-import { newer, type WbElement } from '../../../shared/whiteboard';
+import { newer, type WbElement } from '../../../shared/toys/whiteboard';
 import type { Slice } from '../store';
 
 declare module '../store' {

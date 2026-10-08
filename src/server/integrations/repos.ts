@@ -3,7 +3,7 @@
 // falls back to Composio's GitHub where gh isn't installed (github-composio.ts).
 import { spawn } from 'node:child_process';
 import path from 'node:path';
-import { normalizeRepo } from '../../shared/floors.js';
+import { normalizeRepo } from '../../shared/building/floors.js';
 import type { RepoChoice } from '../../shared/protocol.js';
 import { gh } from './github.js';
 

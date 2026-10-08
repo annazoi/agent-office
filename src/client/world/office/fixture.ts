@@ -1,5 +1,5 @@
 import type * as THREE from 'three';
-import type { WallId } from '../../../shared/decor';
+import type { WallId } from '../../../shared/building/decor';
 import type { Collider, DeskView, Interactable, OfficeHandles } from '../types';
 import type { Looks } from './materials';
 import type { Door } from './shell';

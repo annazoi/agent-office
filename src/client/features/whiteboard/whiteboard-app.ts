@@ -14,7 +14,7 @@ import type { BinaryFileData, Collaborator, ExcalidrawImperativeAPI, SocketId } 
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types';
 import type { RemoteExcalidrawElement } from '@excalidraw/excalidraw/data/reconcile';
 import type { ClientMsg, ServerMsg } from '../../../shared/protocol';
-import { WB_MAX_ELEMENT_BYTES, byIndex, newer, type WbElement, type WbPointer } from '../../../shared/whiteboard';
+import { WB_MAX_ELEMENT_BYTES, byIndex, newer, type WbElement, type WbPointer } from '../../../shared/toys/whiteboard';
 import { store } from '../../state';
 import { toast } from '../../ui/dom';
 

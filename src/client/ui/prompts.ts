@@ -1,7 +1,7 @@
 import './prompts.css';
-import type { Net } from '../net';
+import type { Net } from '../shared/net';
 import { store } from '../state';
-import { PROMPTS, PROMPT_GROUPS, PROMPT_IDS, PROMPT_MAX, fillPrompt, placeholders, promptText, type PromptGroup, type PromptId, type PromptVars } from '../../shared/prompts';
+import { PROMPTS, PROMPT_GROUPS, PROMPT_IDS, PROMPT_MAX, fillPrompt, placeholders, promptText, type PromptGroup, type PromptId, type PromptVars } from '../../shared/agents/prompts';
 import { h, openModal, timeAgo } from './dom';
 
 /** One of the office's prompts, as it has it now (rewritten in ⚙️ Settings, or the default), filled in. */

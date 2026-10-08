@@ -1,6 +1,6 @@
 // The balcony and the roof: golf, darts and axes, the gong and the air horn.
 
-import type { BarGame } from '../bargames.js';
+import type { BarGame } from '../toys/bargames.js';
 
 /** Why the gong rang. */
 export type GongWhy = 'hit' | 'merged' | 'queue';

@@ -7,8 +7,8 @@ import path from 'node:path';
 import { MeetingRoom, type MeetingWorkers } from '../src/server/floor/meetings.js';
 import { Worktrees } from '../src/server/workers/worktrees.js';
 import type { AgentChoice, MeetingRequest, WorkerInfo } from '../src/shared/protocol.js';
-import { MEETING_PATTERNS, MEETING_PATTERN_IDS, fixedRounds, isMeetingPattern } from '../src/shared/meetings.js';
-import { PROMPTS, type PromptId } from '../src/shared/prompts.js';
+import { MEETING_PATTERNS, MEETING_PATTERN_IDS, fixedRounds, isMeetingPattern } from '../src/shared/agents/meetings.js';
+import { PROMPTS, type PromptId } from '../src/shared/agents/prompts.js';
 
 function fixture(opts: { git?: boolean; rewritten?: Partial<Record<PromptId, string>>; officeDefault?: AgentChoice } = {}) {
   const dir = mkdtempSync(path.join(tmpdir(), 'office-meeting-'));

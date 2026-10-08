@@ -1,7 +1,7 @@
 import { readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import type { MapState } from '../../shared/protocol.js';
-import { OFFICE_MAP, checkCustomMaps, isMapChoice, planOf, type CustomMap, type MapPlan } from '../../shared/maps/index.js';
+import { OFFICE_MAP, checkCustomMaps, isMapChoice, planOf, type CustomMap, type MapPlan } from '../../shared/building/maps/index.js';
 
 /** The most custom maps read, and the biggest file that's read as one. */
 const MAX_FILES = 24;

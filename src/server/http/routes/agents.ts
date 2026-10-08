@@ -1,5 +1,5 @@
 // The models the hire dialog offers for the providers whose CLI lists them (see ../../models.ts).
-import { PROVIDER_META, isAgentProvider } from '../../../shared/providers.js';
+import { PROVIDER_META, isAgentProvider } from '../../../shared/agents/providers.js';
 import { send } from '../util.js';
 import type { Route } from '../router.js';
 

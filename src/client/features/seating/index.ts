@@ -2,7 +2,7 @@
  * Sitting down: on a chair, a stool, the couch, the throne. Sitting there already, E gets you up, or
  * does what the seat's for (the TV from the couch, Minesweeper from the boss's chair, the bar's menu).
  */
-import { seatPlace, type SeatDef, type SeatPlace } from '../../../shared/layout';
+import { seatPlace, type SeatDef, type SeatPlace } from '../../../shared/building/layout';
 import type { Ctx } from '../../core/context';
 import { aside, hintTitle, key, onE } from '../../core/hint';
 import { store } from '../../state';

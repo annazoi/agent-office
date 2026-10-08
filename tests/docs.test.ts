@@ -5,7 +5,7 @@ import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { Docs, docTitle } from '../src/server/floor/docs.js';
-import { isDocPath, resolveDocLink } from '../src/shared/docs.js';
+import { isDocPath, resolveDocLink } from '../src/shared/building/docs.js';
 
 /** A folder with some Markdown in it, and whatever `git` makes of it. */
 function fixture(t: { after(fn: () => void): void }, git: boolean) {

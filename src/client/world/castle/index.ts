@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-import type { FloorPalette } from '../../../shared/floors';
-import type { MapPlan } from '../../../shared/maps';
-import type { PropKind } from '../../../shared/maps/props';
-import { NavGrid, type Pt } from '../../../shared/nav';
+import type { FloorPalette } from '../../../shared/building/floors';
+import type { MapPlan } from '../../../shared/building/maps/index';
+import type { PropKind } from '../../../shared/building/maps/props';
+import { NavGrid, type Pt } from '../../../shared/building/nav';
 // The people first: Person (and what it loads) ran before the dungeon's module when the castle was one
 // file, so the materials the modules make as they load keep their order (three sorts by it).
 import { buildEscort, buildHerald } from './people';

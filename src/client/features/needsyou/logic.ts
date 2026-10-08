@@ -3,7 +3,7 @@
  * says about them, and when to ring again. No three.js and no page here, so the tests run it as it is.
  */
 import type { WorkerInfo, WorkerStatus } from '../../../shared/protocol';
-import { alertDetail } from '../../../shared/status';
+import { alertDetail } from '../../../shared/agents/status';
 
 /** How long between reminders while a worker's still waiting on an answer nobody's looking at (ms). */
 export const REMIND_EVERY = 30_000;

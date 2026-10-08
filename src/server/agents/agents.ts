@@ -1,5 +1,5 @@
 import path from 'node:path';
-import { AGENT_PROVIDERS, PROVIDER_META, isAgentEffort, providerMeta, providerNames, type AgentProvider } from '../../shared/providers.js';
+import { AGENT_PROVIDERS, PROVIDER_META, isAgentEffort, providerMeta, providerNames, type AgentProvider } from '../../shared/agents/providers.js';
 
 /**
  * Finds the provider represented by the configured executable.  Keep this deliberately based on

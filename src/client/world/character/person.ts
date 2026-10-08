@@ -1,9 +1,9 @@
 import * as THREE from 'three';
-import { HAIR_COLORS, HAIR_STYLES, SKIN_TONES, type Look } from '../../../shared/avatar';
-import { EMOTE_BY_ID, type EmoteId } from '../../../shared/emotes';
+import { HAIR_COLORS, HAIR_STYLES, SKIN_TONES, type Look } from '../../../shared/people/avatar';
+import { EMOTE_BY_ID, type EmoteId } from '../../../shared/people/emotes';
 import type { CarriedIssue, Theme } from '../../../shared/protocol';
-import type { BarGame } from '../../../shared/bargames';
-import type { Drink } from '../../../shared/rooftop';
+import type { BarGame } from '../../../shared/toys/bargames';
+import type { Drink } from '../../../shared/building/rooftop';
 import { HIPS, type PersonRig } from './rig';
 import { axeModel, dartModel } from '../../features/bargames/world';
 import { OpenBook } from '../../features/bookshelf/book';

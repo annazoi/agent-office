@@ -3,7 +3,7 @@ import path from 'node:path';
 import type headless from '@xterm/headless';
 import type serialize from '@xterm/addon-serialize';
 import type { ChatLine } from '../../shared/protocol.js';
-import { logicalLines, searchKey, snippet } from '../../shared/search.js';
+import { logicalLines, searchKey, snippet } from '../../shared/util/search.js';
 
 type HeadlessTerminal = InstanceType<typeof headless.Terminal>;
 type Serializer = InstanceType<typeof serialize.SerializeAddon>;

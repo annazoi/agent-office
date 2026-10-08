@@ -1,5 +1,5 @@
 import type { SkyState, Weather } from '../../../shared/protocol';
-import { skyNow, sunPosition } from '../../../shared/sun';
+import { skyNow, sunPosition } from '../../../shared/building/sun';
 import { DEG } from './math';
 
 const LABEL: Record<Weather, string> = { clear: 'Clear', cloudy: 'Cloudy', rain: 'Rain', storm: 'Thunderstorm', snow: 'Snow', fog: 'Fog' };

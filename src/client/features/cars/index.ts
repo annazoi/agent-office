@@ -3,12 +3,12 @@
  * horn, laps of the scenic loop, and a car shoving you out of its way. Placing you anywhere gets you
  * out first: see the driver's activity, and placeAt in core/place.ts.
  */
-import { CARS, SEAT_HIPS, type CarSeat } from '../../../shared/garage';
-import { PLACES, placeAt as loopPlace } from '../../../shared/scenic';
+import { CARS, SEAT_HIPS, type CarSeat } from '../../../shared/toys/garage';
+import { PLACES, placeAt as loopPlace } from '../../../shared/building/scenic';
 import type { Ctx, Hint } from '../../core/context';
 import { aside, hintTitle, key, onE } from '../../core/hint';
 import { Driver } from './controller';
-import { DESK_KEYS } from '../../interaction';
+import { DESK_KEYS } from '../../input/interaction';
 import { LapTimer, lapTime } from './laps';
 import { store } from '../../state';
 import { clip, h, toast } from '../../ui/dom';

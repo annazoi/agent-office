@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Box3, Quaternion, Vector3 } from 'three';
-import { DESK_SIZE } from '../src/shared/layout';
+import { DESK_SIZE } from '../src/shared/building/layout';
 import { openModel } from './glb';
 
 // desk_props.glb (exported by blender/scripts/build_desk_props.py) against what world/office/props.ts counts on:

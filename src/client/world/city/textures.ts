@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { mulberry32 } from '../../../shared/rng';
+import { mulberry32 } from '../../../shared/util/rng';
 import { tilingCanvasTexture } from '../texture';
 import { PERIOD, ROAD, WALK, Paint } from './shared';
 

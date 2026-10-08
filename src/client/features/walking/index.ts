@@ -3,7 +3,7 @@
  * they're on another floor; and walking over to something to use it (Shift+Enter in the palette).
  * A key of yours takes over.
  */
-import { seatOn } from '../../../shared/maps';
+import { seatOn } from '../../../shared/building/maps/index';
 import type { PeerInfo } from '../../../shared/protocol';
 import type { Ctx } from '../../core/context';
 import type { CoreState } from '../../core/ctx';

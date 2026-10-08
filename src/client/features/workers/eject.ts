@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { adrift } from '../../../shared/maps';
+import { adrift } from '../../../shared/building/maps/index';
 import type { AirlockView } from '../../world/station/airlock';
 import { ADRIFT_SCALE, float } from './adrift';
 import { pick, wrap, type Sendoff, type StepHost } from './sendoff';

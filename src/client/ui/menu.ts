@@ -1,7 +1,7 @@
 import './menu.css';
 import { store, type HudPanel, type Settings, type Topic } from '../state';
-import { waitingOnSomeone } from '../notify';
-import { DESK_BY_ID } from '../../shared/layout';
+import { waitingOnSomeone } from '../shared/notify';
+import { DESK_BY_ID } from '../../shared/building/layout';
 import { $, h, openModal, type Modal } from './dom';
 
 /** One thing the ☰ menu does. Any of them can be pinned to the top bar. */

@@ -1,6 +1,6 @@
 // What each station does, as Composio tool calls: the tool slugs and parameter names below are the
 // ones Composio's tool schemas give (docs.composio.dev/api/tools/<SLUG>), and the answers are cut
-// down to what the panels show (src/shared/composio-api.ts). Nothing here knows about HTTP or who
+// down to what the panels show (src/shared/integrations/composio-api.ts). Nothing here knows about HTTP or who
 // is asking: the hub runs each call as the person whose station it is.
 import type {
   CalendarEvent,
@@ -19,7 +19,7 @@ import type {
   SlackChannel,
   SlackMessage,
   SlackSendBody,
-} from '../../shared/composio-api.js';
+} from '../../shared/integrations/composio-api.js';
 import type { ComposioToolkit } from '../../shared/protocol.js';
 import { str } from '../office/input.js';
 

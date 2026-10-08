@@ -1,6 +1,6 @@
 import './team.css';
 import type { ServerMsg, TeamState } from '../../shared/protocol';
-import type { Net } from '../net';
+import type { Net } from '../shared/net';
 import { store } from '../state';
 import { h, openModal } from './dom';
 import { confirmDialog } from './prompt';

@@ -1,5 +1,5 @@
 import type * as THREE from 'three';
-import { DOG_COATS, DOG_COAT_GLOW } from '../../../shared/dog';
+import { DOG_COATS, DOG_COAT_GLOW } from '../../../shared/toys/dog';
 
 /** Paints the dog's three coat materials (see Dog's coatMats) in coat `n`, the white one glowing a little so it stays white at dusk. */
 export function paintCoat(mats: readonly THREE.MeshToonMaterial[], n: number) {

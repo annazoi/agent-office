@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { byUrgency, needingYou, needyFirst, NextUp, waitingInOrder, waitingLabel } from '../src/client/nextup.js';
+import { byUrgency, needingYou, needyFirst, NextUp, waitingInOrder, waitingLabel } from '../src/client/shared/nextup.js';
 import type { WorkerInfo, WorkerStatus } from '../src/shared/protocol.js';
 
 function worker(id: string, status: WorkerStatus, waitingSince?: number, acked = false, createdAt = 0): WorkerInfo {

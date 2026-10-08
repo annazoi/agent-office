@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 import type { Theme, WorkerAction, WorkerStatus, WorkerTask } from '../../../shared/protocol';
-import { isAsleep, type WorkerPr } from '../../../shared/status';
+import { isAsleep, type WorkerPr } from '../../../shared/agents/status';
 import { beard, grime, peasantGarb, type Beard, type PeasantGarb } from '../costumes';
 import { disposeSprite, mesh, textSprite, toon, toonUnique } from '../toon';
 import type { WorkerRig } from './rig';

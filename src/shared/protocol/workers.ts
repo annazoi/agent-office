@@ -15,7 +15,7 @@ export type WorkerStatus =
 export type WorkerKind = 'agent' | 'shell';
 
 /**
- * What a working agent's latest tool call looks like from across the room (see shared/actions.ts):
+ * What a working agent's latest tool call looks like from across the room (see shared/agents/actions.ts):
  * reading files, editing them, running tests or a build, on the web, or tests failing again and again.
  */
 export type WorkerAction = 'read' | 'edit' | 'test' | 'web' | 'failing';

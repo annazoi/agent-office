@@ -1,7 +1,7 @@
 import './upgrade.css';
 import type { UpgradeState, VersionInfo } from '../../shared/protocol';
-import type { Net } from '../net';
-import { isAsleep } from '../../shared/status';
+import type { Net } from '../shared/net';
+import { isAsleep } from '../../shared/agents/status';
 import { store } from '../state';
 import { closeAllModals, h, openModal, timeAgo, type Modal } from './dom';
 

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BOARD_KEYS, type BoardKey } from '../../../shared/maps';
+import { BOARD_KEYS, type BoardKey } from '../../../shared/building/maps/index';
 import type { Interactable } from '../types';
 import { mesh, textPlane } from '../toon';
 import { box, type Kit } from './kit';

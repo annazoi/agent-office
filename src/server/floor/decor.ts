@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { MAX_DECOR, checkImageUrl, sanitizePlacement, type Decoration } from '../../shared/decor.js';
+import { MAX_DECOR, checkImageUrl, sanitizePlacement, type Decoration } from '../../shared/building/decor.js';
 
 /** The pictures on the office walls, saved in .agent-office/decor.json. */
 export class Decor {

@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { CLEAR_POINTS, SCORES_KEPT, WELL_ROWS, checkScore, levelFor, type CabinetFrame, type HighScore } from '../../shared/cabinet.js';
+import { CLEAR_POINTS, SCORES_KEPT, WELL_ROWS, checkScore, levelFor, type CabinetFrame, type HighScore } from '../../shared/toys/cabinet.js';
 
 const COLOR_RE = /^#[0-9a-fA-F]{6}$/;
 

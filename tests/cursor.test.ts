@@ -14,7 +14,7 @@ import {
   withoutCursorLaunchArgs,
   writeCursorHook,
 } from '../src/server/agents/cursor.js';
-import { isValidCursorModel } from '../src/shared/providers.js';
+import { isValidCursorModel } from '../src/shared/agents/providers.js';
 
 function scratch(t: { after(fn: () => void): void }): string {
   const dir = mkdtempSync(path.join(tmpdir(), 'agent-office-cursor-'));

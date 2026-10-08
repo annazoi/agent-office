@@ -1,4 +1,4 @@
-import { trackTitle } from '../../../shared/jukebox';
+import { trackTitle } from '../../../shared/toys/jukebox';
 import type { Ctx } from '../../core/context';
 import { aside, hintTitle, key, onE } from '../../core/hint';
 import { store } from '../../state';

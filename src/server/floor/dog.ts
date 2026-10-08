@@ -1,8 +1,8 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { DESK_BY_ID, FLOOR, KIOSK, type DeskDef } from '../../shared/layout.js';
-import { DOG_BREEDS, DOG_COATS, cleanDogName, dogAt, dogDefaults, legSeconds, type DogAct, type DogBreed, type DogState } from '../../shared/dog.js';
-import { deskPoint, nearestWalkable, route, walkable, type Pt } from '../../shared/nav.js';
+import { DESK_BY_ID, FLOOR, KIOSK, type DeskDef } from '../../shared/building/layout.js';
+import { DOG_BREEDS, DOG_COATS, cleanDogName, dogAt, dogDefaults, legSeconds, type DogAct, type DogBreed, type DogState } from '../../shared/toys/dog.js';
+import { deskPoint, nearestWalkable, route, walkable, type Pt } from '../../shared/building/nav.js';
 import type { PeerInfo, WorkerInfo } from '../../shared/protocol.js';
 
 // ---- Its day ------------------------------------------------------------------------------------

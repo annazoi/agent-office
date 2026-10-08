@@ -6,7 +6,7 @@ import path from 'node:path';
 import headless from '@xterm/headless';
 import serialize from '@xterm/addon-serialize';
 import { CHAT_KEEP, ChatLog, ScrollbackStore, searchTerminal, terminalTail } from '../src/server/floor/history.js';
-import { findLine, searchKey, snippet } from '../src/shared/search.js';
+import { findLine, searchKey, snippet } from '../src/shared/util/search.js';
 import type { ChatLine } from '../src/shared/protocol.js';
 
 function dataDir(t: { after(fn: () => void): void }) {

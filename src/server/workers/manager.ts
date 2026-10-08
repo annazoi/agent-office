@@ -1,9 +1,9 @@
 import { randomBytes } from 'node:crypto';
 import path from 'node:path';
 import type { AgentChoice, AgentEffort, AgentProvider, TerminalHit, WorkerInfo, WorkerKind, WorkerRepo } from '../../shared/protocol.js';
-import { AGENT_PROVIDERS, takesEffort, takesModel } from '../../shared/providers.js';
+import { AGENT_PROVIDERS, takesEffort, takesModel } from '../../shared/agents/providers.js';
 import { Worktrees, workspaceOf, type WorktreeCleanup, type WorktreeState } from './worktrees.js';
-import { DESK_BY_ID, STATION_AGENT, deskBuilt } from '../../shared/layout.js';
+import { DESK_BY_ID, STATION_AGENT, deskBuilt } from '../../shared/building/layout.js';
 import { stationBrief } from '../floor/stations.js';
 import type { PromptSource } from '../floor/prompts.js';
 import type { GhAs } from '../accounts/signins.js';

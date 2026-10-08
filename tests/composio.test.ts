@@ -19,7 +19,7 @@ import { requestHandler } from '../src/server/http/router.js';
 import { authRoutes } from '../src/server/http/routes/auth.js';
 import type { Ctx } from '../src/server/office/context.js';
 import { parseToolkitPick } from '../src/server/setup-composio.js';
-import { stationFootprint, stationObstacles, STATION_SPOTS } from '../src/shared/integrations.js';
+import { stationFootprint, stationObstacles, STATION_SPOTS } from '../src/shared/integrations/integrations.js';
 import type { ServerMsg } from '../src/shared/protocol.js';
 
 const tmp = (name: string) => mkdtempSync(path.join(os.tmpdir(), `ao-${name}-`));

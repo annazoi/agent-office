@@ -1,11 +1,11 @@
 import './settings.css';
-import type { Net } from '../net';
+import type { Net } from '../shared/net';
 import type { OfficeSound } from '../sound';
 import { store, type NeedsYouSound, type Settings, type ViewMode } from '../state';
-import { askNotifyPermission, notifyPermission, type DesktopNotifier } from '../notify';
+import { askNotifyPermission, notifyPermission, type DesktopNotifier } from '../shared/notify';
 import type { ThemePick, WebhookKind } from '../../shared/protocol';
-import { THEME_PICKS } from '../../shared/theme';
-import { mapChoices } from '../../shared/maps';
+import { THEME_PICKS } from '../../shared/building/theme';
+import { mapChoices } from '../../shared/building/maps/index';
 import { dogSetting } from './settings-dog';
 import { connectionsSettings } from './settings-connections';
 import { h, openModal, timeAgo } from './dom';

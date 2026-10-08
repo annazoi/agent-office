@@ -21,7 +21,7 @@
 // Once it has drawn, window.__ready holds what it found in each model, to check against the contract.
 
 import * as THREE from 'three';
-import { DOG_BREEDS, dogBreed, type DogBreed, type DogState } from '../../shared/dog';
+import { DOG_BREEDS, dogBreed, type DogBreed, type DogState } from '../../shared/toys/dog';
 import type { Theme } from '../../shared/protocol';
 import { Dog } from '../features/dog/world';
 import { loadModel } from '../world/models';

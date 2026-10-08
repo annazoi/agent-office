@@ -1,6 +1,6 @@
 import './windows.css';
 import type { GhIssue, GhIssueDetail } from '../../../shared/protocol';
-import type { Net } from '../../net';
+import type { Net } from '../../shared/net';
 import { store } from '../../state';
 import { h, openModal, timeAgo } from '../dom';
 import { issueMeeting } from '../meeting';

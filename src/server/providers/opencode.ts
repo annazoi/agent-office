@@ -1,7 +1,7 @@
 // OpenCode: a plugin the office writes (see ../opencode.ts), loaded through OPENCODE_CONFIG_CONTENT,
 // reports statuses and usage snapshots on /hooks/opencode.
 import { describeComposioTool, openCodeComposioMcp } from '../integrations/composio-mcp.js';
-import { toolAction } from '../../shared/actions.js';
+import { toolAction } from '../../shared/agents/actions.js';
 import { openCodeMcp } from '../office-workers.js';
 import { mergeOpenCodeConfigContent, openCodePluginSpecifier, writeOpenCodePlugin, type OpenCodeStatusEvent } from '../agents/opencode.js';
 import { reportedUsage } from '../usage/reported-usage.js';

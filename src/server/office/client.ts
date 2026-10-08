@@ -1,5 +1,5 @@
 import type { WebSocket } from 'ws';
-import { EMOTE_EVERY, EmoteBucket } from '../../shared/emotes.js';
+import { EMOTE_EVERY, EmoteBucket } from '../../shared/people/emotes.js';
 import type { PeerInfo } from '../../shared/protocol.js';
 
 /** A viewer with more than this waiting to go out skips terminal output, and gets a fresh snapshot once it catches up. */

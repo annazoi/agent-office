@@ -4,7 +4,7 @@
 // following its tool calls one by one; Claude Code's own hook is built from the same steps (see
 // providers/claude.ts). OpenCode's plugin reports statuses instead (see providers/opencode.ts).
 import { describeComposioTool } from '../integrations/composio-mcp.js';
-import { toolAction } from '../../shared/actions.js';
+import { toolAction } from '../../shared/agents/actions.js';
 import type { Worker, WorkerHandle } from './types.js';
 import { truncate } from './util.js';
 

@@ -4,18 +4,18 @@
  * at a desk; and what the hint bar says at a desk or a board agent's kiosk. Also what the boards'
  * buttons do with a worker.
  */
-import { STATION_AGENT, deskSeat, type DeskDef } from '../../../shared/layout';
-import { canLabel } from '../../../shared/floorplan';
-import { officeFull, pressureNote } from '../../../shared/machine';
+import { STATION_AGENT, deskSeat, type DeskDef } from '../../../shared/building/layout';
+import { canLabel } from '../../../shared/building/floorplan';
+import { officeFull, pressureNote } from '../../../shared/agents/machine';
 import type { AgentEffort, AgentProvider, WorkerInfo } from '../../../shared/protocol';
-import { isAsleep, isBusy } from '../../../shared/status';
+import { isAsleep, isBusy } from '../../../shared/agents/status';
 import type { Ctx, Hint } from '../../core/context';
 import type { CoreState } from '../../core/ctx';
 import { seatBuilt } from '../../core/floors';
 import { aside, key } from '../../core/hint';
 import type { Parts } from '../../core/parts';
 import { STATION_INFO } from '../../core/stations';
-import { askNotifyPermission, notifyPermission } from '../../notify';
+import { askNotifyPermission, notifyPermission } from '../../shared/notify';
 import { repoChoices } from '../../shared/hiring';
 import { store } from '../../state';
 import { openAsk } from '../../ui/ask';

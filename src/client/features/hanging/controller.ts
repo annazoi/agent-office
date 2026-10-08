@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { PICTURE_MAX, PICTURE_MIN, clampToWall, frameRect, overlaps, pictureSize, type WallId } from '../../../shared/decor';
-import type { Net } from '../../net';
+import { PICTURE_MAX, PICTURE_MIN, clampToWall, frameRect, overlaps, pictureSize, type WallId } from '../../../shared/building/decor';
+import type { Net } from '../../shared/net';
 import type { PlayerController } from '../../player';
 import { store } from '../../state';
 import { openHangDialog, openPicture, type HangChoice } from './ui';

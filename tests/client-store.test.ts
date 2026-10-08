@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import { readdirSync } from 'node:fs';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { EMPTY_PLAN } from '../src/shared/floorplan.js';
-import { parked } from '../src/shared/garage.js';
-import { JUKEBOX_TUNES } from '../src/shared/jukebox.js';
+import { EMPTY_PLAN } from '../src/shared/building/floorplan.js';
+import { parked } from '../src/shared/toys/garage.js';
+import { JUKEBOX_TUNES } from '../src/shared/toys/jukebox.js';
 import type { ServerMsg } from '../src/shared/protocol.js';
 
 // The store keeps the floor you're on in localStorage and times things by performance.now(): stand both

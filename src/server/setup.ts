@@ -5,7 +5,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { createInterface } from 'node:readline/promises';
 import tty from 'node:tty';
-import { normalizeRepo, sameRepo } from '../shared/floors.js';
+import { normalizeRepo, sameRepo } from '../shared/building/floors.js';
 import type { RepoChoice } from '../shared/protocol.js';
 import { Building, tildify } from './floor/building.js';
 import { officeHome, type Config } from './config.js';

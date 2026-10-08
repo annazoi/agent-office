@@ -7,7 +7,7 @@ import { openModel } from './glb';
 // lounge.glb (exported by blender/scripts/build_lounge.py) against what world/office/props.ts counts on: its four
 // pieces by name, each a root standing on the floor at the origin and facing +z, the materials it paints, and
 // the old code-built lounge's sizes, which the couch's and the table's colliders, the seats' hips (SEATING in
-// shared/layout.ts) and the holiday pumpkin on the table (holiday.ts) are placed by.
+// shared/building/layout.ts) and the holiday pumpkin on the table (holiday.ts) are placed by.
 
 const FILE = new URL('../src/client/models/lounge.glb', import.meta.url);
 const lounge = openModel('lounge');

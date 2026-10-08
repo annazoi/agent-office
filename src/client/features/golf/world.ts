@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BALCONY, GOLF_HOLE, GOLF_TEE, STREET_Y } from '../../../shared/layout';
+import { BALCONY, GOLF_HOLE, GOLF_TEE, STREET_Y } from '../../../shared/building/layout';
 import type { Collider, Interactable } from '../../world/types';
 import { golfBall } from './balls';
 import { BUNKERS, FAIRWAY_Z0, FRINGE, STICK } from './course';

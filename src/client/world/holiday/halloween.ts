@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { WALL_HEIGHT } from '../../../shared/layout';
+import { WALL_HEIGHT } from '../../../shared/building/layout';
 import { batWingGeometry } from '../costumes';
 import { mesh, toon } from '../toon';
 

@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { PALETTE_MAX, isPaletteKey, matchItem, matchText, rankItems, type PaletteItem } from '../src/shared/palette.js';
+import { PALETTE_MAX, isPaletteKey, matchItem, matchText, rankItems, type PaletteItem } from '../src/shared/util/palette.js';
 
 const titles = (q: string, items: PaletteItem[]) => rankItems(q, items).map((m) => m.item.title);
 

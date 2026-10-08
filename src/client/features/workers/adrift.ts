@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { adrift, adriftFrom, wasting, type Drift, type SendHomePlan } from '../../../shared/maps';
+import { adrift, adriftFrom, wasting, type Drift, type SendHomePlan } from '../../../shared/building/maps/index';
 import type { JailState, Prisoner } from '../../../shared/protocol';
 import { Worker } from '../../world/character';
 import type { AirlockView } from '../../world/station/airlock';

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { AXE_LANE } from '../../../shared/bargames';
-import { FLOOR, ROOF_TABLES, SEATING_BY_ID, FIRE_PIT } from '../../../shared/layout';
+import { AXE_LANE } from '../../../shared/toys/bargames';
+import { FLOOR, ROOF_TABLES, SEATING_BY_ID, FIRE_PIT } from '../../../shared/building/layout';
 import type { Collider, Interactable } from '../../world/types';
 import { bulb, type NightParts } from '../../world/outside';
 import { mesh, roundedBox, toon } from '../../world/toon';

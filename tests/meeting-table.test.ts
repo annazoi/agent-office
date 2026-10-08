@@ -1,9 +1,9 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Box3 } from 'three';
-import { MEETING_LAPTOP, MEETING_SEATS, MEETING_TABLE, type DeskDef } from '../src/shared/layout.js';
-import { COUNCIL, planOf } from '../src/shared/maps/index.js';
-import { deskPoint, type Pt } from '../src/shared/nav.js';
+import { MEETING_LAPTOP, MEETING_SEATS, MEETING_TABLE, type DeskDef } from '../src/shared/building/layout.js';
+import { COUNCIL, planOf } from '../src/shared/building/maps/index.js';
+import { deskPoint, type Pt } from '../src/shared/building/nav.js';
 
 // A full meeting's laptops (in the castle, its tomes) where the worlds put them on the table
 // (world/office/meeting-room.ts, world/castle/seats.ts), each the size of the real model with its

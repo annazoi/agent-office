@@ -1,12 +1,12 @@
 import * as THREE from 'three';
-import { AXE_LANE, AXE_TARGET, DART, DARTBOARD, targetFrame, throwSpot, type BarGame, type Score, type Toss } from '../../../shared/bargames';
-import { FLOOR } from '../../../shared/layout';
+import { AXE_LANE, AXE_TARGET, DART, DARTBOARD, targetFrame, throwSpot, type BarGame, type Score, type Toss } from '../../../shared/toys/bargames';
+import { FLOOR } from '../../../shared/building/layout';
 import type { Collider, Interactable } from '../../world/types';
 import { bulb, type NightParts } from '../../world/outside';
 import { canvasTexture } from '../../world/texture';import { axeModel, dartModel, plain } from './models';import { axeTargetTexture, dartboardTexture, toonMap } from './textures';
 import { disposeSprite, mergeByMaterial, mesh, textPlane, textSprite, toon } from '../../world/toon';
 
-// The rooftop bar's games corner (see shared/bargames.ts): an axe-throwing booth against the north
+// The rooftop bar's games corner (see shared/toys/bargames.ts): an axe-throwing booth against the north
 // edge with its target on the back wall, and a dart board in a cabinet on the outside of the booth,
 // each with a chalkboard for the round being thrown. The darts and axes flying at them, and stuck in
 // them, are everyone's: whoever throws, every page up there flies it the same way to the same spot.

@@ -1,6 +1,6 @@
 import './changes.css';
 import { changedImageType, type ChangedFile, type ChangesState, type ServerMsg } from '../../shared/protocol';
-import type { Net } from '../net';
+import type { Net } from '../shared/net';
 import { store } from '../state';
 import { h, openModal, type Modal } from './dom';
 import { confirmDialog, openPrompt } from './prompt';

@@ -1,8 +1,8 @@
 // ⚙️ Settings' Connections pane: your own Linear, Notion, Slack, Google Calendar and Gmail, each to
 // connect or disconnect (only you see yours), and for admins the office's Composio API key and which
-// toolkits the office shows (see server/composio.ts).
+// toolkits the office shows (see server/integrations/composio.ts).
 import { COMPOSIO_TOOLKITS, COMPOSIO_TOOLKIT_META, type ComposioToolkit } from '../../shared/protocol';
-import type { Net } from '../net';
+import type { Net } from '../shared/net';
 import { store } from '../state';
 import { h, timeAgo, toast } from './dom';
 import { connect, disconnect } from './integrations/api';

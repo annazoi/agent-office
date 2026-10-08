@@ -11,7 +11,7 @@
 // Once it has drawn, window.__ready holds each prop's size, triangles, draw calls and material names.
 
 import * as THREE from 'three';
-import { DESKS } from '../../shared/layout';
+import { DESKS } from '../../shared/building/layout';
 import { buildCabinet } from '../features/cabinet/world';
 import { supercar } from '../features/cars/world';
 import { buildGong } from '../features/gong/world';
@@ -20,7 +20,7 @@ import { buildKitchen } from '../world/kitchen';
 import { preloadModels } from '../world/models';
 import { DESK_BOOKS, FLOOR_PLANTS, buildDesk, coffeeTable, deskBooks, deskMug, loungeCouch, plant, pouf } from '../world/office';
 import { toon } from '../world/toon';
-import { STATION_SPOTS } from '../../shared/integrations';
+import { STATION_SPOTS } from '../../shared/integrations/integrations';
 import { buildStation, paintCalendarScreen, paintSlackScreen } from '../world/integrations';
 import { ready, stage } from './stage';
 

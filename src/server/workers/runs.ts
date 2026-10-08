@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto';
 import path from 'node:path';
 import type { AgentProvider } from '../../shared/protocol.js';
-import { DESK_BY_ID } from '../../shared/layout.js';
+import { DESK_BY_ID } from '../../shared/building/layout.js';
 import { PtyHost, SCROLLBACK, type Adopted, type Pty } from './ptys.js';
 import { ScrollbackStore, terminalTail } from '../floor/history.js';
 import { providerAdapter, titleNoise, type LaunchPlan } from '../providers/index.js';

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { HATCH, HULL, wallOut, type WallOpening, type WallSide } from '../../../shared/maps';
-import type { Bounds, Pt } from '../../../shared/nav';
+import { HATCH, HULL, wallOut, type WallOpening, type WallSide } from '../../../shared/building/maps/index';
+import type { Bounds, Pt } from '../../../shared/building/nav';
 import { canvasTexture, tilingCanvasTexture } from '../texture';
 import { mesh, textPlane } from '../toon';
 import { Batch, PANEL, PLATE, box, lit, placed, tileBox, type Kit } from './kit';

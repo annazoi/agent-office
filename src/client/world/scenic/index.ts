@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { FARM, LIGHTHOUSE } from '../../../shared/scenic';
+import { FARM, LIGHTHOUSE } from '../../../shared/building/scenic';
 import type { Collider } from '../types';
 import type { Fixture, StreetSite } from '../office/fixture';
 import type { NightParts } from '../outside';
@@ -14,7 +14,7 @@ import { plantTrees } from './trees';
 import { buildTunnel } from './tunnel';
 import { buildWater } from './water';
 
-// The scenic loop (see shared/scenic.ts), down on the street: the country road itself, and what you
+// The scenic loop (see shared/building/scenic.ts), down on the street: the country road itself, and what you
 // drive past on it. A farm on the way out of town to the east, then the pines, with a creek under a
 // bridge; the mountains to the south, snow on their tops, a lake under them and a tunnel through a
 // spur of them; up the coast, the beach, the sea and a pier, a lighthouse out on a rocky point; and

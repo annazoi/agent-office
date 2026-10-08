@@ -1,6 +1,6 @@
 // Names what each worker is on: a few words and a one-line summary for the card above its head.
 // A small model (Claude Haiku, through the `claude` CLI the office already needs) writes them from
-// the worker's prompts and recent tool calls, told how by the 'office.namer' prompt (shared/prompts.ts).
+// the worker's prompts and recent tool calls, told how by the 'office.namer' prompt (shared/agents/prompts.ts).
 // Without it, the card falls back to the prompt itself.
 
 import { spawn } from 'node:child_process';

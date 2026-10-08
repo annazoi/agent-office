@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { FLOOR, SLAB, STREET_Y, WING, inWing, wingMinZ } from '../../shared/layout';
+import { FLOOR, SLAB, STREET_Y, WING, inWing, wingMinZ } from '../../shared/building/layout';
 import type { ViewMode } from '../state';
 import type { Collider } from '../world/types';
 import { ceilingAt, groundAt } from './collide';

@@ -3,8 +3,8 @@
 import { existsSync } from 'node:fs';
 import path from 'node:path';
 import type { WorkerInfo } from '../../shared/protocol.js';
-import { DESK_BY_ID } from '../../shared/layout.js';
-import { isBusy } from '../../shared/status.js';
+import { DESK_BY_ID } from '../../shared/building/layout.js';
+import { isBusy } from '../../shared/agents/status.js';
 import { gh } from '../integrations/github.js';
 import type { GhAs } from '../accounts/signins.js';
 import { Worktrees } from './worktrees.js';

@@ -1,5 +1,5 @@
 /** Emotes: G opens the wheel (hold it and point, or tap it and click), 1 to 6 play one straight away. */
-import { EMOTES, EMOTE_BY_ID, EmoteBucket, type EmoteId } from '../../../shared/emotes';
+import { EMOTES, EMOTE_BY_ID, EmoteBucket, type EmoteId } from '../../../shared/people/emotes';
 import type { Ctx } from '../../core/context';
 import { $, h, toast } from '../../ui/dom';
 import { EmoteWheel } from './ui';

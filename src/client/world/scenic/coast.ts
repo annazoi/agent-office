@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { LIGHTHOUSE, LOOP, LOOP_HALF, PIER, shoreX } from '../../../shared/scenic';
+import { LIGHTHOUSE, LOOP, LOOP_HALF, PIER, shoreX } from '../../../shared/building/scenic';
 import { bulb } from '../outside';
 import { tilingCanvasTexture } from '../texture';
 import { mergeByColor, mesh, textPlane, toon } from '../toon';

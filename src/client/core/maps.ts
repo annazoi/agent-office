@@ -3,7 +3,7 @@
  * the new one's put up with everyone in their seats, and you come in where it has you arrive. Also
  * the floor's paint, down off a roof the map doesn't have, and who's waiting on another floor.
  */
-import { floorPalette } from '../../shared/floors';
+import { floorPalette } from '../../shared/building/floors';
 import { store } from '../state';
 import { $, toast } from '../ui/dom';
 import type { Ctx } from './context';

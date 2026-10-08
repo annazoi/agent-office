@@ -1,6 +1,6 @@
 import './windows.css';
 import type { GhIssue, GhLabel, GhPull } from '../../../shared/protocol';
-import type { Net } from '../../net';
+import type { Net } from '../../shared/net';
 import { h, openModal } from '../dom';
 import { repoUrlOf } from '../markdown';
 import { getJson, labelWaiters } from './api';

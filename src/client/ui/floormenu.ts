@@ -1,6 +1,6 @@
 import './floormenu.css';
-import { cloneLabel, floorPalette } from '../../shared/floors';
-import { ROOF, ROOF_NAME } from '../../shared/rooftop';
+import { cloneLabel, floorPalette } from '../../shared/building/floors';
+import { ROOF, ROOF_NAME } from '../../shared/building/rooftop';
 import type { FloorInfo } from '../../shared/protocol';
 import { store } from '../state';
 import { h } from './dom';

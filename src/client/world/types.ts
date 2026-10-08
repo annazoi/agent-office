@@ -1,7 +1,7 @@
 import type * as THREE from 'three';
-import type { DeskDef } from '../../shared/layout';
-import type { WallRect } from '../../shared/decor';
-import type { FloorPalette } from '../../shared/floors';
+import type { DeskDef } from '../../shared/building/layout';
+import type { WallRect } from '../../shared/building/decor';
+import type { FloorPalette } from '../../shared/building/floors';
 
 // The world's shared types: what you bump into and what you can use, the seats workers sit in, and the
 // office floor as main.ts drives it (built in world/office/ from fixtures that each add what they give it).
@@ -47,7 +47,7 @@ export interface Interactable {
   seatId?: string;
   /** Which of POLES, for a fire pole. */
   pole?: number;
-  /** Which of CARS (shared/garage.ts), for a car. */
+  /** Which of CARS (shared/toys/garage.ts), for a car. */
   car?: number;
   /** Put away for now (a bean bag nobody needs yet): can't be used. */
   off?: boolean;

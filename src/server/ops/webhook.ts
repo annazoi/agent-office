@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import type { NotifyState, WebhookKind, WorkerInfo, WorkerStatus } from '../../shared/protocol.js';
-import { alertDetail } from '../../shared/status.js';
+import { alertDetail } from '../../shared/agents/status.js';
 
 /** A worker has to stay put this long before the channel hears about it, so a flicker never posts. */
 const SETTLE_MS = 5_000;

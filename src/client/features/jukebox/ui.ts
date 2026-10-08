@@ -1,6 +1,6 @@
 import './ui.css';
-import { JUKEBOX_TUNES, STREAM, checkStreamUrl, trackTitle, tuneById } from '../../../shared/jukebox';
-import type { Net } from '../../net';
+import { JUKEBOX_TUNES, STREAM, checkStreamUrl, trackTitle, tuneById } from '../../../shared/toys/jukebox';
+import type { Net } from '../../shared/net';
 import { store } from '../../state';
 import { h, openModal, toast } from '../../ui/dom';
 

@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
-import { FLOOR, WING, wingMinZ } from '../src/shared/layout.js';
+import { FLOOR, WING, wingMinZ } from '../src/shared/building/layout.js';
 import { buildWalls, exitPlug, wallRun } from '../src/client/world/office/shell.js';
 
 // Indoors the walls take no shadows (features/lamplight), which goes by `userData.wall`: every piece of

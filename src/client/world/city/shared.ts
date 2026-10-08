@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { FLOOR, WALL_T, roofDrop } from '../../../shared/layout';
+import { FLOOR, WALL_T, roofDrop } from '../../../shared/building/layout';
 
 /** The building, walls included. */
 export const B = { minX: FLOOR.minX - WALL_T, maxX: FLOOR.maxX + WALL_T, minZ: FLOOR.minZ - WALL_T, maxZ: FLOOR.maxZ + WALL_T } as const;

@@ -1,7 +1,7 @@
 // Coercing what a browser sends into what the office works with: a message's fields are whatever
 // the page (or anyone else) put there, so every one is checked before it's used.
-import { MAX_FLOORS } from '../../shared/floors.js';
-import { streetBelow } from '../../shared/layout.js';
+import { MAX_FLOORS } from '../../shared/building/floors.js';
+import { streetBelow } from '../../shared/building/layout.js';
 
 export const str = (v: unknown, max: number) => (typeof v === 'string' ? v.slice(0, max) : '');
 /** Which of a worker's repositories a Changes message is about: another floor's (see WorkerInfo.repos), or none for its own. */

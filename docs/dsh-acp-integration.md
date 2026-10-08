@@ -108,7 +108,7 @@ and the adapters are both keyed by `AgentProvider`):
 
 | Piece | File |
 |---|---|
-| Its id in `AGENT_PROVIDERS`, and its row in `PROVIDER_META`: its label, its executable, which models and efforts it takes, how the hire dialog asks for its model (`models`), and how its spend shows | `src/shared/providers.ts` (the wire types re-export it from `src/shared/protocol/agents.ts`) |
+| Its id in `AGENT_PROVIDERS`, and its row in `PROVIDER_META`: its label, its executable, which models and efforts it takes, how the hire dialog asks for its model (`models`), and how its spend shows | `src/shared/agents/providers.ts` (the wire types re-export it from `src/shared/protocol/agents.ts`) |
 | Its adapter, a `ProviderAdapter`: how it's launched, its hook route, what its screen says, how its usage is read | a new `src/server/providers/<id>.ts` |
 | Its entry in `PROVIDERS` | `src/server/providers/index.ts` |
 
@@ -165,7 +165,7 @@ inferred.
 
 ### Worker actions
 
-`src/shared/actions.ts` maps a tool *name* to a `WorkerAction`. ACP instead supplies a semantic
+`src/shared/agents/actions.ts` maps a tool *name* to a `WorkerAction`. ACP instead supplies a semantic
 `ToolKind` (`read`, `edit`, `delete`, `move`, `search`, `execute`, `think`, `fetch`,
 `switch_mode`, `other`), which is more reliable than name matching. Add a parallel mapper:
 

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import type { PropConfig } from '../../../shared/maps';
-import { PROP_SIZE, type PropKind } from '../../../shared/maps/props';
+import type { PropConfig } from '../../../shared/building/maps/index';
+import { PROP_SIZE, type PropKind } from '../../../shared/building/maps/props';
 import { buildGong } from '../../features/gong/world';
 import type { Interactable } from '../types';
 import { canvasTexture } from '../texture';

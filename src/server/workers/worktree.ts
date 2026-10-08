@@ -5,7 +5,7 @@ import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, rmdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import type { WorkerInfo, WorkerRepo } from '../../shared/protocol.js';
-import { normalizeRepo } from '../../shared/floors.js';
+import { normalizeRepo } from '../../shared/building/floors.js';
 import { officePrompt } from '../floor/prompts.js';
 import { WORKSPACE_FILES, WORKTREES_DIR, Worktrees, describeWork, workspaceOf, type WorktreeCleanup, type WorktreeRef, type WorktreeState } from './worktrees.js';
 import { midTurn } from './lifecycle.js';

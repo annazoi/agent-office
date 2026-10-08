@@ -8,7 +8,7 @@
  * at the same moment, and the lights on the rig flash on the same kicks and snares (see djFrame),
  * even for someone who has the music turned off.
  */
-import { mulberry32 } from '../../shared/rng';
+import { mulberry32 } from '../../shared/util/rng';
 
 export const DJ_BPM = 172;
 /** A 16th, a beat and a bar, in seconds. */

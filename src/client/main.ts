@@ -1,12 +1,12 @@
 import './style.css';
-import { Net } from './net';
-import { DesktopNotifier } from './notify';
+import { Net } from './shared/net';
+import { DesktopNotifier } from './shared/notify';
 import { store, loadProfile, loadSettings } from './state';
 import { PlayerController, groundAt } from './player';
 import { Hands } from './world/hands';
 import { Confetti } from './world/confetti';
 import { djFrame } from './dnb';
-import { Voice } from './voice';
+import { Voice } from './sound/voice';
 import { $ } from './ui/dom';
 import { openCharacter } from './ui/character';
 import { elevatorPanelOpen } from './ui/elevator';

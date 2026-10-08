@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { FLOOR, WING, WING_DESKS, wingMinZ } from '../src/shared/layout.js';
+import { FLOOR, WING, WING_DESKS, wingMinZ } from '../src/shared/building/layout.js';
 import type { FloorInfo } from '../src/shared/protocol.js';
 import { builtFloors, floorWings, pastTheWing, seatBuilt } from '../src/client/core/floors.js';
 import { store } from '../src/client/state/index.js';

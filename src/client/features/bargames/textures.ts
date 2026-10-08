@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { AXE_TARGET, DART, DART_NUMBERS } from '../../../shared/bargames';
+import { AXE_TARGET, DART, DART_NUMBERS } from '../../../shared/toys/bargames';
 import { canvasTexture } from '../../world/texture';
 import { toon } from '../../world/toon';
 

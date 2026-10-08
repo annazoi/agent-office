@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { FLOOR, STREET_Y, WALL_T, WING, wingMinZ } from '../../../shared/layout';
+import { FLOOR, STREET_Y, WALL_T, WING, wingMinZ } from '../../../shared/building/layout';
 import type { SkyState, Theme, Weather } from '../../../shared/protocol';
-import { guessPlace, skyNow, sunPosition } from '../../../shared/sun';
+import { guessPlace, skyNow, sunPosition } from '../../../shared/building/sun';
 import type { NightParts } from '../outside';
 import { DEG, clamp01, ease, lerp, rand, smooth } from './math';
 import { B, MAX_LAMPS, uniforms } from './shader';
@@ -41,7 +41,7 @@ export class Sky {
   /** In a hall with a roof and walls all round (a map other than the office's, see setIndoors). */
   private indoors = false;
   /**
-   * How far out into the country you are, 0–1 (out on the scenic loop, see shared/scenic.ts): the
+   * How far out into the country you are, 0–1 (out on the scenic loop, see shared/building/scenic.ts): the
    * haze near the ground thins out to more than twice as far, so the mountains and the sea show from the road.
    */
   open = 0;

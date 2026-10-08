@@ -5,12 +5,12 @@
  * order they register in, and a part can reach one installed after it. Each part names the ones it
  * reaches for (a `Pick` of these). Types only.
  */
-import type { Net } from '../net';
-import type { DesktopNotifier } from '../notify';
+import type { Net } from '../shared/net';
+import type { DesktopNotifier } from '../shared/notify';
 import type { PlayerController } from '../player';
 import type { OfficeSound } from '../sound';
 import type { Settings } from '../state';
-import type { Voice } from '../voice';
+import type { Voice } from '../sound/voice';
 import type { Person } from '../world/character';
 import type { Confetti } from '../world/confetti';
 import type { Hands } from '../world/hands';

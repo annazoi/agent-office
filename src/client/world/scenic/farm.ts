@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { FARM } from '../../../shared/scenic';
+import { FARM } from '../../../shared/building/scenic';
 import { bulb } from '../outside';
 import { tilingCanvasTexture } from '../texture';
 import { mergeByColor, mesh, toon } from '../toon';

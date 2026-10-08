@@ -1,5 +1,5 @@
 import './ui.css';
-import { isDocPath, resolveDocLink, type DocFile, type DocList, type DocText } from '../../../shared/docs';
+import { isDocPath, resolveDocLink, type DocFile, type DocList, type DocText } from '../../../shared/building/docs';
 import { clip, h, openModal, setDoing, timeAgo, toast } from '../../ui/dom';
 import { markdownFile } from '../../ui/markdown';
 

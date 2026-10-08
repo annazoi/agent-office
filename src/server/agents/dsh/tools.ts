@@ -1,4 +1,4 @@
-import { commandAction, toolAction } from '../../../shared/actions.js';
+import { commandAction, toolAction } from '../../../shared/agents/actions.js';
 import type { WorkerAction } from '../../../shared/protocol.js';
 import { bounded, isRec, oneLine, str, type Rec } from './util.js';
 import { V } from './theme.js';

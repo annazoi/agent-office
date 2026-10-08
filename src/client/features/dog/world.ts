@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BARK_EVERY_S, BARK_FOR_S, DOG_COATS, dogAt, dogBreed, legSeconds, type DogBreed, type DogState } from '../../../shared/dog';
+import { BARK_EVERY_S, BARK_FOR_S, DOG_COATS, dogAt, dogBreed, legSeconds, type DogBreed, type DogState } from '../../../shared/toys/dog';
 import type { Theme } from '../../../shared/protocol';
 import { paintCoat } from './coat';
 import { drops, fitPicking, type Act } from './rigging';
@@ -93,7 +93,7 @@ interface Rig {
 
 /**
  * The office dog, as everyone on the floor sees it: a chunky cartoon dog of its floor's breed that walks
- * where the server says (see shared/dog.ts), sits, lies down, naps with its head on its paws, sniffs, barks
+ * where the server says (see shared/toys/dog.ts), sits, lies down, naps with its head on its paws, sniffs, barks
  * at a worker that needs input and wags when it's petted. Forward is +z. Every breed is modelled and
  * animated in Blender (dog-<breed>.glb, see models.ts) with the same rig, and loads the first time a floor
  * has one; the woof, the panting, blinking and dressing up are done here.

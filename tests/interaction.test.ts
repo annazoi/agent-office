@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { interactionAvailable, type DeskKey, type InteractionState } from '../src/client/interaction.js';
+import { interactionAvailable, type DeskKey, type InteractionState } from '../src/client/input/interaction.js';
 import type { Interactable } from '../src/client/world/types.js';
 
 const state = (overrides: Partial<InteractionState> = {}): InteractionState => ({ room: false, note: null, carrying: false, ...overrides });

@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { levelRoute, type SendHomePlace, type SendHomeStep } from '../../../shared/maps';
-import type { Pt } from '../../../shared/nav';
+import { levelRoute, type SendHomePlace, type SendHomeStep } from '../../../shared/building/maps/index';
+import type { Pt } from '../../../shared/building/nav';
 import type { Worker } from '../../world/character';
 import type { Drifters } from './adrift';
 import { eject, shut } from './eject';

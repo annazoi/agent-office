@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { WHITEBOARD } from '../../../shared/layout';
+import { WHITEBOARD } from '../../../shared/building/layout';
 import { mesh, roundedBox, textPlane, toon } from '../../world/toon';
 import type { Collider, Interactable } from '../../world/types';
 import type { Fixture } from '../../world/office/fixture';

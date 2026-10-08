@@ -7,7 +7,7 @@
  * Every note follows from the tune and how far into it you are, so everyone on the floor who starts
  * from the same moment hears exactly the same bar.
  */
-import { mulberry32 } from '../../shared/rng';
+import { mulberry32 } from '../../shared/util/rng';
 import { biquad } from './dsp';
 
 interface Tune {

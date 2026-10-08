@@ -1,9 +1,9 @@
 // The way over to a teammate you clicked in the sidebar: round the furniture downstairs (see
-// shared/nav.ts), and up the stairs to the boss's office or out through the balcony doors when that's
+// shared/building/nav.ts), and up the stairs to the boss's office or out through the balcony doors when that's
 // where they are.
 
-import { BALCONY, BALCONY_DOOR, FLOOR, LOFT, STAIRS, WALL_T, inWing } from '../../../shared/layout';
-import { route } from '../../../shared/nav';
+import { BALCONY, BALCONY_DOOR, FLOOR, LOFT, STAIRS, WALL_T, inWing } from '../../../shared/building/layout';
+import { route } from '../../../shared/building/nav';
 
 export interface Spot {
   x: number;

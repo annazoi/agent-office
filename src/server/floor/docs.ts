@@ -4,7 +4,7 @@ import path from 'node:path';
 import { insideCheckout } from '../workers/changes.js';
 import type { ImageResult } from './decor.js';
 import { changedImageType } from '../../shared/protocol.js';
-import { isDocPath, type DocFile, type DocList, type DocText } from '../../shared/docs.js';
+import { isDocPath, type DocFile, type DocList, type DocText } from '../../shared/building/docs.js';
 
 // The bookshelf: every Markdown file in a floor's project, to read in the office (features/bookshelf/ui.ts).
 // Git says which files are the project's (tracked, or new and not ignored), so node_modules, build

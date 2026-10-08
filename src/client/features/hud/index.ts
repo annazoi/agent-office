@@ -3,12 +3,12 @@
  * and F to hang a picture; the project in the corner (click it for the floors); Settings, and your
  * character.
  */
-import { ROOF } from '../../../shared/rooftop';
+import { ROOF } from '../../../shared/building/rooftop';
 import type { Ctx } from '../../core/context';
 import type { CoreState } from '../../core/ctx';
 import { builtFloors } from '../../core/floors';
 import type { Parts } from '../../core/parts';
-import { waitingInOrder, waitingLabel } from '../../nextup';
+import { waitingInOrder, waitingLabel } from '../../shared/nextup';
 import { saveSettings, store } from '../../state';
 import { openAccounts } from '../../ui/accounts';
 import { openBoard } from '../../ui/boards';

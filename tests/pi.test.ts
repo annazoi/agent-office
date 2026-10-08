@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { normalizePiHook, piArgs, PI_EXTENSION_SOURCE, writePiExtension } from '../src/server/agents/pi.js';
-import { isValidPiModel } from '../src/shared/providers.js';
+import { isValidPiModel } from '../src/shared/agents/providers.js';
 import { WorkerManager, type WorkerEvents } from '../src/server/workers.js';
 import { Ledger } from '../src/server/usage/usage.js';
 import type { Pty, PtyExit, SpawnOpts } from '../src/server/workers/ptys.js';

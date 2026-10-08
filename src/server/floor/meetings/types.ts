@@ -1,5 +1,5 @@
 import type { AgentChoice, AgentEffort, AgentProvider, Meeting, MeetingState, WorkerInfo } from '../../../shared/protocol.js';
-import type { PromptId } from '../../../shared/prompts.js';
+import type { PromptId } from '../../../shared/agents/prompts.js';
 import type { WorktreeRef, WorktreeState } from '../../workers/worktrees.js';
 
 

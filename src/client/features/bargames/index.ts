@@ -3,10 +3,10 @@
  * up there) and chalked up on the board, and your best rounds, kept in this browser.
  */
 import * as THREE from 'three';
-import { ROUND, score, targetFrame, type BarGame, type Score, type Toss } from '../../../shared/bargames';
+import { ROUND, score, targetFrame, type BarGame, type Score, type Toss } from '../../../shared/toys/bargames';
 import type { Ctx, Hint } from '../../core/context';
 import { aside, hintTitle, key, onE } from '../../core/hint';
-import { DESK_KEYS } from '../../interaction';
+import { DESK_KEYS } from '../../input/interaction';
 import { store } from '../../state';
 import { Thrower } from './controller';
 import { clip, h, toast } from '../../ui/dom';

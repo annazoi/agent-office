@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { isAgentEffort, isAgentProvider, type AgentChoice, type AgentProvider, type PromptsState } from '../../shared/protocol.js';
-import { PROMPTS, PROMPT_MAX, fillPrompt, isPromptId, promptText, type PromptId, type PromptVars } from '../../shared/prompts.js';
+import { PROMPTS, PROMPT_MAX, fillPrompt, isPromptId, promptText, type PromptId, type PromptVars } from '../../shared/agents/prompts.js';
 import { validateWorkerEffort, validateWorkerModel } from '../agents/agents.js';
 
 /** What the floors read: a prompt as the office has it now, and what workers start on. */
@@ -17,7 +17,7 @@ export function officePrompt(source: PromptSource | undefined, id: PromptId, var
 }
 
 /**
- * The prompts the office writes for workers by itself (shared/prompts.ts), as rewritten in
+ * The prompts the office writes for workers by itself (shared/agents/prompts.ts), as rewritten in
  * ⚙️ Settings, and the provider, model and effort every worker starts on unless whoever starts it
  * picks others. The same for the whole building, kept in .agent-office/prompts.json; admins change them.
  */

@@ -1,6 +1,6 @@
 import './boards.css';
 import type { GhIssue, GhLabel, GhPull, WorkerInfo } from '../../shared/protocol';
-import type { Net } from '../net';
+import type { Net } from '../shared/net';
 import { store, workerForPull } from '../state';
 import { h, openModal, timeAgo } from './dom';
 import { openIssue } from './github/issue-window';

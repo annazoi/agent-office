@@ -2,10 +2,10 @@ import { randomBytes } from 'node:crypto';
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { isAgentProvider, type AgentChoice, type AgentEffort, type AgentProvider, type GhPull, type QueueState, type QueueTask, type WorkerInfo, type WorkerStatus } from '../../shared/protocol.js';
-import { DESK_BY_ID, SEATS, nextFreeSeat } from '../../shared/layout.js';
+import { DESK_BY_ID, SEATS, nextFreeSeat } from '../../shared/building/layout.js';
 import { validateWorkerEffort, validateWorkerModel } from '../agents/agents.js';
-import { savedEffort, savedModel, takesEffort, takesModel } from '../../shared/providers.js';
-import { PROMPTS } from '../../shared/prompts.js';
+import { savedEffort, savedModel, takesEffort, takesModel } from '../../shared/agents/providers.js';
+import { PROMPTS } from '../../shared/agents/prompts.js';
 
 /** What the queue needs from the worker manager. Narrow on purpose, so a smoke test can fake it. */
 export interface QueueWorkers {
@@ -36,7 +36,7 @@ export interface QueueEvents {
   room?(): number;
   /** The last task on the queue just finished, done: nothing is left queued or running. */
   emptied(): void;
-  /** What's added after a task that runs in its own worktree ('queue.worktree' in shared/prompts.ts); empty for nothing. */
+  /** What's added after a task that runs in its own worktree ('queue.worktree' in shared/agents/prompts.ts); empty for nothing. */
   worktreeNote?(): string;
 }
 

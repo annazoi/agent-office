@@ -1,4 +1,4 @@
-import type { Decoration } from '../../../shared/decor';
+import type { Decoration } from '../../../shared/building/decor';
 import type { Slice } from '../store';
 
 declare module '../store' {

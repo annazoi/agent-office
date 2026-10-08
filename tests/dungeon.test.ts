@@ -3,8 +3,8 @@ import assert from 'node:assert/strict';
 import { mkdtempSync, readFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { NavGrid, type Pt } from '../src/shared/nav.js';
-import { checkCustomMaps, dungeonClear, levelRoute, planOf, prisonSeat, wasting } from '../src/shared/maps/index.js';
+import { NavGrid, type Pt } from '../src/shared/building/nav.js';
+import { checkCustomMaps, dungeonClear, levelRoute, planOf, prisonSeat, wasting } from '../src/shared/building/maps/index.js';
 import { Jail, MAX_PRISONERS } from '../src/server/floor/jail.js';
 
 /** Every step along `way` is walkable: in the hall on `hall`, down in the dungeon (below `ceiling`, by `level`) on `vault`, and on the stairs, on them. */

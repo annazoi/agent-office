@@ -6,8 +6,8 @@ import { writeFileSync } from 'node:fs';
 import path from 'node:path';
 import type { AgentEffort, AgentProvider, GhPull, QueueTask, WorkerInfo, WorkerStatus, WorktreeCleanup } from '../shared/protocol.js';
 import { isAgentEffort, isAgentProvider } from '../shared/protocol.js';
-import { DESK_BY_ID, STATION_AGENT } from '../shared/layout.js';
-import { workerPr } from '../shared/status.js';
+import { DESK_BY_ID, STATION_AGENT } from '../shared/building/layout.js';
+import { workerPr } from '../shared/agents/status.js';
 import { landedWork, notLeaving } from './floor/leave-on-merge.js';
 
 /** One worker as an agent sees it: enough to pick the ones to send home, and say why. */

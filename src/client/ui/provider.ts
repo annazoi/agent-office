@@ -1,7 +1,7 @@
 import './provider.css';
 import type { AgentChoice, AgentEffort, AgentProvider, ProjectInfo, Usage, WorkerInfo } from '../../shared/protocol';
 import { AGENT_EFFORTS, isAgentEffort } from '../../shared/protocol';
-import { AGENT_PROVIDERS, CLAUDE_MODEL_NAMES, PROVIDER_META, claudeModelName, isAgentProvider, isClaudeModel, takesEffort, type ModelOption } from '../../shared/providers';
+import { AGENT_PROVIDERS, CLAUDE_MODEL_NAMES, PROVIDER_META, claudeModelName, isAgentProvider, isClaudeModel, takesEffort, type ModelOption } from '../../shared/agents/providers';
 import { store } from '../state';
 import { h } from './dom';
 
@@ -155,7 +155,7 @@ function loadCatalogue(provider: AgentProvider): Promise<void> | undefined {
 /**
  * The provider, model and effort fields: a provider selector that never offers a provider outside
  * the server's metadata, with its model and reasoning effort underneath. Which of those a provider
- * takes, and how its model is asked for, is its row in the provider table (shared/providers.ts), so
+ * takes, and how its model is asked for, is its row in the provider table (shared/agents/providers.ts), so
  * a provider added there gets its fields here.
  */
 export function agentFields(project: ProjectInfo | null, id: string, initial: AgentChoice, label = 'Provider'): AgentFields {

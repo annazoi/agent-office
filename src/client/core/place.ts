@@ -2,8 +2,8 @@
  * Where you are, and putting you somewhere: in the elevator car, on your feet at a spot, where a map
  * has you come in, up on its throne; and where you're standing, to come back to.
  */
-import { ELEVATOR, ELEVATOR_CAR, FLOOR, POLE, SLAB, STOREY, WALL_HEIGHT, inElevator, inWing } from '../../shared/layout';
-import { ROOF, ROOF_NAME } from '../../shared/rooftop';
+import { ELEVATOR, ELEVATOR_CAR, FLOOR, POLE, SLAB, STOREY, WALL_HEIGHT, inElevator, inWing } from '../../shared/building/layout';
+import { ROOF, ROOF_NAME } from '../../shared/building/rooftop';
 import type { Arrival } from '../features/climbing/controller';
 import { rememberSpot, store, type Spot } from '../state';
 import type { Ctx } from './context';

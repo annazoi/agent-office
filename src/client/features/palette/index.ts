@@ -3,8 +3,8 @@
  * requests, issues and services, and the people in it. Enter does it; Shift+Enter walks you over to
  * where it's done first.
  */
-import { DESK_BY_ID, DESKS, WING_DESKS, deskSeat, type DeskDef } from '../../../shared/layout';
-import { isPaletteKey } from '../../../shared/palette';
+import { DESK_BY_ID, DESKS, WING_DESKS, deskSeat, type DeskDef } from '../../../shared/building/layout';
+import { isPaletteKey } from '../../../shared/util/palette';
 import type { Ctx } from '../../core/context';
 import { seatBuilt } from '../../core/floors';
 import type { Parts } from '../../core/parts';

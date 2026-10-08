@@ -1,7 +1,7 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import type { ThemePick, ThemeState } from '../../shared/protocol.js';
-import { activeTheme, isThemePick } from '../../shared/theme.js';
+import { activeTheme, isThemePick } from '../../shared/building/theme.js';
 
 /** How often 'auto' looks at the calendar again, so October 1st turns the pumpkins on by itself. */
 const CHECK_MS = 10 * 60_000;

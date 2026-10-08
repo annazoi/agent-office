@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { FLOOR, SLAB, STREET_Y, WALL_T, roofDrop } from '../../../shared/layout';
-import { mulberry32 } from '../../../shared/rng';
+import { FLOOR, SLAB, STREET_Y, WALL_T, roofDrop } from '../../../shared/building/layout';
+import { mulberry32 } from '../../../shared/util/rng';
 import type { NightParts } from '../outside';
 import { mergeByMaterial, mesh, toon } from '../toon';
 import { buildTower } from '../tower';

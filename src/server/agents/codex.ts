@@ -1,6 +1,6 @@
 import { chmodSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import type { AgentEffort } from '../../shared/providers.js';
+import type { AgentEffort } from '../../shared/agents/providers.js';
 
 export const CODEX_HOOK_EVENTS = [
   'SessionStart',

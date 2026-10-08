@@ -1,4 +1,4 @@
-import { BALCONY, DESKS, DESK_SIZE, EXIT_STAIRS, FLOOR, PLANTS, STREET_Y, WINDOWS } from '../../../shared/layout';
+import { BALCONY, DESKS, DESK_SIZE, EXIT_STAIRS, FLOOR, PLANTS, STREET_Y, WINDOWS } from '../../../shared/building/layout';
 
 export const G = STREET_Y;
 

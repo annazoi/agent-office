@@ -1,13 +1,13 @@
 // The building: its floors, going between them, and what each floor holds.
 
-import type { CabinetView } from '../cabinet.js';
-import type { Decoration } from '../decor.js';
-import type { DogState } from '../dog.js';
-import type { FloorPlan } from '../floorplan.js';
-import type { CarState } from '../garage.js';
-import type { BallState } from '../hoop.js';
-import type { JukeboxState } from '../jukebox.js';
-import type { WhiteboardView } from '../whiteboard.js';
+import type { CabinetView } from '../toys/cabinet.js';
+import type { Decoration } from '../building/decor.js';
+import type { DogState } from '../toys/dog.js';
+import type { FloorPlan } from '../building/floorplan.js';
+import type { CarState } from '../toys/garage.js';
+import type { BallState } from '../toys/hoop.js';
+import type { JukeboxState } from '../toys/jukebox.js';
+import type { WhiteboardView } from '../toys/whiteboard.js';
 import type { AgentProvider } from './agents.js';
 import type { GhIssue, GhPull, GhState } from './github.js';
 import type { MeetingState } from './meetings.js';
@@ -120,7 +120,7 @@ export interface FloorView {
   meeting: MeetingState;
   /** The basketball by the hoop: who has it, or how it was last thrown. */
   ball: BallState;
-  /** The cars in the garage (see CARS in shared/garage.ts): where each one is, and who's in it. */
+  /** The cars in the garage (see CARS in shared/toys/garage.ts): where each one is, and who's in it. */
   cars: CarState[];
   /** Workers sent home and locked up in the dungeon, on a map that has one. */
   jail: JailState;

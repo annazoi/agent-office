@@ -1,5 +1,5 @@
 import type { GhComment } from '../../../shared/protocol';
-import type { Net } from '../../net';
+import type { Net } from '../../shared/net';
 import { h } from '../dom';
 import { markdown } from '../markdown';
 import { commentWaiters } from './api';

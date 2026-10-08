@@ -1,9 +1,9 @@
 // The workers list in the sidebar: every worker on your floor, what it's on, and what it has spent.
 // One that needs you goes to the top, in red, saying what it's asking and for how long.
 
-import { needyFirst } from '../nextup';
+import { needyFirst } from '../shared/nextup';
 import { store } from '../state';
-import { DESK_BY_ID } from '../../shared/layout';
+import { DESK_BY_ID } from '../../shared/building/layout';
 import { $, h, STATUS_LABEL, timeAgo } from './dom';
 import { usageLabel, usageTitle } from './usage';
 import { providerLabel, providerUsageState, providerWaitingLabel, resolvedProvider, modelBadge } from './provider';

@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import { BALCONY, DESKS, DESK_SIZE, EXIT_STAIRS, FLOOR, PLANTS, STREET_Y, WALL_HEIGHT, WINDOWS } from '../../../shared/layout';
+import { BALCONY, DESKS, DESK_SIZE, EXIT_STAIRS, FLOOR, PLANTS, STREET_Y, WALL_HEIGHT, WINDOWS } from '../../../shared/building/layout';
 import type { Theme } from '../../../shared/protocol';
-import { mulberry32 } from '../../../shared/rng';
+import { mulberry32 } from '../../../shared/util/rng';
 import { batWingGeometry, glowTexture } from '../costumes';
 import { plantLeaves } from '../office';
 import type { Collider, Office } from '../types';

@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { accessSync, constants, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { FLOOR_PALETTES, MAX_FLOORS, normalizeRepo, sameRepo } from '../../shared/floors.js';
+import { FLOOR_PALETTES, MAX_FLOORS, normalizeRepo, sameRepo } from '../../shared/building/floors.js';
 import type { CloneProgress, ProjectsDirState, RepoChoice } from '../../shared/protocol.js';
 import { CloneRun, GH_MISSING, dropLog, whyCloneFailed, type CloneEnd, type CloneRunOptions } from '../integrations/clone.js';
 import type { RepoSource } from '../integrations/github-composio.js';

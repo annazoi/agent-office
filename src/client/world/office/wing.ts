@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { DESKS, DESK_SIZE, FLOOR, SLAB, WALL_HEIGHT, WALL_T, WING, WING_DESKS, deskSeat, wingMinZ, wingRowZ } from '../../../shared/layout';
+import { DESKS, DESK_SIZE, FLOOR, SLAB, WALL_HEIGHT, WALL_T, WING, WING_DESKS, deskSeat, wingMinZ, wingRowZ } from '../../../shared/building/layout';
 import type { NightParts } from '../outside';
 import { mesh, roundedBox, toon } from '../toon';
 import { wingWindows } from '../tower';

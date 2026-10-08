@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { DogAct } from '../../../shared/dog';
+import type { DogAct } from '../../../shared/toys/dog';
 
 // Fitting a dog's model once it's loaded: the capsules the mouse picks it by, and how far its top sinks in each clip.
 

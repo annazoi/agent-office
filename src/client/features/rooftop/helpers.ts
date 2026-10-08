@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { FLOOR, SEATING_BY_ID, WALL_T } from '../../../shared/layout';
+import { FLOOR, SEATING_BY_ID, WALL_T } from '../../../shared/building/layout';
 import { canvasTexture } from '../../world/texture';
 import type { Collider, Interactable } from '../../world/types';
 

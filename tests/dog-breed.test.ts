@@ -4,7 +4,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { Dog, type DogEnv } from '../src/server/floor/dog.js';
-import { dogDefaults } from '../src/shared/dog.js';
+import { dogDefaults } from '../src/shared/toys/dog.js';
 
 const env: DogEnv = { workers: () => [], people: () => [], send: () => {} };
 

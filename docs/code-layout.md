@@ -34,13 +34,13 @@ They're in `core/registry.ts`, and each is a field of `ctx`. Every registration 
 ### Folders
 
 - **`features/<name>/`** is the home of a feature. `index.ts` has its `install<Name>(ctx, deps)`, and beside it is whatever it needs: `controller.ts` (what it does with you), `world.ts` (its 3D things), `sound.ts` (its sound recipes), `ui.ts` and `ui.css` (its window). `features/workers/` is the one without an `index.ts`: its install functions are in `actions.ts` and `views.ts`. `tests/client-structure.test.ts` checks `main.ts` calls every feature's install function once.
-- **`core/`** is the office's own parts that aren't a feature: the renderer and scene (`scene.ts`), the frame loop (`loop.ts`), the building's maps (`worlds.ts`, `maps.ts`), floors and the elevator (`travel.ts`), arriving (`arrival.ts`), where you are (`place.ts`), and the hint bar (`hintbar.ts`, with the pieces every hint is made of in `hint.ts`).
+- **`core/`** is the office's own parts that aren't a feature: the renderer and scene (`scene.ts`), the frame loop (`loop.ts`), the building's maps (`worlds.ts`, `maps.ts`), floors and the elevator (`travel.ts`), arriving (`arrival.ts`), where you are (`place.ts`), the frame-rate check (`framerate.ts`), and the hint bar (`hintbar.ts`, with the pieces every hint is made of in `hint.ts`).
 - **`input/`** is the keyboard (`keyboard.ts`, which hands every press to `ctx.keys`), aiming and clicking (`pointer.ts`), and windows and the game taking turns with both (`focus.ts`).
 - **`state/`** is the store. `store.ts` declares the core fields (who you are, the people, the floors, and the floor you're on with its workers, screens, boards and queue), and `core.ts` keeps them up to date. Everything else is a slice in `state/slices/`: a module that adds its fields and topics to `Store` and `Topics` (`declare module '../store'`), sets where they start (`init`), and says what it takes in from each server message (`on`) and from each floor you arrive on (`enter`). Slices run in the order of `SLICES` in `state/slices/index.ts`, which is the order their topics fire in, so a new one goes at the end. Features follow a topic with `store.on('<topic>', fn)`. What the browser remembers between visits is `persist.ts`.
 - **`ui/`** is the app shell: the HUD, the menu and the windows (settings, the palette, terminals, changes, the queue, and the GitHub windows in `ui/github/`). Each module imports its own stylesheet (`import './palette.css'`), as a feature's `ui.ts` does (`import './ui.css'`).
 - **`world/`** is the engine and the scenery: toon materials and shapes (`toon.ts`), the characters (`world/character/`), the office floor (`world/office/`), the castle (`world/castle/`), the space station (`world/station/`), the scenic loop, the sky and the city. The types they share (what you bump into, what you can use, the seats, `Office`) are in `world/types.ts`.
 - **`sound/`** is the office's sound. `OfficeSound` (`sound/index.ts`, the `ctx.sound` every part uses) is a facade over `AudioCore` (`sound/core.ts`: the audio context, its buses, where your ears are) and the recipes, each in a file of its own, here (`weather.ts`, `steps.ts`) or in its feature's folder (`features/gong/sound.ts`).
-- **`shared/`** (`src/client/shared/`) is what the 3D office and the 2D view at `/lite` both use: the tab title and hiring. The 2D view loads no three.js and nothing from `core/`, `features/`, `input/`, `world/` or `player/`; `tests/client-structure.test.ts` follows `lite.ts`'s imports to check.
+- **`shared/`** (`src/client/shared/`) is what the 3D office and the 2D view at `/lite` both use: the tab title, hiring, the socket (`net.ts`), the workers waiting on you (`nextup.ts`) and desktop notifications (`notify.ts`). The 2D view loads no three.js and nothing from `core/`, `features/`, `input/`, `world/` or `player/`; `tests/client-structure.test.ts` follows `lite.ts`'s imports to check.
 
 ### Stylesheets
 
@@ -70,14 +70,17 @@ The rest of `src/server/` is grouped by what it's for, and only the entry points
 
 A module that outgrows one file becomes a folder (`agents/dsh/`, `floor/meetings/`, `accounts/signins/`), and the old `<name>.ts` stays beside it as a barrel that re-exports what it exported before, so its importers don't change. The client does the same: `world/sky/`, `world/city/`, `world/holiday/`, `world/costumes/` and `dnb/` each have an `index.ts`.
 
-The Composio integrations are the one feature laid out by its own name rather than through `features/`: `integrations/composio.ts` (the hub: the office's key, a Composio session per account), `integrations/composio-actions.ts` (what each station does, as tool calls), `integrations/composio-mcp.ts` (the workers' MCP configs), `http/composio.ts` (its routes, listed in `http/routes/index.ts`), `ws/handlers/composio.ts`, and on the client `world/integrations.ts` (the five stations, their interactions and the text over heads) and `ui/integrations/` (the panels, shared with `/lite`). Their layout is in `src/shared/integrations.ts`, which `nav.ts` reads too.
+The Composio integrations are the one feature laid out by its own name rather than through `features/`: `integrations/composio.ts` (the hub: the office's key, a Composio session per account), `integrations/composio-actions.ts` (what each station does, as tool calls), `integrations/composio-mcp.ts` (the workers' MCP configs), `http/composio.ts` (its routes, listed in `http/routes/index.ts`), `ws/handlers/composio.ts`, and on the client `world/integrations.ts` (the five stations, their interactions and the text over heads) and `ui/integrations/` (the panels, shared with `/lite`). Their layout is in `src/shared/integrations/integrations.ts`, which `nav.ts` reads too.
 
 ## Shared
 
 - **`protocol.ts`** is the wire protocol. It puts the domain files in `protocol/<domain>.ts` back together (`export *`) and makes the `ClientMsg` and `ServerMsg` unions every frame is one of. Keep `import type` between domain files: some name each other's types (`floors.ts` and `presence.ts` do), which only type imports can do without a cycle at run time.
-- **`providers.ts`** is the provider table: every agent a worker can run, and what the office knows about each.
+- **`agents/`** is what the office knows about workers: `providers.ts` (the provider table: every agent a worker can run, and what the office knows about each), `actions.ts`, `status.ts`, `prompts.ts`, `machine.ts` and `meetings.ts` (the meeting patterns).
+- **`building/`** is the building and what it's made of: `layout.ts`, `floors.ts`, `floorplan.ts`, `rooftop.ts`, `scenic.ts`, `sun.ts`, `theme.ts`, `nav.ts`, `decor.ts`, `docs.ts`, `drops.ts` and the maps in `building/maps/`.
+- **`toys/`** is what's on a floor to play with: `hoop.ts`, `garage.ts`, `bargames.ts`, `cabinet.ts`, `dog.ts`, `jukebox.ts` and `whiteboard.ts`.
+- **`people/`** is how a person looks and acts (`avatar.ts`, `emotes.ts`), **`integrations/`** is the Composio stations (`integrations.ts`, `composio-api.ts`), and **`util/`** is `rng.ts`, `search.ts` and `palette.ts`.
 
-The rest is data and pure code both sides use: the floor's layout, maps (`shared/maps/`), the sun, the garage and so on.
+The rest is data and pure code both sides use.
 
 ## Adding a feature
 
@@ -96,7 +99,7 @@ Its HTTP routes, if it has any, go in `http/routes/`, and its tests in `tests/`.
 
 ## Adding an agent provider
 
-One adapter file in `src/server/providers/`, one entry in `PROVIDERS` in `src/server/providers/index.ts`, and one row in `src/shared/providers.ts` (its id in `AGENT_PROVIDERS`, its entry in `PROVIDER_META`). The typecheck fails until all three are there. Its row says which models and efforts it takes and how the hire dialog asks for them; one whose CLI lists its models gets a lister in `src/server/agents/models.ts` too. What reads them, and the one place that still names providers one by one, are in [Provider seams](dsh-acp-integration.md#provider-seams).
+One adapter file in `src/server/providers/`, one entry in `PROVIDERS` in `src/server/providers/index.ts`, and one row in `src/shared/agents/providers.ts` (its id in `AGENT_PROVIDERS`, its entry in `PROVIDER_META`). The typecheck fails until all three are there. Its row says which models and efforts it takes and how the hire dialog asks for them; one whose CLI lists its models gets a lister in `src/server/agents/models.ts` too. What reads them, and the one place that still names providers one by one, are in [Provider seams](dsh-acp-integration.md#provider-seams).
 
 ## The size guard
 

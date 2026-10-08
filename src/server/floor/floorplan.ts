@@ -1,7 +1,7 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { canLabel, cleanLabel, cleanPlan, rowDesks, signColor, type DeskLabel, type FloorPlan } from '../../shared/floorplan.js';
-import { DESK_BY_ID, WING } from '../../shared/layout.js';
+import { canLabel, cleanLabel, cleanPlan, rowDesks, signColor, type DeskLabel, type FloorPlan } from '../../shared/building/floorplan.js';
+import { DESK_BY_ID, WING } from '../../shared/building/layout.js';
 
 /**
  * A floor's own layout: the signs over its desks, and how far its back office is built out. Saved in

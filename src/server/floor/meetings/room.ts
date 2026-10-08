@@ -1,13 +1,13 @@
 import { randomBytes } from 'node:crypto';
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { MEETING_SEATS } from '../../../shared/layout.js';
-import { MEETING_NOTES_DIR, MEETING_PATTERNS, isMeetingPattern, meetingRecord, outputProblem, slugify } from '../../../shared/meetings.js';
+import { MEETING_SEATS } from '../../../shared/building/layout.js';
+import { MEETING_NOTES_DIR, MEETING_PATTERNS, isMeetingPattern, meetingRecord, outputProblem, slugify } from '../../../shared/agents/meetings.js';
 import { isAgentEffort, isAgentProvider, tokensOf, type Meeting, type MeetingRecord, type MeetingRequest, type MeetingState, type MeetingTurn, type WorkerInfo, type WorkerStatus } from '../../../shared/protocol.js';
 import { validateWorkerEffort, validateWorkerModel } from '../../agents/agents.js';
-import { providerMeta, takesEffort, takesModel } from '../../../shared/providers.js';
+import { providerMeta, takesEffort, takesModel } from '../../../shared/agents/providers.js';
 import { gitError } from '../../workers/worktrees.js';
-import { PROMPTS, fillPrompt, type PromptId, type PromptVars } from '../../../shared/prompts.js';
+import { PROMPTS, fillPrompt, type PromptId, type PromptVars } from '../../../shared/agents/prompts.js';
 import { brief, isLast, plan, type PatternEnv } from './patterns.js';
 import type { MeetingEvents, MeetingTrees, MeetingWorkers, Part } from './types.js';
 import { clamp, commitAll, firstLine, list, numbered, readStart } from './util.js';
@@ -31,7 +31,7 @@ const ready = (s: WorkerStatus) => s === 'idle' || s === 'done';
 
 /**
  * The meeting room. A meeting seats 2–5 agents round the table, each with a role, and runs them
- * through the rounds of its pattern (shared/meetings.ts): in each step every worker with a part gets
+ * through the rounds of its pattern (shared/agents/meetings.ts): in each step every worker with a part gets
  * it as a prompt, and the step is over when each of them has ended its turn with its part written to
  * the file it names. Checking the files, not the talk, is what moves a meeting on. It ends when the
  * output file is written, and stops early, saying why, when a worker won't write its part or when a

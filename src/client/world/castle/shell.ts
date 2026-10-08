@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import type { MapPlan } from '../../../shared/maps';
-import type { Pt } from '../../../shared/nav';
+import type { MapPlan } from '../../../shared/building/maps/index';
+import type { Pt } from '../../../shared/building/nav';
 import { holedPlane } from '../dungeon';
 import { canvasTexture } from '../texture';
 import { mesh, toon } from '../toon';

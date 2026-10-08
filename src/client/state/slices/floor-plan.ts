@@ -1,4 +1,4 @@
-import { EMPTY_PLAN, type FloorPlan } from '../../../shared/floorplan';
+import { EMPTY_PLAN, type FloorPlan } from '../../../shared/building/floorplan';
 import type { Slice } from '../store';
 
 declare module '../store' {

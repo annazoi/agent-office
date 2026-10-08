@@ -1,11 +1,11 @@
-import { throwOk, type BallState } from '../../shared/hoop.js';
+import { throwOk, type BallState } from '../../shared/toys/hoop.js';
 
 /** How often one person can pick the ball up, at most (ms): and so throw it, as it has to be in their hands. */
 const EVERY = 150;
 
 /**
  * A floor's basketball: who has it in their hands, or how it was last thrown. The office only keeps
- * track of that much; each page flies the ball from the throw itself (see shared/hoop.ts), so where
+ * track of that much; each page flies the ball from the throw itself (see shared/toys/hoop.ts), so where
  * it lands is the same for everyone without the office working it out.
  */
 export class Court {

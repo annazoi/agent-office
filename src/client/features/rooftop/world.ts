@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { DANCE_FLOOR, DJ_BOOTH, ELEVATOR, ELEVATOR_FRONT, FLOOR, ROOF_BAR, SEATING_BY_ID, STAGE, WALL_HEIGHT, WALL_T } from '../../../shared/layout';
+import { DANCE_FLOOR, DJ_BOOTH, ELEVATOR, ELEVATOR_FRONT, FLOOR, ROOF_BAR, SEATING_BY_ID, STAGE, WALL_HEIGHT, WALL_T } from '../../../shared/building/layout';
 import type { DjFrame } from '../../dnb';
 import { buildBarGames, type BarGamesView } from '../bargames/world';
 import { Worker } from '../../world/character';
@@ -15,7 +15,7 @@ import { bulb, type NightParts } from '../../world/outside';
 import { canvasTexture } from '../../world/texture';
 import { mergeByMaterial, mesh, toon } from '../../world/toon';
 
-// The rooftop bar, on top of the building (see shared/rooftop.ts): a deck with a glass railing round
+// The rooftop bar, on top of the building (see shared/building/rooftop.ts): a deck with a glass railing round
 // it and the city all around, the elevator's housing where you arrive, a DJ on a stage under a rig
 // of moving lights and lasers with an LED wall behind and a dance floor in front, a bar with a
 // bartender under a pergola hung with string lights, a lounge round a fire pit, sun loungers along

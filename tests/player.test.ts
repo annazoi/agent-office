@@ -4,7 +4,7 @@ import * as THREE from 'three';
 import { PlayerController } from '../src/client/player/index.js';
 import { Effects } from '../src/client/player/effects.js';
 import type { Collider } from '../src/client/world/types.js';
-import { BALCONY, FLOOR, LOFT, SEATING_BY_ID, SLAB, STAIRS, seatAt, seatPlace } from '../src/shared/layout.js';
+import { BALCONY, FLOOR, LOFT, SEATING_BY_ID, SLAB, STAIRS, seatAt, seatPlace } from '../src/shared/building/layout.js';
 
 /** The office floor: upstairs, over the garage, so off it you'd drop to the street. */
 const officeFloor: Collider = { ...FLOOR, bottom: -SLAB, top: 0 };

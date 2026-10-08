@@ -1,5 +1,5 @@
 import type { GhCloseReason, GhIssue, GhPull } from '../../../shared/protocol';
-import type { Net } from '../../net';
+import type { Net } from '../../shared/net';
 import { store, workerForPull } from '../../state';
 import { h, openModal } from '../dom';
 import { closeWaiters } from './api';

@@ -1,11 +1,11 @@
-import { CAR, SEATS, carFits, carPoint, drive, onPavement, type Box, type CarPose, type CarSeat, type Pedals } from '../../../shared/garage';
-import { LOOP_PAVED, nearLoop } from '../../../shared/scenic';
+import { CAR, SEATS, carFits, carPoint, drive, onPavement, type Box, type CarPose, type CarSeat, type Pedals } from '../../../shared/toys/garage';
+import { LOOP_PAVED, nearLoop } from '../../../shared/building/scenic';
 import type { PlayerController } from '../../player';
 import type { Fleet } from './world';
 
 // Driving the cars in the garage: E at one gets you in (behind the wheel, or beside whoever's
 // there), and it takes hold of you (PlayerController.rig) until you get out. The driver's page runs
-// the car (shared/garage.ts) and tells the office where it's got to; everyone else's follows it.
+// the car (shared/toys/garage.ts) and tells the office where it's got to; everyone else's follows it.
 
 export interface DriveHooks {
   /** The car you're driving has got to `pose`: tell the office, for everyone else on the floor. */

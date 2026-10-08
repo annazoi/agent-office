@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { FloorPalette } from '../../../shared/floors';
+import type { FloorPalette } from '../../../shared/building/floors';
 import { toon } from '../toon';
 
 // The castle's pictures: stone, flagstones and boards to tile over its walls, floors and roof,

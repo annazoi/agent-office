@@ -4,7 +4,7 @@ import os from 'node:os';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { WEATHERS, isComposioToolkit, type ComposioToolkit, type Weather } from '../shared/protocol.js';
-import { AGENT_PROVIDERS, PROVIDER_META } from '../shared/providers.js';
+import { AGENT_PROVIDERS, PROVIDER_META } from '../shared/agents/providers.js';
 import { MAX_WORKER_LIMIT, parseWorkerLimit } from './ops/machine.js';
 
 export interface Config {

@@ -9,7 +9,7 @@
 // registered in (./slices/index.ts), and that order is the order their topics fire in.
 
 import type { ChatLine, FloorInfo, FloorView, GhIssue, GhPull, GhState, Me, PeerInfo, ProjectInfo, ProjectsDirState, QueueState, QueueTask, RepoChoice, Run, ServerMsg, WorkerInfo } from '../../shared/protocol';
-import { randomLook } from '../../shared/avatar';
+import { randomLook } from '../../shared/people/avatar';
 import { AVATAR_COLORS, type Profile } from './persist';
 
 /** A worker's terminal as its laptop shows it, put together from the office's 'screen' frames. */

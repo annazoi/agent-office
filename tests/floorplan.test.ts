@@ -4,8 +4,8 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { FloorPlanStore } from '../src/server/floor/floorplan.js';
-import { MAX_LABEL, SIGN_COLORS, cleanLabel, cleanPlan } from '../src/shared/floorplan.js';
-import { BEANBAGS, DESKS, WING, WING_DESKS, beanbagsOut, builtDesks, nextFreeSeat } from '../src/shared/layout.js';
+import { MAX_LABEL, SIGN_COLORS, cleanLabel, cleanPlan } from '../src/shared/building/floorplan.js';
+import { BEANBAGS, DESKS, WING, WING_DESKS, beanbagsOut, builtDesks, nextFreeSeat } from '../src/shared/building/layout.js';
 
 function withDir(fn: (dir: string) => void) {
   const dir = mkdtempSync(path.join(tmpdir(), 'agent-office-floorplan-'));

@@ -1,8 +1,8 @@
 // ⚙️ Settings' Office dog, under Building: its name, and its breed and coat as buttons, for everyone
-// on the floor (see server/dog.ts).
-import type { Net } from '../net';
+// on the floor (see server/floor/dog.ts).
+import type { Net } from '../shared/net';
 import { store } from '../state';
-import { DOG_BREEDS, DOG_BREED_NAMES, DOG_COATS, DOG_COAT_NAMES, DOG_NAME_MAX, cleanDogName, dogBreed } from '../../shared/dog';
+import { DOG_BREEDS, DOG_BREED_NAMES, DOG_COATS, DOG_COAT_NAMES, DOG_NAME_MAX, cleanDogName, dogBreed } from '../../shared/toys/dog';
 import { h } from './dom';
 
 /** The setting, made by `frame` from what goes in it, and how to paint it afresh when the dog changes. */

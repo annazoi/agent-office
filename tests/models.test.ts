@@ -1,8 +1,8 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { isValidGrokModel, isValidMuseModel, isValidOpenCodeModel } from '../src/shared/providers.js';
+import { isValidGrokModel, isValidMuseModel, isValidOpenCodeModel } from '../src/shared/agents/providers.js';
 import { MODEL_LISTERS, createModelCatalogue, fetchCodexModels, fetchCursorModels, fetchGrokModels, fetchOpenCodeModels, type ModelCommandRunner } from '../src/server/agents/models.js';
-import { AGENT_PROVIDERS, PROVIDER_META } from '../src/shared/providers.js';
+import { AGENT_PROVIDERS, PROVIDER_META } from '../src/shared/agents/providers.js';
 
 test('OpenCode model ids require provider/model and reject whitespace or control characters', () => {
   assert.equal(isValidOpenCodeModel('openai/gpt-5'), true);

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { Drink } from '../../../shared/rooftop';
+import type { Drink } from '../../../shared/building/rooftop';
 import { disposeSprite, mesh, toon, toonUnique } from '../toon';
 
 // What people hold and carry (a mug of coffee, a drink, a cigarette, a box of their things), and taking

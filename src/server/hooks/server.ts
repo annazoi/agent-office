@@ -8,7 +8,7 @@ import { readBody, send } from '../http/util.js';
 import { officeQueue } from './office-queue.js';
 import { officeWorkers } from './office-workers.js';
 import { providerHook } from '../providers/index.js';
-import type { AgentProvider } from '../../shared/providers.js';
+import type { AgentProvider } from '../../shared/agents/providers.js';
 
 /** Starts the hook server, and says which port it listens on. */
 export async function startHookServer(ctx: Ctx): Promise<{ hookServer: http.Server; hookPort: number }> {

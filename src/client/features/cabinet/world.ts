@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { CABINET, FLOOR } from '../../../shared/layout';
+import { CABINET, FLOOR } from '../../../shared/building/layout';
 import { mesh, roundedBox, toon } from '../../world/toon';
 import type { Collider, Interactable } from '../../world/types';
 import type { Fixture } from '../../world/office/fixture';

@@ -1,8 +1,8 @@
 // workers.json: every worker as the office last saw it, to pick them all back up after a restart.
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import type { AgentProvider, WorkerInfo, WorkerStatus, WorkerTask } from '../../shared/protocol.js';
-import { DESK_BY_ID } from '../../shared/layout.js';
-import { isAgentProvider, savedEffort, savedModel } from '../../shared/providers.js';
+import { DESK_BY_ID } from '../../shared/building/layout.js';
+import { isAgentProvider, savedEffort, savedModel } from '../../shared/agents/providers.js';
 import { providerAdapter } from '../providers/index.js';
 import { reportedUsage } from '../usage/reported-usage.js';
 import { restoreTracker, trackerUsage } from '../usage/usage.js';

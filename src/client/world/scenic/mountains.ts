@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { mulberry32 } from '../../../shared/rng';
-import { FOOTHILLS, MOUNTAINS, TUNNEL } from '../../../shared/scenic';
+import { mulberry32 } from '../../../shared/util/rng';
+import { FOOTHILLS, MOUNTAINS, TUNNEL } from '../../../shared/building/scenic';
 import { mergeByColor, mesh, toon } from '../toon';
 import { G, type ScenicKit } from './kit';
 

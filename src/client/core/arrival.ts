@@ -5,9 +5,9 @@
  * says about where you are: the project in the corner and the tab's title, the upgrade banner, and the
  * sign-ins a newcomer is greeted with.
  */
-import { OFFICE_PLAN } from '../../shared/maps';
-import { SLAB, inElevator } from '../../shared/layout';
-import { ROOF, ROOF_NAME } from '../../shared/rooftop';
+import { OFFICE_PLAN } from '../../shared/building/maps/index';
+import { SLAB, inElevator } from '../../shared/building/layout';
+import { ROOF, ROOF_NAME } from '../../shared/building/rooftop';
 import { renderTitle } from '../shared/title';
 import { lastFloor, lastSpot, store, type Spot } from '../state';
 import { routeAccountsMessage } from '../ui/accounts';

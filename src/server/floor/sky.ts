@@ -1,6 +1,6 @@
 import { readFileSync, writeFileSync } from 'node:fs';
 import type { SkyState, Weather } from '../../shared/protocol.js';
-import { guessPlace } from '../../shared/sun.js';
+import { guessPlace } from '../../shared/building/sun.js';
 
 // The sky over the office: where it is (which sets when the sun rises and sets) and the weather.
 // With --city, both follow that city's live forecast from open-meteo.com (free, no key needed).

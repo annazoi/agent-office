@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { SKY_DAY_MS, skyTime, sunPosition } from '../src/shared/sun.js';
+import { SKY_DAY_MS, skyTime, sunPosition } from '../src/shared/building/sun.js';
 
 const HOUR = 3_600_000;
 const DAY = 86_400_000;

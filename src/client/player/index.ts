@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { FLOOR, STREET_Y, WALL_T, type SeatPlace } from '../../shared/layout';
+import { FLOOR, STREET_Y, WALL_T, type SeatPlace } from '../../shared/building/layout';
 import type { ViewMode } from '../state';
 import type { Collider } from '../world/types';
 import { HIPS } from '../world/character/rig';

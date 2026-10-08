@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { commandAction, outputFailed, toolAction } from '../src/shared/actions.js';
+import { commandAction, outputFailed, toolAction } from '../src/shared/agents/actions.js';
 
 test('tool calls map to what a worker acts out, across providers', () => {
   for (const [tool, action] of [

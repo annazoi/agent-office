@@ -4,7 +4,7 @@ import { existsSync, mkdtempSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { DropStore, dropName } from '../src/server/floor/drops.js';
-import { droppedPaths } from '../src/shared/drops.js';
+import { droppedPaths } from '../src/shared/building/drops.js';
 
 function dataDir(t: { after(fn: () => void): void }) {
   const dir = mkdtempSync(path.join(tmpdir(), 'agent-office-drops-'));

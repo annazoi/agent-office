@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import type { MapPlan } from '../../shared/maps';
-import type { NavGrid, Pt } from '../../shared/nav';
+import type { MapPlan } from '../../shared/building/maps/index';
+import type { NavGrid, Pt } from '../../shared/building/nav';
 import type { Worker } from './character';
 import type { DeskView, Interactable } from './types';
 

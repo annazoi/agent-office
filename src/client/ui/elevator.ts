@@ -1,8 +1,8 @@
 import './elevator.css';
 import type { CloneProgress, FloorInfo, RepoChoice, ServerMsg } from '../../shared/protocol';
-import { cloneLabel, cloneStep, floorPalette, normalizeRepo, sameRepo } from '../../shared/floors';
-import { ROOF, ROOF_NAME } from '../../shared/rooftop';
-import type { Net } from '../net';
+import { cloneLabel, cloneStep, floorPalette, normalizeRepo, sameRepo } from '../../shared/building/floors';
+import { ROOF, ROOF_NAME } from '../../shared/building/rooftop';
+import type { Net } from '../shared/net';
 import { store } from '../state';
 import { h, openModal, timeAgo, toast, type Modal } from './dom';
 import { confirmDialog } from './prompt';

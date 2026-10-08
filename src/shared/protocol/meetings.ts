@@ -2,7 +2,7 @@
 
 import type { AgentEffort, AgentProvider } from './agents.js';
 
-/** How the workers at the meeting table work together (see shared/meetings.ts). */
+/** How the workers at the meeting table work together (see shared/agents/meetings.ts). */
 export type MeetingPattern = 'debate' | 'lead' | 'mapreduce' | 'redblue' | 'review';
 
 /** A worker's place at a meeting. */
@@ -116,7 +116,7 @@ export interface MeetingState {
   past: MeetingRecord[];
 }
 
-/** What calling a meeting asks for (see shared/meetings.ts for each pattern's defaults and limits). */
+/** What calling a meeting asks for (see shared/agents/meetings.ts for each pattern's defaults and limits). */
 export interface MeetingRequest {
   pattern: MeetingPattern;
   prompt: string;

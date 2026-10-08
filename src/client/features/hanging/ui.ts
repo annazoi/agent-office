@@ -1,5 +1,5 @@
 import './ui.css';
-import { FRAMES, checkImageUrl, type Decoration } from '../../../shared/decor';
+import { FRAMES, checkImageUrl, type Decoration } from '../../../shared/building/decor';
 import { store } from '../../state';
 import { holdPicture, loadPicture, type Picture } from './world';
 import { h, openModal, timeAgo } from '../../ui/dom';

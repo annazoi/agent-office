@@ -1,10 +1,10 @@
 import * as THREE from 'three';
-import { FLOOR, SLAB, STREET_Y, WALL_HEIGHT, WALL_T, WING, wingMinZ } from '../../../shared/layout';
+import { FLOOR, SLAB, STREET_Y, WALL_HEIGHT, WALL_T, WING, wingMinZ } from '../../../shared/building/layout';
 import { DEG } from './math';
 
 /*
  * Day, night and the weather outside the windows. The server says where the office is and what the
- * weather is doing (server/sky.ts). From that and the office's clock, sped up so a whole day and
+ * weather is doing (server/floor/sky.ts). From that and the office's clock, sped up so a whole day and
  * night go by every hour (see skyTime), this works out where the sun is, and every frame it sets
  * the sky's color, the fog, the sun (or the moon), the lamps that come on at night, and the rain or snow.
  *

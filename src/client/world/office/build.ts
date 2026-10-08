@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import type { WallRect } from '../../../shared/decor';
-import type { FloorPalette } from '../../../shared/floors';
+import type { WallRect } from '../../../shared/building/decor';
+import type { FloorPalette } from '../../../shared/building/floors';
 import { street } from '../outside';
 import { cars } from '../../features/cars/world';
 import { scenic } from '../scenic';

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { EMOTE_BY_ID, type Emote, type EmoteId } from '../../shared/emotes';
+import { EMOTE_BY_ID, type Emote, type EmoteId } from '../../shared/people/emotes';
 import type { CarriedIssue, Theme } from '../../shared/protocol';
-import type { Drink } from '../../shared/rooftop';
+import type { Drink } from '../../shared/building/rooftop';
 import { OpenBook } from '../features/bookshelf/book';
 import { HeldCard } from '../features/carrying/card';
 import { REACH_TIME, SMOKE_CYCLE, cigarette, coffeeMug, dragCurve, drinkGlass, emoteEnvelope, putDownGlass, reachCurve } from './character';

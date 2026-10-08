@@ -1,7 +1,7 @@
 // The balcony and the roof: the golf tee, the dart board and the axe lane, the gong and the DJ's air horn.
 import type { RooftopClientMsg } from '../../../shared/protocol.js';
-import { ROOF } from '../../../shared/rooftop.js';
-import { tossOk, type BarGame } from '../../../shared/bargames.js';
+import { ROOF } from '../../../shared/building/rooftop.js';
+import { tossOk, type BarGame } from '../../../shared/toys/bargames.js';
 import { throttle } from '../../office/client.js';
 import { num } from '../../office/input.js';
 import type { HandlerMap } from './types.js';

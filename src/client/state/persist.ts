@@ -1,7 +1,7 @@
 // What this browser remembers between visits, in localStorage: your profile, your settings, the floor
 // you were last on and the spot you were standing in. Every read and write shrugs off blocked storage.
 
-import { randomLook, sanitizeLook, type Look } from '../../shared/avatar';
+import { randomLook, sanitizeLook, type Look } from '../../shared/people/avatar';
 
 export interface Profile {
   name: string;
@@ -94,7 +94,7 @@ export interface Spot {
   floor: string;
   /** What that floor was called, to say so if it's gone by then. */
   name: string;
-  /** The building's map then (see shared/maps): a spot on another map is nowhere on this one. */
+  /** The building's map then (see shared/building/maps): a spot on another map is nowhere on this one. */
   map?: string;
   /** Sitting on its throne. */
   throne?: boolean;

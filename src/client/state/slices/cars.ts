@@ -1,10 +1,10 @@
-import { parked, type CarSeat, type CarState } from '../../../shared/garage';
+import { parked, type CarSeat, type CarState } from '../../../shared/toys/garage';
 import type { Slice, Store } from '../store';
 
 declare module '../store' {
   interface Store {
     /**
-     * The cars in the garage, as the office last said (see shared/garage.ts), and when (performance.now())
+     * The cars in the garage, as the office last said (see shared/toys/garage.ts), and when (performance.now())
      * each one's driver last said where it is. Their moves change them without a word, like people's.
      */
     cars: CarState[];

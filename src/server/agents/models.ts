@@ -5,7 +5,7 @@ import { spawn } from 'node:child_process';
 import { closeSync, mkdtempSync, openSync, readFileSync, rmSync, statSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
-import { AGENT_EFFORTS, isValidCodexModel, isValidCursorModel, isValidGrokModel, isValidOpenCodeModel, type AgentProvider, type ModelOption } from '../../shared/providers.js';
+import { AGENT_EFFORTS, isValidCodexModel, isValidCursorModel, isValidGrokModel, isValidOpenCodeModel, type AgentProvider, type ModelOption } from '../../shared/agents/providers.js';
 
 /** A CLI that lists its models in a second or two takes ten times that on a busy machine. */
 export const MODEL_COMMAND_TIMEOUT_MS = 30_000;

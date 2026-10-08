@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { LAKE, LOOP_PAVED, PIER, shoreX } from '../../../shared/scenic';
-import { mulberry32 } from '../../../shared/rng';
+import { LAKE, LOOP_PAVED, PIER, shoreX } from '../../../shared/building/scenic';
+import { mulberry32 } from '../../../shared/util/rng';
 import { tilingCanvasTexture } from '../texture';
 import { mesh, toon } from '../toon';
 import { boulder } from './flora';

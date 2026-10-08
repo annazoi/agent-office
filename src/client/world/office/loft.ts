@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { LOFT, STAIRS, WALL_T } from '../../../shared/layout';
+import { LOFT, STAIRS, WALL_T } from '../../../shared/building/layout';
 import { mesh, roundedBox, textPlane, toon } from '../toon';
 import type { Collider, Interactable } from '../types';
 import type { Fixture } from './fixture';

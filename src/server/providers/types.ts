@@ -1,9 +1,9 @@
 // What the office needs from each agent provider: one adapter per provider (see index.ts), so the
 // worker manager never asks which provider a worker runs. What the windows show about each (names,
-// models, efforts, spend) is the shared table in shared/providers.ts.
+// models, efforts, spend) is the shared table in shared/agents/providers.ts.
 import type { ComposioMcp } from '../integrations/composio-mcp.js';
-import type { AgentProvider } from '../../shared/providers.js';
-import type { StationKind } from '../../shared/layout.js';
+import type { AgentProvider } from '../../shared/agents/providers.js';
+import type { StationKind } from '../../shared/building/layout.js';
 import type { WorkerHandle } from '../workers/types.js';
 
 /** What a provider is set up with on one floor (see ProviderAdapter.prepare). */

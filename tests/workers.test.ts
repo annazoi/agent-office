@@ -9,7 +9,7 @@ import { CARRY_ON_PROMPT, WorkerManager, type WorkerEvents } from '../src/server
 import { Worktrees } from '../src/server/workers/worktrees.js';
 import type { AgentProvider, WorkerInfo } from '../src/shared/protocol.js';
 import type { PromptSource } from '../src/server/floor/prompts.js';
-import { PROMPTS } from '../src/shared/prompts.js';
+import { PROMPTS } from '../src/shared/agents/prompts.js';
 
 type Invocation = {
   kind: string;

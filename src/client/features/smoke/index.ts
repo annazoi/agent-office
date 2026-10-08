@@ -1,4 +1,4 @@
-import { BALCONY } from '../../../shared/layout';
+import { BALCONY } from '../../../shared/building/layout';
 import type { Ctx } from '../../core/context';
 import { hintTitle, key, onE } from '../../core/hint';
 import { toast } from '../../ui/dom';

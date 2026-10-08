@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { GREEN, ROUND, landing, meterAt, targetFrame, throwSpot, type BarGame, type Toss } from '../../../shared/bargames';
+import { GREEN, ROUND, landing, meterAt, targetFrame, throwSpot, type BarGame, type Toss } from '../../../shared/toys/bargames';
 import { isTyping, type PlayerController } from '../../player';
 import { $, h, modalOpen } from '../../ui/dom';
 import type { Person } from '../../world/character';

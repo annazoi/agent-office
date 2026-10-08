@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { GAME, type CabinetFrame } from '../../../shared/cabinet';
+import { GAME, type CabinetFrame } from '../../../shared/toys/cabinet';
 import type { WorkerInfo } from '../../../shared/protocol';
-import type { Net } from '../../net';
+import type { Net } from '../../shared/net';
 import { store } from '../../state';
 import { h, openModal, toast, type Modal } from '../../ui/dom';
 import { ScreenZoom } from '../arcade/ui';

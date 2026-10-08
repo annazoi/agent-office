@@ -13,7 +13,7 @@ export interface Me {
 /** What someone signs in to for their own workers: Claude Code, and the GitHub CLI. */
 export type SignInKind = 'claude' | 'github';
 
-/** One of your sign-ins, as the office sees it (see server/signins.ts). */
+/** One of your sign-ins, as the office sees it (see server/accounts/signins.ts). */
 export interface SignInState {
   /** ok: signed in. none: not yet. busy: signing in, or being looked at. */
   status: 'ok' | 'none' | 'busy';
@@ -60,7 +60,7 @@ export interface AccountInvite {
   expiresAt: number;
 }
 
-/** Per-person accounts, for admins (see server/accounts.ts). */
+/** Per-person accounts, for admins (see server/accounts/accounts.ts). */
 export interface AccountsState {
   accounts: AccountInfo[];
   invites: AccountInvite[];

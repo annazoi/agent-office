@@ -4,7 +4,7 @@
  */
 import type { Ctx } from '../core/context';
 import type { Parts } from '../core/parts';
-import { DESK_KEYS } from '../interaction';
+import { DESK_KEYS } from './interaction';
 import { isTyping } from '../player';
 import { modalOpen } from '../ui/dom';
 

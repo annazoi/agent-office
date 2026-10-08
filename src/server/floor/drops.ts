@@ -6,7 +6,7 @@ import path from 'node:path';
 const PICTURE_EXT: Record<string, string> = { 'image/png': '.png', 'image/jpeg': '.jpg', 'image/gif': '.gif', 'image/webp': '.webp' };
 
 /**
- * Files dropped or pasted into a worker's terminal from a browser (see shared/drops.ts), kept in
+ * Files dropped or pasted into a worker's terminal from a browser (see shared/building/drops.ts), kept in
  * .agent-office/drops/<worker id>/ so the program there can open them by path. They go with the worker.
  */
 export class DropStore {

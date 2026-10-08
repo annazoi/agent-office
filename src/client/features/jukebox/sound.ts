@@ -1,5 +1,5 @@
-import { JUKEBOX } from '../../../shared/layout';
-import { STREAM } from '../../../shared/jukebox';
+import { JUKEBOX } from '../../../shared/building/layout';
+import { STREAM } from '../../../shared/toys/jukebox';
 import type { AudioCore } from '../../sound/core';
 import { biquad, rms } from '../../sound/dsp';
 import { TunePlayer } from '../../sound/music';

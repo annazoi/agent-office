@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { AXE_TARGET, DART, GREEN, ROUND, axeScore, dartScore, landing, meterAt, onBackWall, score, tossOk, type BarGame } from '../src/shared/bargames.js';
+import { AXE_TARGET, DART, GREEN, ROUND, axeScore, dartScore, landing, meterAt, onBackWall, score, tossOk, type BarGame } from '../src/shared/toys/bargames.js';
 
 /** A point `r` meters out from the board's middle, `deg` degrees clockwise from straight up. */
 const at = (r: number, deg: number): [number, number] => [r * Math.sin((deg * Math.PI) / 180), r * Math.cos((deg * Math.PI) / 180)];

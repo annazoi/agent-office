@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-import type { FloorPalette } from '../../../shared/floors';
-import type { MapPlan } from '../../../shared/maps';
-import type { StationPropKind } from '../../../shared/maps/station-props';
-import { NavGrid, type Pt } from '../../../shared/nav';
+import type { FloorPalette } from '../../../shared/building/floors';
+import type { MapPlan } from '../../../shared/building/maps/index';
+import type { StationPropKind } from '../../../shared/building/maps/station-props';
+import { NavGrid, type Pt } from '../../../shared/building/nav';
 // The people first, as the castle's are: Person (and what it loads) before the rest, so the materials
 // the modules make as they load keep their order.
 import { buildEscort, buildHerald } from './people';

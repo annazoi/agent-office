@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { MEETING_PATTERNS, meetingSpend, meetingStage, meetingSummary } from '../../../shared/meetings';
+import { MEETING_PATTERNS, meetingSpend, meetingStage, meetingSummary } from '../../../shared/agents/meetings';
 import type { Meeting, MeetingState } from '../../../shared/protocol';
 
 const FONT = 'Nunito, ui-rounded, system-ui, sans-serif';

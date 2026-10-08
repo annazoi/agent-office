@@ -1,6 +1,6 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, renameSync, statSync, unlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { WB_MAX_BYTES, WB_MAX_ELEMENTS, WB_MAX_ELEMENT_BYTES, WB_MAX_FILES_BYTES, byIndex, checkElement, checkFile, newer, type WbElement, type WbFile } from '../../shared/whiteboard.js';
+import { WB_MAX_BYTES, WB_MAX_ELEMENTS, WB_MAX_ELEMENT_BYTES, WB_MAX_FILES_BYTES, byIndex, checkElement, checkFile, newer, type WbElement, type WbFile } from '../../shared/toys/whiteboard.js';
 
 /** How long after the last stroke the drawing is written to disk. */
 const SAVE_DELAY_MS = 2000;

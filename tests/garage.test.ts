@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { CAR, CARS, DRIVE, PAVEMENT, carFits, carPoint, drive, onPavement, overlaps, parked, paved, steerLimit, type CarPose, type Pedals } from '../src/shared/garage.js';
-import { ELEVATOR, ELEVATOR_FRONT, FLOOR, ROAD } from '../src/shared/layout.js';
+import { CAR, CARS, DRIVE, PAVEMENT, carFits, carPoint, drive, onPavement, overlaps, parked, paved, steerLimit, type CarPose, type Pedals } from '../src/shared/toys/garage.js';
+import { ELEVATOR, ELEVATOR_FRONT, FLOOR, ROAD } from '../src/shared/building/layout.js';
 import { Garage } from '../src/server/floor/garage.js';
 
 const GAS: Pedals = { gas: 1, turn: 0, brake: false };

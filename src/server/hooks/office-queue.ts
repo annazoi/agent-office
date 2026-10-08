@@ -1,5 +1,5 @@
 import type http from 'node:http';
-import { DESK_BY_ID } from '../../shared/layout.js';
+import { DESK_BY_ID } from '../../shared/building/layout.js';
 import type { Ctx } from '../office/context.js';
 import { str } from '../office/input.js';
 import { readBody, send } from '../http/util.js';

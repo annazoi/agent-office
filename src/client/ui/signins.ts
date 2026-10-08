@@ -1,6 +1,6 @@
 import './signins.css';
 import type { SignInKind, SignInState } from '../../shared/protocol';
-import type { Net } from '../net';
+import type { Net } from '../shared/net';
 import { store } from '../state';
 import { h, openModal, type Modal } from './dom';
 import { confirmDialog } from './prompt';
@@ -12,7 +12,7 @@ let open: { modal: Modal; say(why?: string): void } | null = null;
 
 /**
  * 🔐 Your sign-ins: the Claude plan your workers run on and the GitHub account the office acts as
- * for you, both your own (see server/signins.ts). The office runs the sign-in itself and hands you
+ * for you, both your own (see server/accounts/signins.ts). The office runs the sign-in itself and hands you
  * the page to open; or paste a token; admins may use the office machine's own instead.
  * `why` says what sent you here (hiring a worker before signing in, say).
  */

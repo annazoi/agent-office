@@ -1,4 +1,4 @@
-import { FLOOR, GOLF_HOLE, ROAD, WALL_T } from '../../../shared/layout';
+import { FLOOR, GOLF_HOLE, ROAD, WALL_T } from '../../../shared/building/layout';
 
 // The course across the street: where the green, fairway and bunkers are, and what a ball comes down on.
 

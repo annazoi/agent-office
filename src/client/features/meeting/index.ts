@@ -1,5 +1,5 @@
 /** The meeting room: E there (or 🤝 in the menu) opens its window, how the meeting's going or the form to call one. */
-import { MEETING_PATTERNS, meetingStage } from '../../../shared/meetings';
+import { MEETING_PATTERNS, meetingStage } from '../../../shared/agents/meetings';
 import type { Ctx } from '../../core/context';
 import { aside, hintTitle, key, onE } from '../../core/hint';
 import type { Parts } from '../../core/parts';

@@ -2,8 +2,8 @@
 // the script that ejects workers through it, and where whoever's been ejected drifts to.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { NavGrid, pathLength } from '../src/shared/nav.js';
-import { ADRIFT, AIRLOCK, HULL, adrift, adriftFrom, checkCustomMaps, planOf } from '../src/shared/maps/index.js';
+import { NavGrid, pathLength } from '../src/shared/building/nav.js';
+import { ADRIFT, AIRLOCK, HULL, adrift, adriftFrom, checkCustomMaps, planOf } from '../src/shared/building/maps/index.js';
 
 test('on the station every worker can walk from its seat to the hatch, the line and the airlock', () => {
   const plan = planOf('station');

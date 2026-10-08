@@ -3,8 +3,8 @@
  * down to the garage), straight to another floor from the floor list, through the ceiling up the
  * ladder or down a pole; and arriving, up on the roof or on a floor, with the doors opening onto it.
  */
-import { inElevator, roofDrop, streetBelow } from '../../shared/layout';
-import { ROOF } from '../../shared/rooftop';
+import { inElevator, roofDrop, streetBelow } from '../../shared/building/layout';
+import { ROOF } from '../../shared/building/rooftop';
 import type { Arrival, Grip } from '../features/climbing/controller';
 import { lastSpot, store } from '../state';
 import { $, clip, closeAllModals, modalOpen, toast } from '../ui/dom';

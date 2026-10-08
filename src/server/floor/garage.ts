@@ -1,11 +1,11 @@
-import { DRIVE, parked, paved, type CarPose, type CarSeat, type CarState } from '../../shared/garage.js';
+import { DRIVE, parked, paved, type CarPose, type CarSeat, type CarState } from '../../shared/toys/garage.js';
 
 /** How often one person can honk, at most (ms). */
 const HONK_EVERY = 250;
 
 /**
  * A floor's cars: who's in each one, and where its driver last said it is. Each driver's page drives
- * its own car (see shared/garage.ts) and the office passes it on. Nothing is saved: when the office
+ * its own car (see shared/toys/garage.ts) and the office passes it on. Nothing is saved: when the office
  * restarts, every car is back in its spot.
  */
 export class Garage {

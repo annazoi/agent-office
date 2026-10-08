@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Vector3 } from 'three';
-import { DOG_BREEDS, dogBreed, dogDefaults, type DogBreed } from '../src/shared/dog.js';
+import { DOG_BREEDS, dogBreed, dogDefaults, type DogBreed } from '../src/shared/toys/dog.js';
 import { openModel } from './glb';
 
 // Each breed's dog-<breed>.glb (exported by blender/scripts/build_dog.py) against what features/dog/world.ts counts

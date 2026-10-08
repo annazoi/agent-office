@@ -1,10 +1,10 @@
 import type { MapState } from '../../../shared/protocol';
-import { OFFICE_MAP, planOf, type MapPlan } from '../../../shared/maps';
+import { OFFICE_MAP, planOf, type MapPlan } from '../../../shared/building/maps/index';
 import type { Slice } from '../store';
 
 declare module '../store' {
   interface Store {
-    /** What the building looks like inside (see shared/maps): the same on every floor. */
+    /** What the building looks like inside (see shared/building/maps): the same on every floor. */
     map: MapState;
     /** Where everything is on the building's map. */
     plan(): MapPlan;

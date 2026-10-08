@@ -1,7 +1,7 @@
 import * as THREE from 'three';
-import { STREET_Y } from '../../../shared/layout';
-import { mulberry32 } from '../../../shared/rng';
-import { LOOP, LOOP_LENGTH, STREET_Z, type Place } from '../../../shared/scenic';
+import { STREET_Y } from '../../../shared/building/layout';
+import { mulberry32 } from '../../../shared/util/rng';
+import { LOOP, LOOP_LENGTH, STREET_Z, type Place } from '../../../shared/building/scenic';
 import type { Collider } from '../types';
 import type { NightParts } from '../outside';
 import { toon } from '../toon';

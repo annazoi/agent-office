@@ -3,7 +3,7 @@
 import { describeComposioTool, writeClaudeComposioMcp } from '../integrations/composio-mcp.js';
 import { writeFileSync } from 'node:fs';
 import path from 'node:path';
-import { FAILS_TO_DESPAIR, outputFailed, toolAction } from '../../shared/actions.js';
+import { FAILS_TO_DESPAIR, outputFailed, toolAction } from '../../shared/agents/actions.js';
 import { MCP_READ_ONLY, writeClaudeMcpConfig } from '../office-workers.js';
 import { QUEUE_AGENT_DISALLOWED_TOOLS } from '../floor/stations.js';
 import { answered, notified, wantsPermission } from '../workers/lifecycle.js';

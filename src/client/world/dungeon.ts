@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-import { DUNGEON_PILLAR } from '../../shared/maps/dungeon';
-import type { DungeonPlan } from '../../shared/maps';
-import { boxFootprint } from '../../shared/maps/props';
-import { NavGrid, type Rect } from '../../shared/nav';
+import { DUNGEON_PILLAR } from '../../shared/building/maps/dungeon';
+import type { DungeonPlan } from '../../shared/building/maps/index';
+import { boxFootprint } from '../../shared/building/maps/props';
+import { NavGrid, type Rect } from '../../shared/building/nav';
 import type { Collider } from './types';
 import { mesh, toon } from './toon';
 

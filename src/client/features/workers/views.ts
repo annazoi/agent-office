@@ -5,19 +5,19 @@
  * the building dressed up for a holiday, and what the workers have spent.
  */
 import * as THREE from 'three';
-import { FLOOR, WING, beanbagsOut, deskBuilt, vacantSeats, wingMinZ, wingRowZ } from '../../../shared/layout';
-import { OFFICE_PLAN } from '../../../shared/maps';
-import { MEETING_PATTERNS } from '../../../shared/meetings';
+import { FLOOR, WING, beanbagsOut, deskBuilt, vacantSeats, wingMinZ, wingRowZ } from '../../../shared/building/layout';
+import { OFFICE_PLAN } from '../../../shared/building/maps/index';
+import { MEETING_PATTERNS } from '../../../shared/agents/meetings';
 import type { WorkerInfo, WorkerTask } from '../../../shared/protocol';
-import { workerPr } from '../../../shared/status';
+import { workerPr } from '../../../shared/agents/status';
 import type { Ctx } from '../../core/context';
 import type { CoreState } from '../../core/ctx';
 import { pastTheWing, seatBuilt } from '../../core/floors';
 import { aside, hintTitle, key, onE } from '../../core/hint';
 import { noOutline } from '../../core/outline';
 import type { Parts } from '../../core/parts';
-import { waitingInOrder } from '../../nextup';
-import { waitingOnSomeone } from '../../notify';
+import { waitingInOrder } from '../../shared/nextup';
+import { waitingOnSomeone } from '../../shared/notify';
 import { renderTitle } from '../../shared/title';
 import { store } from '../../state';
 import { $ } from '../../ui/dom';

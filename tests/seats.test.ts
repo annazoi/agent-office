@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { DESK_BY_ID, seatHere, vacantSeats } from '../src/shared/layout.js';
+import { DESK_BY_ID, seatHere, vacantSeats } from '../src/shared/building/layout.js';
 
 // Two floors that each have a Queue agent hired at the queue kiosk and a worker at desk 3.
 const agentOffice = [

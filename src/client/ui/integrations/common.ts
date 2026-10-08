@@ -2,7 +2,7 @@
 // row list, and loading and error states, all from the office's own pieces (dom.ts, github/pieces.ts).
 import './integrations.css';
 import { COMPOSIO_TOOLKIT_META, type ComposioStationToolkit } from '../../../shared/protocol';
-import type { Net } from '../../net';
+import type { Net } from '../../shared/net';
 import { store } from '../../state';
 import { h, openModal, toast, type Modal } from '../dom';
 import { spinnerRow } from '../github/pieces';
