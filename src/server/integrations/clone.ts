@@ -3,17 +3,23 @@ import { closeSync, fstatSync, openSync, readSync, rmSync } from 'node:fs';
 import path from 'node:path';
 import type { CloneProgress } from '../../shared/protocol.js';
 
-// One `gh repo clone`, run so the office can see how it's getting on. git's progress goes to a log
+// One `git clone`, run so the office can see how it's getting on. git's progress goes to a log
 // file, which the office reads every second: that says how far along it is, and a log that stops
 // growing is a clone that's stuck. The clone runs in its own session with no terminal, so an ssh
 // host-key question or a password prompt fails it straight away instead of waiting, unseen, on the
 // terminal the office was started in. Writing to a file (not a pipe) and being its own process
 // group lets it outlive an office restart, for the next office to pick up (see CloneRun.adopt).
 
-/** Signals go to the whole clone (gh, git, ssh, index-pack) as a process group, except on Windows. */
+/** Signals go to the whole clone (git, ssh, index-pack) as a process group, except on Windows. */
 const GROUPS = process.platform !== 'win32';
-/** What a missing GitHub CLI reads as, wherever it's looked for (the building falls back to git on it). */
-export const GH_MISSING = "The GitHub CLI (gh) isn't installed on the office's machine";
+/**
+ * git's way into GitHub as one person: their token as an HTTP header for github.com, set through the
+ * environment so it's on no command line and in no .git/config.
+ */
+export function githubAuthEnv(token: string): Record<string, string> {
+  const basic = Buffer.from(`x-access-token:${token}`).toString('base64');
+  return { GIT_CONFIG_COUNT: '1', GIT_CONFIG_KEY_0: 'http.https://github.com/.extraheader', GIT_CONFIG_VALUE_0: `Authorization: Basic ${basic}` };
+}
 
 /** How long git can go without a word before the clone is given up on as stuck. */
 export const STALL_MS = 3 * 60_000;
@@ -47,29 +53,31 @@ export function parseProgress(output: string): CloneProgress | undefined {
   return undefined;
 }
 
-/** Why a clone failed, from what gh and git said, in terms of what to do about it on the office's machine. */
+/** Why a clone failed, from what git said, in terms of what the person can do about it. */
 export function whyCloneFailed(output: string): string {
   const said = output
     .split(/[\r\n]+/)
     .map((l) => l.trim())
     .filter((l) => l && !PROGRESS.test(l) && !/^Cloning into /.test(l));
   const all = said.join('\n');
-  if (/Host key verification failed/i.test(all)) return "ssh on the office's machine hasn't accepted github.com's host key yet. Run `ssh -T git@github.com` there once, or clone over https with `gh config set git_protocol https`";
-  if (/passphrase/i.test(all)) return "the office's ssh key needs its passphrase. Add it to the ssh agent (`ssh-add`), or clone over https with `gh config set git_protocol https`";
-  if (/Permission denied \(publickey/i.test(all)) return "GitHub didn't take the office's ssh key. Add it with `gh ssh-key add`, or clone over https with `gh config set git_protocol https`";
-  if (/terminal prompts disabled|could not read (Username|Password)|Authentication failed/i.test(all)) return "git wanted a GitHub password. Run `gh auth setup-git` on the office's machine so git uses gh's login";
-  return said.slice(-2).join(' ') || 'gh failed';
+  if (/terminal prompts disabled|could not read (Username|Password)|Authentication failed|Repository not found/i.test(all))
+    return "GitHub wouldn't let the office in. A private repository needs your own GitHub connected with access to it (☰ → ⚙️ Settings → Connections; reconnect it if it was connected before)";
+  return said.slice(-2).join(' ') || 'git failed';
 }
 
 /** How a clone ended: stopped (and why), or the process's exit code (null when an office before this one started it). */
 export interface CloneEnd {
   stopped?: string;
   code?: number | null;
-  /** The end of what gh and git said. */
+  /** The end of what git said. */
   output: string;
 }
 
 export interface CloneRunOptions {
+  /** The person's GitHub token, for a private repository (see githubAuthEnv). */
+  token?: string;
+  /** What to run instead of `git clone` (tests). */
+  command?: (repo: string, dest: string) => [string, string[]];
   /** Hears about new progress, at most once a tick. */
   changed?: () => void;
   stallMs?: number;
@@ -90,7 +98,7 @@ export class CloneRun {
 
   private constructor(
     readonly pid: number,
-    /** Where gh and git write; the office reads it. */
+    /** Where git writes; the office reads it. */
     readonly log: string,
     private child: ChildProcess | undefined,
     private opts: CloneRunOptions,
@@ -100,12 +108,11 @@ export class CloneRun {
   }
 
   /**
-   * Starts `gh repo clone repo dest`, writing to `log`. Resolves once it's running, or to why it
-   * couldn't start. Where gh isn't installed, `how: 'git'` clones with git itself over https, which
-   * reaches public repositories, and private ones only where git has a way in of its own (an ssh
-   * remote isn't tried; a credential helper or a token in git's config is).
+   * Starts `git clone` of `repo` into `dest` over https, writing to `log`, as the person whose token
+   * `opts` has (without one, only public repositories clone). Resolves once it's running, or to why
+   * it couldn't start.
    */
-  static start(repo: string, dest: string, log: string, opts: CloneRunOptions = {}, how: 'gh' | 'git' = 'gh'): Promise<CloneRun | string> {
+  static start(repo: string, dest: string, log: string, opts: CloneRunOptions = {}): Promise<CloneRun | string> {
     let fd: number;
     try {
       fd = openSync(log, 'w', 0o600);
@@ -115,19 +122,19 @@ export class CloneRun {
     return new Promise((resolve) => {
       let child: ChildProcess;
       try {
-        const [file, args] = how === 'git' ? ['git', ['clone', '--progress', `https://github.com/${repo}.git`, dest]] : ['gh', ['repo', 'clone', repo, dest, '--', '--progress']];
+        const [file, args] = opts.command?.(repo, dest) ?? ['git', ['clone', '--progress', `https://github.com/${repo}.git`, dest]];
         child = spawn(file, args, {
           cwd: path.dirname(dest),
           detached: GROUPS,
           stdio: ['ignore', fd, fd],
           windowsHide: true,
           // No prompts: nobody would see them. What would have asked says so and fails instead.
-          env: { ...process.env, GIT_TERMINAL_PROMPT: '0', GH_PROMPT_DISABLED: '1' },
+          env: { ...process.env, GIT_TERMINAL_PROMPT: '0', ...(opts.token ? githubAuthEnv(opts.token) : {}) },
         });
       } finally {
         closeSync(fd);
       }
-      child.once('error', (err: NodeJS.ErrnoException) => resolve(err.code === 'ENOENT' ? (how === 'git' ? "git isn't installed on the office's machine" : GH_MISSING) : `Couldn't run ${how}: ${err.message}`));
+      child.once('error', (err: NodeJS.ErrnoException) => resolve(err.code === 'ENOENT' ? "git isn't installed on the office's machine" : `Couldn't run git: ${err.message}`));
       child.once('spawn', () => {
         const run = new CloneRun(child.pid!, log, child, opts);
         child.once('exit', (code) => run.end(code));
@@ -216,7 +223,7 @@ export class CloneRun {
     this.ended = true;
     clearInterval(this.timer);
     clearTimeout(this.killTimer);
-    // gh goes at once on SIGTERM; a git, ssh or index-pack still hanging in its group goes with it.
+    // git goes at once on SIGTERM; an ssh or index-pack still hanging in its group goes with it.
     if (this.stopped && this.child && GROUPS) {
       try {
         process.kill(-this.pid, 'SIGKILL');
@@ -248,10 +255,10 @@ function alive(pid: number): boolean {
   }
 }
 
-/** The process is a `gh repo clone` (the pid wasn't handed to something else since). */
+/** The process is a clone (the pid wasn't handed to something else since). */
 function isClone(pid: number): boolean {
   try {
-    return /\brepo clone\b/.test(execFileSync('ps', ['-o', 'command=', '-p', String(pid)], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 5000 }));
+    return /\bclone\b/.test(execFileSync('ps', ['-o', 'command=', '-p', String(pid)], { encoding: 'utf8', stdio: ['ignore', 'pipe', 'ignore'], timeout: 5000 }));
   } catch {
     return false;
   }

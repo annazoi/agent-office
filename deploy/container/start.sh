@@ -87,8 +87,7 @@ if [[ ! -x $RUN_HOME/.local/bin/claude ]]; then
     say "couldn't install Claude Code; it's tried again at the next start"
 fi
 "${AS_USER[@]}" mkdir -p $RUN_HOME/workspace
-# Unless one was picked already: after the first time, the folder is the admins' to move in ⚙️ Settings.
-"${AS_USER[@]}" node /opt/agent-office/bin/agent-office.js setup --default-projects $RUN_HOME/workspace </dev/null
 "${AS_USER[@]}" node /usr/local/lib/agent-office/onboard.js $RUN_HOME/workspace
 
-exec "${AS_USER[@]}" node /opt/agent-office/bin/agent-office.js --host 127.0.0.1 --port 4600 --no-open
+# Until an admin picks another folder in ⚙️ Settings, projects are cloned into the workspace.
+exec "${AS_USER[@]}" node /opt/agent-office/bin/agent-office.js --default-projects $RUN_HOME/workspace --host 127.0.0.1 --port 4600 --no-open

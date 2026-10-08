@@ -4,10 +4,8 @@ import os from 'node:os';
 import path from 'node:path';
 import { FLOOR_PALETTES, MAX_FLOORS, normalizeRepo, sameRepo } from '../../shared/building/floors.js';
 import type { CloneProgress, ProjectsDirState, RepoChoice } from '../../shared/protocol.js';
-import { CloneRun, GH_MISSING, dropLog, whyCloneFailed, type CloneEnd, type CloneRunOptions } from '../integrations/clone.js';
+import { CloneRun, dropLog, whyCloneFailed, type CloneEnd, type CloneRunOptions } from '../integrations/clone.js';
 import type { RepoSource } from '../integrations/github-composio.js';
-import { gh } from '../integrations/github.js';
-import { cloneHere, listRepos } from '../integrations/repos.js';
 import { stateDoc, type Doc } from '../db/state.js';
 
 /** A floor as the floors document keeps it. */
@@ -55,16 +53,11 @@ interface SavedClone extends FloorDef {
 }
 
 export interface BuildingOptions {
-  /**
-   * Clones run in this terminal (`agent-office setup`), showing git's own progress and asking
-   * there if ssh or git has a question, rather than watched by the office.
-   */
-  terminal?: boolean;
-  /** How clones are watched (tests shorten these). */
-  clone?: Pick<CloneRunOptions, 'stallMs' | 'tickMs'>;
+  /** How clones are watched, and (tests) what they run. */
+  clone?: Pick<CloneRunOptions, 'stallMs' | 'tickMs' | 'command'>;
 }
 
-/** How long the list of repositories `gh` can see is reused before it's asked again. */
+/** How long the list of repositories someone's GitHub shows is reused before it's asked again. */
 const REPOS_TTL_MS = 5 * 60_000;
 
 /**
@@ -95,8 +88,9 @@ export class Building {
   private localOff?: LocalOff;
 
   /**
-   * Where to ask about repositories when `gh` isn't installed: the person's own GitHub through
-   * Composio (github-composio.ts), set once the office's services are up. Cloning then runs git itself.
+   * Where to ask about repositories: the person's own GitHub through Composio (github-composio.ts),
+   * set once the office's services are up. The office has no GitHub login of its own, so everyone
+   * lists, checks and clones with their own access.
    */
   repoSource?: RepoSource;
 
@@ -301,22 +295,16 @@ export class Building {
       this.save();
       return def;
     }
-    // Asking GitHub first says whether this login can see it at all, and gets the name's real case.
+    // Asking GitHub first says whether this person can see it at all, and gets the name's real case.
+    const source = this.repoSource;
+    const blocked = source ? await source.blocked(account) : 'GitHub is not available in this office';
+    if (blocked || !source || !account) return blocked ?? 'Sign in to add a project';
     let repo: string;
     let empty = false;
     try {
-      const view = JSON.parse(await gh(['repo', 'view', wanted, '--json', 'nameWithOwner,isEmpty'], this.dataDir, 30_000)) as { nameWithOwner?: string; isEmpty?: boolean };
-      repo = normalizeRepo(view.nameWithOwner) ?? wanted;
-      empty = view.isEmpty === true;
-    } catch (err) {
-      // No gh: the person's own GitHub through Composio, when they've connected it.
-      const viaComposio = this.fallback(err, account);
-      if (!viaComposio) return `Couldn't find ${wanted} on GitHub: ${(err as Error).message}`;
-      try {
-        ({ repo, empty } = await viaComposio.view(account!, wanted));
-      } catch (e) {
-        return `Couldn't find ${wanted} on GitHub (through Composio): ${(e as Error).message}`;
-      }
+      ({ repo, empty } = await source.view(account, wanted));
+    } catch (e) {
+      return `Couldn't find ${wanted} on your GitHub: ${(e as Error).message}`;
     }
     const key = repo.toLowerCase();
     if (this.defs.some((d) => sameRepo(d.repo, repo))) return `${repo} already has a floor`;
@@ -353,17 +341,15 @@ export class Building {
     } catch (err) {
       return `Couldn't make ${path.dirname(dest)}: ${(err as Error).message}`;
     }
-    if (this.opts.terminal) return cloneHere(repo, dest);
     try {
       mkdirSync(this.logsDir, { recursive: true, mode: 0o700 });
     } catch (err) {
       return `Couldn't make ${this.logsDir}: ${(err as Error).message}`;
     }
     const log = path.join(this.logsDir, `${repo.replace('/', '__')}.log`);
-    const cloneOpts = { ...this.opts.clone, changed: () => this.cloneChanged?.() };
-    let run = await CloneRun.start(repo, dest, log, cloneOpts);
-    // No gh: git itself, over https (see CloneRun.start).
-    if (run === GH_MISSING && this.repoSource) run = await CloneRun.start(repo, dest, log, cloneOpts, 'git');
+    // As the person who added it: a private repository clones with their own token, or not at all.
+    const token = p.owner && this.repoSource ? await this.repoSource.token(p.owner).catch(() => undefined) : undefined;
+    const run = await CloneRun.start(repo, dest, log, { ...this.opts.clone, token, changed: () => this.cloneChanged?.() });
     if (typeof run === 'string') return run;
     p.run = run;
     this.saveClones();
@@ -383,25 +369,14 @@ export class Building {
     return [...this.cloning.values()].find((p) => p.def.id === id);
   }
 
-  /** Whether a `gh` failure is one to fall back from (gh isn't installed), and where to, for this account. */
-  private fallback(err: unknown, account: string | undefined): RepoSource | undefined {
-    const msg = (err as Error)?.message ?? '';
-    if (!/not installed/i.test(msg) || !account || !this.repoSource?.ready(account)) return undefined;
-    return this.repoSource;
-  }
-
-  /**
-   * Repositories the office's `gh` login can clone, most recently pushed first; without gh, the
-   * ones `account`'s own GitHub sees through Composio (then the cache is that account's).
-   */
+  /** Repositories `account`'s own GitHub shows, most recently pushed first (the list kept is that account's). */
   async repos(refresh = false, account?: string): Promise<RepoChoice[]> {
     const cached = this.repoCache;
-    if (cached && !refresh && Date.now() - cached.at < REPOS_TTL_MS && (cached.account ?? account) === account) return cached.repos;
-    const repos = listRepos(this.dataDir).catch((err: unknown) => {
-      const via = this.fallback(err, account);
-      if (!via) throw err;
-      return via.list(account!);
-    });
+    if (cached && !refresh && Date.now() - cached.at < REPOS_TTL_MS && cached.account === account) return cached.repos;
+    const source = this.repoSource;
+    const blocked = source ? await source.blocked(account) : 'GitHub is not available in this office';
+    if (blocked || !source || !account) throw new Error(blocked ?? 'Sign in to see your repositories');
+    const repos = source.list(account);
     this.repoCache = { at: Date.now(), repos, account };
     // A failure is worth asking again next time, not keeping for five minutes.
     repos.catch(() => {

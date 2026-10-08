@@ -18,7 +18,6 @@ import { composioRoutes } from '../../src/server/http/composio.js';
 import { requestHandler } from '../../src/server/http/router.js';
 import { authRoutes } from '../../src/server/http/routes/auth.js';
 import type { Ctx } from '../../src/server/office/context.js';
-import { parseToolkitPick } from '../../src/server/setup-composio.js';
 import { stationFootprint, stationObstacles, STATION_SPOTS } from '../../src/shared/integrations/integrations.js';
 import type { ServerMsg } from '../../src/shared/protocol.js';
 import { stateDoc } from '../../src/server/db/state.js';
@@ -53,6 +52,8 @@ function fakeSdk(answers: Record<string, unknown> = {}, connected: string[] = ['
       delete: async (id) => {
         deleted.push(id);
       },
+      // Each account's token, as Composio keeps it ('masked' accounts get the kind git can't use).
+      get: async (id) => ({ state: { val: { access_token: id.endsWith('masked') ? 'gho_ab...yz' : `gho_token_of_${id.replace(/\W/g, '_')}_0123456789` } } }),
     },
     toolkits: { get: async () => ({}) },
   };
@@ -237,12 +238,7 @@ test("the workers' MCP configs carry the endpoint, and never its header on a com
   assert.equal(describeComposioTool('mcp__agent-office__list_workers'), undefined);
 });
 
-test('the wizard reads toolkit picks by number or name; the stations stand clear of each other', () => {
-  assert.deepEqual(parseToolkitPick(''), ['linear', 'notion', 'slack', 'googlecalendar', 'gmail', 'github']);
-  assert.deepEqual(parseToolkitPick('1, 3'), ['linear', 'slack']);
-  assert.deepEqual(parseToolkitPick('gmail linear'), ['linear', 'gmail']);
-  assert.deepEqual(parseToolkitPick('google calendar'), ['googlecalendar']);
-  assert.deepEqual(parseToolkitPick('bogus'), []);
+test('the stations stand clear of each other', () => {
   const prints = STATION_SPOTS.map((s) => stationFootprint(s));
   for (let i = 0; i < prints.length; i++)
     for (let j = i + 1; j < prints.length; j++) {
@@ -394,10 +390,11 @@ test("GitHub through Composio: the elevator's repository list and lookup, for an
   const hub = new ComposioHub(dir, () => {}, () => {}, async () => sdk);
   await hub.setKey(KEY, 'test');
   const github = new ComposioGitHub(hub);
-  assert.equal(github.ready('a1'), false, "not before the account's connections were looked at");
-  await hub.connections('a1');
-  assert.equal(github.ready('a1'), true);
-  assert.equal(github.ready('a2'), false);
+  assert.equal(await github.blocked('a1'), undefined, 'its connections are looked at when asked');
+  assert.equal(await github.blocked(undefined), 'Sign in with your account to connect your tools');
+  // The account's own token, for git; and nothing at all for one that hasn't GitHub connected.
+  assert.match((await github.token('a1')) ?? '', /^gho_token_of_ca_github_ao_a1_/);
+  assert.notEqual(await github.token('a1'), await github.token('a2'), "each person's own");
   const repos = await github.list('a1');
   assert.equal(repos.length, 101, 'two pages, the duplicate dropped');
   assert.deepEqual(repos[0], { name: 'annazoi/repo-0', description: undefined, private: true, pushedAt: '2026-10-01T00:00:00Z' });
@@ -405,4 +402,23 @@ test("GitHub through Composio: the elevator's repository list and lookup, for an
   assert.deepEqual(await github.view('a1', 'agentsystemlabs/agent-office'), { repo: 'AgentSystemLabs/agent-office', empty: true });
   await assert.rejects(github.view('a1', 'annazoi/missing'), /Not Found/);
   await assert.rejects(github.view('a1', 'nonsense'), /owner\/name/);
+});
+
+test("GitHub through Composio asks for a connection first, and a masked token is no token", async () => {
+  const { ComposioGitHub } = await import('../../src/server/integrations/github-composio.js');
+  // Only linear connected: GitHub is not.
+  const { sdk } = fakeSdk({}, ['linear']);
+  const hub = new ComposioHub(tmp('gh2'), () => {}, () => {}, async () => sdk);
+  const github = new ComposioGitHub(hub);
+  assert.match((await github.blocked('a1')) ?? '', /no Composio API key/);
+  await hub.setKey(KEY, 'test');
+  assert.match((await github.blocked('a1')) ?? '', /Connect your GitHub first/);
+  hub.setToolkits(['linear']);
+  assert.match((await github.blocked('a1')) ?? '', /GitHub is switched off/);
+  // A project that masks connection secrets gives git nothing to use.
+  const masked = fakeSdk({}, ['github']);
+  masked.sdk.connectedAccounts.list = async () => ({ items: [{ id: 'ca_masked', status: 'ACTIVE', toolkit: { slug: 'github' } }] });
+  const hub2 = new ComposioHub(tmp('gh3'), () => {}, () => {}, async () => masked.sdk);
+  await hub2.setKey(KEY, 'test');
+  assert.equal(await new ComposioGitHub(hub2).token('a1'), undefined);
 });

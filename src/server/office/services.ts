@@ -114,7 +114,7 @@ export function createServices(ctx: Ctx): BuildingServices {
       for (const c of clients.values()) if (c.accountId === id && !c.out) ctx.sendTo(c, { t: 'composio.connections', connections });
     },
   );
-  // Without the GitHub CLI, the elevator lists and clones repositories through the person's own GitHub on Composio.
+  // The elevator lists, checks and clones repositories through each person's own GitHub on Composio.
   ctx.building.repoSource = new ComposioGitHub(composio);
   if (cfg.composioKey !== undefined) {
     void composio.setKey(cfg.composioKey, 'the command line', cfg.composioToolkits).then((err) => {

@@ -85,9 +85,9 @@ Options
   --allow <ip|cidr>         With up or invite: also allow this IP to SSH in (repeatable).
                             Your own IP is always allowed.
   --port <n>                Local port for the tunnel (default: 4600, or the next free one)
-  --project <owner/repo>    Also clone this GitHub repo as the office's first floor. Without it
-                            the office opens on its elevator, which lists every repo your GitHub
-                            token can see: pick one there. Projects go in ~/workspace on the box
+  --project <owner/repo>    No longer used: the office starts with no project, and everyone
+                            adds theirs from its elevator with their own GitHub (connected
+                            through Composio). Projects go in ~/workspace on the box
   --app-repo <url>          agent-office repo to install (default: this checkout's GitHub origin)
   --app-ref <ref>           Branch or tag to install (default: main)
   --github-token <token>    GitHub token for private repos + the issue/PR boards
@@ -474,14 +474,11 @@ cmd_up() {
   need ssh-keygen
 
   # What to install. The office starts with no project (never the checkout this script is in):
-  # everyone picks theirs in its elevator, unless --project names a first one.
+  # everyone adds theirs from its elevator, with their own GitHub.
   if [[ -z "$APP_REPO" ]]; then
     APP_REPO=$(github_https "$(git -C "$SCRIPT_DIR/.." remote get-url origin 2>/dev/null || true)" || echo "https://github.com/AgentSystemLabs/agent-office")
   fi
-  local project_repo=""
-  if [[ -n "$PROJECT" ]]; then
-    project_repo=$(github_https "$PROJECT") || die "--project must be a GitHub repo (owner/name or URL), got: $PROJECT"
-  fi
+  [[ -z "$PROJECT" ]] || warn "--project is ignored: the office starts with no project, and everyone adds theirs from its elevator"
 
   local gh_token="$GH_TOKEN_ARG"
   if [[ -z "$gh_token" && $NO_GH_TOKEN -eq 0 ]] && command -v gh >/dev/null 2>&1; then
@@ -597,7 +594,7 @@ cmd_up() {
   git_name=$(git config user.name 2>/dev/null || true)
   git_email=$(git config user.email 2>/dev/null || true)
   {
-    printf 'export APP_REPO=%q APP_REF=%q PROJECT_REPO=%q\n' "$APP_REPO" "$APP_REF" "$project_repo"
+    printf 'export APP_REPO=%q APP_REF=%q\n' "$APP_REPO" "$APP_REF"
     printf 'export CLAIM_TOKEN=%q PUBLIC_HOST=%q GH_TOKEN=%q CLAUDE_CODE_OAUTH_TOKEN=%q ANTHROPIC_API_KEY=%q\n' "$(cat "$CLAIM_FILE")" "$IP" "$gh_token" "$CLAUDE_TOKEN" "$ANTHROPIC_KEY"
     printf 'export GIT_NAME=%q GIT_EMAIL=%q\n' "$git_name" "$git_email"
     [[ $TAILSCALE -eq 1 ]] && printf 'export TAILSCALE=1 TAILSCALE_AUTH_KEY=%q TAILSCALE_HOSTNAME=%q\n' "$TS_KEY" "$(ts_name)"
