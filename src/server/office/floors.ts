@@ -3,8 +3,9 @@ import { WebSocket } from 'ws';
 import type { FloorDef } from '../floor/building.js';
 import { Floor, type FloorContext } from '../floor/floor.js';
 import { ROOF } from '../../shared/building/rooftop.js';
+import { seesFloor } from '../../shared/building/floors.js';
 import type { FloorInfo, ServerMsg } from '../../shared/protocol.js';
-import type { Ctx, FloorHelpers, FloorsOpen } from './context.js';
+import type { Ctx, FloorHelpers, FloorsOpen, Viewer } from './context.js';
 import { SLOW_CLIENT_BYTES, type Client } from './client.js';
 
 /** Finding floors, the elevator's list of them, and taking one off the building. */
@@ -15,25 +16,41 @@ export function floorHelpers(ctx: Ctx): FloorHelpers {
     for (const f of ctx.floors.values()) if (f.workers.get(workerId)) return f;
     return undefined;
   };
-  const floorInfos = (): FloorInfo[] => [
-    ...[...ctx.floors.values()].map((f) => ({ ...f.info(), ...(ctx.building.isLocal(f.id) ? { local: true } : {}) })),
-    ...ctx.building.pending().map((d) => ({ id: d.id, name: d.name, repo: d.repo, dir: d.dir, palette: d.palette, addedBy: d.addedBy, addedAt: d.addedAt, cloning: true, clone: ctx.building.cloneProgress(d.id), workers: 0, busy: 0, waiting: 0, people: 0, wing: 0 })),
+  const sees = (who: Viewer, def: FloorDef) => seesFloor(def, who.accountId, who.admin);
+  /** Whose floor it is, as `who` sees it. */
+  const whose = (who: Viewer, def: FloorDef) =>
+    def.owner ? { personal: true, ...(def.owner === who.accountId ? { mine: true } : {}), ...(def.shared ? { shared: true } : {}) } : {};
+  const floorInfos = (who: Viewer): FloorInfo[] => [
+    ...[...ctx.floors.values()].filter((f) => sees(who, f.def)).map((f) => ({ ...f.info(), ...(ctx.building.isLocal(f.id) ? { local: true } : {}), ...whose(who, f.def) })),
+    ...ctx.building
+      .pending()
+      .filter((d) => sees(who, d))
+      .map((d) => ({ id: d.id, name: d.name, repo: d.repo, dir: d.dir, palette: d.palette, addedBy: d.addedBy, addedAt: d.addedAt, cloning: true, clone: ctx.building.cloneProgress(d.id), workers: 0, busy: 0, waiting: 0, people: 0, wing: 0, ...whose(who, d) })),
   ];
+  /** Sends `c` their elevator's list, if it changed since they were last sent it. */
+  const sendFloors = (c: Client, list = floorInfos(c)) => {
+    const json = JSON.stringify(list);
+    if (json === c.floorsSent) return;
+    c.floorsSent = json;
+    ctx.sendTo(c, { t: 'floors', floors: list });
+  };
+  const toastSeers = (def: FloorDef, text: string, level: 'info' | 'warn' = 'info') => {
+    for (const c of ctx.clients.values()) if (sees(c, def)) ctx.sendTo(c, { t: 'toast', text, level });
+  };
   // The elevator's counts change with every worker update; tell everyone at most a few times a second.
-  let floorsSent = '';
   let floorsTimer: NodeJS.Timeout | undefined;
   const floorsChanged = () => {
     floorsTimer ??= setTimeout(() => {
       floorsTimer = undefined;
-      const list = floorInfos();
-      const json = JSON.stringify(list);
-      if (json === floorsSent) return;
-      floorsSent = json;
-      ctx.broadcast({ t: 'floors', floors: list });
+      for (const c of ctx.clients.values()) sendFloors(c);
     }, 250);
   };
-  /** Where someone arriving goes: the floor they asked for, else the first one there is. */
-  const arrivalFloor = (wanted: string | null): Floor | undefined => (wanted && ctx.floors.get(wanted)) || ctx.floors.values().next().value;
+  /** Where someone arriving goes: the floor they asked for, else the first one they see. */
+  const arrivalFloor = (wanted: string | null, who: Viewer): Floor | undefined => {
+    const asked = wanted ? ctx.floors.get(wanted) : undefined;
+    if (asked && sees(who, asked.def)) return asked;
+    return [...ctx.floors.values()].find((f) => sees(who, f.def));
+  };
 
   /**
    * Takes `floor` off the building (already out of the floors document): everyone on it rides the elevator to
@@ -41,12 +58,13 @@ export function floorHelpers(ctx: Ctx): FloorHelpers {
    */
   const closeFloor = (floor: Floor, who: string) => {
     const name = floor.def.name;
-    const next = [...ctx.floors.values()].find((f) => f !== floor);
-    // The list without it first, so nobody arrives somewhere (the lobby's panel) that still shows it.
-    const list = floorInfos().filter((f) => f.id !== floor.id);
-    floorsSent = JSON.stringify(list);
-    ctx.broadcast({ t: 'floors', floors: list });
     for (const c of ctx.clients.values()) {
+      const seen = sees(c, floor.def);
+      // The next floor they see; the roof only while there's one.
+      const next = [...ctx.floors.values()].find((f) => f !== floor && sees(c, f.def));
+      // The list without it first, so nobody arrives somewhere (the lobby's panel) that still shows it.
+      sendFloors(c, floorInfos(c).filter((f) => f.id !== floor.id));
+      if (!seen && c.peer.floor !== floor.id) continue;
       if (c.peer.floor === floor.id || (!next && c.peer.floor === ROOF)) {
         if (next) ctx.goToFloor(c, next);
         else ctx.toLobby(c);
@@ -60,7 +78,7 @@ export function floorHelpers(ctx: Ctx): FloorHelpers {
     ctx.pumpQueues();
   };
 
-  return { floorOf, workerFloor, floorInfos, floorsChanged, cancelFloorsChanged: () => clearTimeout(floorsTimer), arrivalFloor, closeFloor };
+  return { floorOf, workerFloor, floorInfos, sees, toastSeers, floorsChanged, cancelFloorsChanged: () => clearTimeout(floorsTimer), arrivalFloor, closeFloor };
 }
 
 /**
@@ -150,7 +168,7 @@ export async function openFloors(ctx: Ctx, hookPort: number): Promise<FloorsOpen
     }
     if (!openFloor(r)) return;
     console.log(`  the ${r.name} floor's clone finished (${r.dir})`);
-    ctx.toastAll(`🛗 New floor: ${r.name}, added by ${r.addedBy}`);
+    ctx.toastSeers(r, `🛗 New floor: ${r.name}, added by ${r.addedBy}`);
   });
   // Workers still running from the last office are back at their desks before anyone walks in.
   await Promise.all([...floors.values()].map((f) => f.ready));

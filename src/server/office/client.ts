@@ -27,6 +27,8 @@ export interface Client {
   typingAt: Map<string, number>;
   /** Cleared at each heartbeat ping and set again by the pong; still clear at the next one means gone. */
   isAlive: boolean;
+  /** The elevator's list as this person was last sent it (everyone sees their own floors). */
+  floorsSent?: string;
 }
 
 /** A client that just connected, with nothing going on yet. */

@@ -30,7 +30,8 @@ export const workerHandlers = {
     // Other floors' projects to work in too, each in a worktree of its own.
     const repos: RepoSource[] = [];
     for (const id of Array.isArray(msg.repos) ? [...new Set(msg.repos.slice(0, MAX_REPOS + 1).map((x) => str(x, 64)))] : []) {
-      const other = ctx.floors.get(id);
+      const found = ctx.floors.get(id);
+      const other = found && ctx.sees(c, found.def) ? found : undefined;
       if (!other || other === floor) return ctx.warn(c, other ? "The worker's own floor's project is already in its workspace" : 'That project is no longer in the building');
       repos.push({ floor: other.id, name: other.def.name, repo: other.def.repo, dir: other.dir });
     }
