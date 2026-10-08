@@ -57,14 +57,14 @@ They're in `core/registry.ts`, and each is a field of `ctx`. Every registration 
 - **`providers/`** holds one adapter per agent CLI (see [Adding an agent provider](#adding-an-agent-provider)).
 - **`tunnel/`** is `agent-office tunnel`, the one part that runs on someone's own computer instead of the office's: it asks the office for the workers' web servers (`/api/services`, in `http/routes/services.ts`) and listens on each one's port there. It imports nothing from the office but what the two say to each other (`tunnel/wire.ts`) and the cookie's name.
 
-The rest of `src/server/` is grouped by what it's for, and only the entry points stay at the top (`cli.ts`, `server.ts`, `config.ts`, `setup.ts`, `prune.ts`, `browser.ts`, `tasks.ts`, `office-workers.ts`, and `workers.ts`, the barrel for `workers/`):
+The rest of `src/server/` is grouped by what it's for, and only the entry points stay at the top (`cli.ts`, `server.ts`, `config.ts`, `prune.ts`, `browser.ts`, `tasks.ts`, `office-workers.ts`, and `workers.ts`, the barrel for `workers/`):
 
 | Folder | What's in it |
 | --- | --- |
 | `floor/` | A floor and what it keeps: `floor.ts` (made by the office), `building.ts`, `floorplan.ts`, `queue.ts`, `meetings.ts` and `meetings/`, and a module per thing on it (`dog.ts`, `jukebox.ts`, `whiteboard.ts`, `cabinet.ts`, `decor.ts`, `garage.ts`, `court.ts`, `jail.ts`, the bookshelf in `docs.ts`, `maps.ts`, `history.ts`, `theme.ts`, `sky.ts`). |
 | `agents/` | The agent CLIs' own support: `codex.ts`, `cursor.ts`, `grok.ts`, `muse.ts`, `opencode.ts`, `pi.ts`, `dsh.ts` and `dsh/`, and `models.ts` (their model lists). `providers/` holds the adapters. |
 | `usage/` | What the workers use: `usage.ts`, `reported-usage.ts`, `codex-usage.ts` and the plan `limits.ts`. |
-| `integrations/` | GitHub and Composio: `github.ts`, `github-composio.ts`, `repos.ts`, `clone.ts`, and the Composio files below. |
+| `integrations/` | GitHub and Composio: `github.ts`, `github-composio.ts` (each person's GitHub through Composio: the repository list, lookup and clone token), `clone.ts`, and the Composio files below. |
 | `accounts/` | Who's signed in: `accounts.ts` (registering, invites, roles), `auth.ts` (sessions), `user-config.ts` (each account's own settings), `signins.ts` and `signins/`. |
 | `db/` | The office's database: `state.ts` (`StateDb`, the documents every store reads and writes, and `stateDoc`) and `postgres.ts` (the Postgres backend, required at start-up). |
 | `ops/` | Running the office on a machine: `machine.ts`, `upgrade.ts`, `team.ts`, `tailnet.ts`, `relay.ts`, `webhook.ts`. |

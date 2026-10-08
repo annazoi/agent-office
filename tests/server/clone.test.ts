@@ -5,32 +5,44 @@ import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSyn
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { Building, type FloorDef } from '../../src/server/floor/building.js';
-import { parseProgress, whyCloneFailed } from '../../src/server/integrations/clone.js';
+import { githubAuthEnv, parseProgress, whyCloneFailed } from '../../src/server/integrations/clone.js';
+import type { RepoSource } from '../../src/server/integrations/github-composio.js';
 import { stateDoc } from '../../src/server/db/state.js';
 
-// A stand-in for gh: `repo view` and `repo clone` from bare repositories in $FAKE_GH_REPOS. It says
-// how far along it is the way git does, can wait first ($FAKE_GH_DELAY), hang ($FAKE_GH_HANG) or
-// fail the way ssh does ($FAKE_GH_FAIL).
-const FAKE_GH = `#!/bin/sh
-case "$1 $2" in
-  "repo view")
-    [ -d "$FAKE_GH_REPOS/$3.git" ] || { echo "GraphQL: Could not resolve to a Repository with the name '$3'." >&2; exit 1; }
-    echo "{\\"nameWithOwner\\":\\"$3\\",\\"isEmpty\\":false}"
-    ;;
-  "repo clone")
-    name="$3"; dest="$4"
-    printf "Cloning into '%s'...\\n" "$dest" >&2
-    [ -n "$FAKE_GH_FAIL" ] && { echo "$FAKE_GH_FAIL" >&2; echo "fatal: Could not read from remote repository." >&2; exit 128; }
-    [ -n "$FAKE_GH_HANG" ] && exec sleep 600
-    printf "Receiving objects:  42%% (42/100), 1.00 MiB | 512.00 KiB/s\\r" >&2
-    [ -n "$FAKE_GH_DELAY" ] && sleep "$FAKE_GH_DELAY"
-    git clone -q "$FAKE_GH_REPOS/$name.git" "$dest" || exit 1
-    git -C "$dest" remote set-url origin "https://github.com/$name.git"
-    ;;
-esac
+// A stand-in for `git clone` of github.com/<name>, from the bare repositories in $FAKE_GH_REPOS. It
+// says how far along it is the way git does, can wait first ($FAKE_GH_DELAY), hang ($FAKE_GH_HANG)
+// or fail the way git does without a way in ($FAKE_GH_FAIL), and writes what token it was given
+// ($FAKE_GH_TOKEN_LOG) the way git would see it, in its environment.
+const FAKE_CLONE = `#!/bin/sh
+name="$1"; dest="$2"
+printf "Cloning into '%s'...\\n" "$dest" >&2
+[ -n "$FAKE_GH_TOKEN_LOG" ] && printf '%s' "$GIT_CONFIG_VALUE_0" > "$FAKE_GH_TOKEN_LOG"
+[ -n "$FAKE_GH_FAIL" ] && { echo "$FAKE_GH_FAIL" >&2; echo "fatal: Could not read from remote repository." >&2; exit 128; }
+[ -n "$FAKE_GH_HANG" ] && exec sleep 600
+printf "Receiving objects:  42%% (42/100), 1.00 MiB | 512.00 KiB/s\\r" >&2
+[ -n "$FAKE_GH_DELAY" ] && sleep "$FAKE_GH_DELAY"
+git clone -q "$FAKE_GH_REPOS/$name.git" "$dest" || exit 1
+git -C "$dest" remote set-url origin "https://github.com/$name.git"
 `;
 
+/** Everyone's GitHub, as Composio would answer for an account named in $FAKE_GH_REPOS (its bare repositories). */
+const github: RepoSource = {
+  blocked: async (account) => (account === 'sam-account' || account === 'ann-account' ? undefined : 'Connect your GitHub first (☰ → ⚙️ Settings → Connections)'),
+  list: async () => [],
+  view: async (_account, repo) => {
+    if (!existsSync(path.join(process.env.FAKE_GH_REPOS!, `${repo}.git`))) throw new Error('Not Found');
+    return { repo, empty: false };
+  },
+  token: async (account) => (account === 'sam-account' ? 'gho_samstoken0123456789abcdef' : undefined),
+};
+
 const fast = { clone: { tickMs: 50, stallMs: 1500 } };
+/** A building whose clones run the stand-in, and whose GitHub is the one above. */
+function makeBuilding(dataDir: string, projects: string, opts: { clone?: { tickMs?: number; stallMs?: number } } = fast) {
+  const b = new Building(dataDir, projects, { clone: { ...opts.clone, command: (repo, dest) => ['sh', [process.env.FAKE_CLONE!, repo, dest]] } });
+  b.repoSource = github;
+  return b;
+}
 
 function office(t: { after(fn: () => void): void }) {
   const root = mkdtempSync(path.join(tmpdir(), 'agent-office-clone-'));
@@ -49,8 +61,9 @@ function office(t: { after(fn: () => void): void }) {
   mkdirSync(dataDir);
   const bin = path.join(root, 'bin');
   mkdirSync(bin);
-  writeFileSync(path.join(bin, 'gh'), FAKE_GH);
-  chmodSync(path.join(bin, 'gh'), 0o755);
+  writeFileSync(path.join(bin, 'fake-clone'), FAKE_CLONE);
+  chmodSync(path.join(bin, 'fake-clone'), 0o755);
+  process.env.FAKE_CLONE = path.join(bin, 'fake-clone');
   const repos = path.join(root, 'github');
   // acme/game on "GitHub", with a commit.
   const work = path.join(root, 'work');
@@ -59,9 +72,8 @@ function office(t: { after(fn: () => void): void }) {
   execFileSync('git', ['-C', work, 'add', '.']);
   execFileSync('git', ['-C', work, '-c', 'user.name=t', '-c', 'user.email=t@t', 'commit', '-qm', 'first']);
   execFileSync('git', ['clone', '-q', '--bare', work, path.join(repos, 'acme', 'game.git')]);
-  process.env.PATH = `${bin}${path.delimiter}${process.env.PATH}`;
   process.env.FAKE_GH_REPOS = repos;
-  for (const k of ['FAKE_GH_DELAY', 'FAKE_GH_HANG', 'FAKE_GH_FAIL']) delete process.env[k];
+  for (const k of ['FAKE_GH_DELAY', 'FAKE_GH_HANG', 'FAKE_GH_FAIL', 'FAKE_GH_TOKEN_LOG']) delete process.env[k];
   const projects = path.join(root, 'projects');
   /** The clones under way, as the office keeps them for the next one. */
   const saved = () => (stateDoc<any>(dataDir, 'cloning').read() ?? []) as (FloorDef & { pid: number })[];
@@ -98,20 +110,19 @@ test("git's progress reads as a step, how far and how fast", () => {
 });
 
 test('a failed clone says what to do about it', () => {
-  assert.match(whyCloneFailed("Cloning into 'x'...\nHost key verification failed.\nfatal: Could not read from remote repository.\n"), /ssh -T git@github\.com/);
-  assert.match(whyCloneFailed('git@github.com: Permission denied (publickey).\n'), /gh ssh-key add/);
-  assert.match(whyCloneFailed("fatal: could not read Username for 'https://github.com': terminal prompts disabled\n"), /gh auth setup-git/);
+  assert.match(whyCloneFailed("remote: Repository not found.\nfatal: Authentication failed for 'https://github.com/acme/x.git/'\n"), /your own GitHub connected/);
+  assert.match(whyCloneFailed("fatal: could not read Username for 'https://github.com': terminal prompts disabled\n"), /Connections/);
   assert.equal(whyCloneFailed('Receiving objects:  1% (1/100)\rerror: RPC failed\nfatal: early EOF\n'), 'error: RPC failed fatal: early EOF');
 });
 
 test('a clone shows how far along it is, then becomes a floor', async (t) => {
   const { dataDir, projects, saved } = office(t);
   process.env.FAKE_GH_DELAY = '0.6';
-  const building = new Building(dataDir, projects, fast);
+  const building = makeBuilding(dataDir, projects);
   const seen: unknown[] = [];
   let id = '';
   building.watchClones(() => seen.push(building.cloneProgress(id)));
-  const r = await building.add('acme/game', 'Sam', (def) => (id = def.id));
+  const r = await building.add('acme/game', 'Sam', (def) => (id = def.id), 'sam-account');
   assert.equal(typeof r, 'object', String(r));
   assert.deepEqual(seen.at(-1), { step: 'Downloading', percent: 42, detail: '1.00 MiB · 512.00 KiB/s' });
   assert.ok(existsSync(path.join(projects, 'acme', 'game', 'index.html')));
@@ -124,8 +135,8 @@ test('a clone shows how far along it is, then becomes a floor', async (t) => {
 test("a clone that goes quiet is stopped as stalled, and one that can't sign in says why", async (t) => {
   const { dataDir, projects, running } = office(t);
   process.env.FAKE_GH_HANG = '1';
-  const building = new Building(dataDir, projects, fast);
-  const r = building.add('acme/game', 'Sam', () => {});
+  const building = makeBuilding(dataDir, projects);
+  const r = building.add('acme/game', 'Sam', () => {}, 'sam-account');
   const pid = await running();
   assert.match(String(await r), /stalled/);
   await until(() => !alive(pid));
@@ -133,15 +144,40 @@ test("a clone that goes quiet is stopped as stalled, and one that can't sign in 
   assert.deepEqual(building.pending(), []);
 
   delete process.env.FAKE_GH_HANG;
-  process.env.FAKE_GH_FAIL = 'Host key verification failed.';
-  assert.match(String(await building.add('acme/game', 'Sam', () => {})), /^Couldn't clone acme\/game: ssh .*host key/);
+  process.env.FAKE_GH_FAIL = "fatal: could not read Username for 'https://github.com': terminal prompts disabled";
+  assert.match(String(await building.add('acme/game', 'Sam', () => {}, 'sam-account')), /^Couldn't clone acme\/game: GitHub wouldn't let the office in.*Connections/);
+  assert.deepEqual(building.list(), []);
+});
+
+test("a clone is the person's own: their GitHub's token goes to git in its environment, never to the command line or the log", async (t) => {
+  const { root, dataDir, projects } = office(t);
+  const seen = path.join(root, 'token');
+  process.env.FAKE_GH_TOKEN_LOG = seen;
+  const building = makeBuilding(dataDir, projects);
+  assert.equal(typeof (await building.add('acme/game', 'Sam', () => {}, 'sam-account')), 'object');
+  assert.equal(readFileSync(seen, 'utf8'), githubAuthEnv('gho_samstoken0123456789abcdef').GIT_CONFIG_VALUE_0);
+  assert.match(readFileSync(seen, 'utf8'), /^Authorization: Basic /);
+  // Ann hasn't a token to give (Composio keeps it): a public repository still clones, as herself.
+  building.remove('game');
+  rmSync(path.join(projects, 'acme'), { recursive: true, force: true });
+  assert.equal(typeof (await building.add('acme/game', 'Ann', () => {}, 'ann-account')), 'object');
+  assert.equal(readFileSync(seen, 'utf8'), '', 'no token, no header');
+});
+
+test("nobody adds a project without their own GitHub connected: not an account that hasn't, not the command line", async (t) => {
+  const { dataDir, projects } = office(t);
+  const building = makeBuilding(dataDir, projects);
+  assert.match(String(await building.add('acme/game', 'Bob', () => {}, 'bob-account')), /Connect your GitHub first/);
+  assert.match(String(await building.add('acme/game', 'Bob', () => {})), /Connect your GitHub first/);
+  await assert.rejects(building.repos(false, 'bob-account'), /Connect your GitHub first/);
+  assert.match(String(await building.add('acme/missing', 'Sam', () => {}, 'sam-account')), /Couldn't find acme\/missing on your GitHub: Not Found/);
   assert.deepEqual(building.list(), []);
 });
 
 test('a clone can be stopped by an admin or whoever added it', async (t) => {
   const { dataDir, projects, running } = office(t);
   process.env.FAKE_GH_HANG = '1';
-  const building = new Building(dataDir, projects, { clone: { tickMs: 50 } });
+  const building = makeBuilding(dataDir, projects, { clone: { tickMs: 50 } });
   let id = '';
   const r = building.add('acme/game', 'Sam', (def) => (id = def.id), 'sam-account');
   const pid = await running();
@@ -157,12 +193,12 @@ test('a clone can be stopped by an admin or whoever added it', async (t) => {
 test('a restart mid-clone picks the clone back up, and it becomes its floor', async (t) => {
   const { dataDir, projects, saved, running } = office(t);
   process.env.FAKE_GH_DELAY = '1';
-  const first = new Building(dataDir, projects, fast);
-  void first.add('acme/game', 'Sam', () => {});
+  const first = makeBuilding(dataDir, projects);
+  void first.add('acme/game', 'Sam', () => {}, 'sam-account');
   await running();
   // The office restarts (tsx watch, systemd): the clone carries on without it.
   first.shutdown(true);
-  const second = new Building(dataDir, projects, fast);
+  const second = makeBuilding(dataDir, projects);
   const done: (FloorDef | string)[] = [];
   second.resumeClones((r) => done.push(r));
   assert.deepEqual(second.pending().map((d) => d.repo), ['acme/game'], "it's on its way again");
@@ -177,13 +213,13 @@ test('a restart mid-clone picks the clone back up, and it becomes its floor', as
 test('a clone that finished while no office was watching becomes its floor at the next start', async (t) => {
   const { dataDir, projects, running } = office(t);
   process.env.FAKE_GH_DELAY = '0.3';
-  const first = new Building(dataDir, projects, fast);
-  void first.add('acme/game', 'Sam', () => {});
+  const first = makeBuilding(dataDir, projects);
+  void first.add('acme/game', 'Sam', () => {}, 'sam-account');
   const pid = await running();
   first.shutdown(true);
   await until(() => !alive(pid));
   const done: (FloorDef | string)[] = [];
-  new Building(dataDir, projects, fast).resumeClones((r) => done.push(r));
+  makeBuilding(dataDir, projects).resumeClones((r) => done.push(r));
   assert.equal(done.length, 1);
   assert.equal((done[0] as FloorDef).repo, 'acme/game');
 });
@@ -193,7 +229,7 @@ test("a clone that was cut off isn't taken for a checkout", async (t) => {
   const dest = path.join(projects, 'acme', 'game');
   execFileSync('git', ['init', '-q', dest]);
   execFileSync('git', ['-C', dest, 'remote', 'add', 'origin', 'https://github.com/acme/game.git']);
-  const building = new Building(dataDir, projects, fast);
-  assert.match(String(await building.add('acme/game', 'Sam', () => {})), /didn't finish/);
+  const building = makeBuilding(dataDir, projects);
+  assert.match(String(await building.add('acme/game', 'Sam', () => {}, 'sam-account')), /didn't finish/);
   assert.deepEqual(building.list(), []);
 });

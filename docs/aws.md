@@ -88,7 +88,7 @@ An office created before the SSH tunnel served HTTPS on port 443 with a self-sig
 
 Useful options for `up`:
 
-- `--project owner/repo` also clones that repo as the office's first floor. Without it, you pick projects in the elevator. (Before, the office was started in the GitHub origin of the directory you ran `up` from, which is usually agent-office itself. An office set up that way keeps its data in that checkout after `up`, and you can take agent-office off the building in the elevator.)
+- `--project owner/repo` is no longer used: the office starts with no project, and everyone connects their own GitHub and adds theirs in the elevator. (Before, the office was started in the GitHub origin of the directory you ran `up` from, which is usually agent-office itself. An office set up that way keeps its data in that checkout after `up`, and you can take agent-office off the building in the elevator.)
 - `--instance-type`, `--disk` and `--region` set the machine size, disk size and region.
 - `--allow <ip>` lets more IPs reach SSH from the start.
 - `--name <name>` runs several offices side by side.
@@ -100,7 +100,7 @@ Useful options for `up`:
 
 That's the office's own sign-in, which workers use while you're in on the office password. Once teammates have [accounts](../README.md#add-users), each of them signs in to their own Claude in **☰ → 🔐 Your sign-ins**, and their workers run on their own plan. Admins can pick the office's own there instead.
 
-**GitHub.** By default, your local `gh auth token` is used to sign in the GitHub CLI on the machine. The office uses it to list and clone your repos and to read the issue and PR boards, so it needs access to them. On the office password, commenting, merging, pushing and opening PRs use it too. People with accounts do those as themselves, with the GitHub account they sign in to in **🔐 Your sign-ins**. Every worker runs as the same user on the machine, so anyone who can use the office can get at that token: pass `--github-token <fine-grained token>` or `--no-github-token` if that's too much.
+**GitHub.** By default, your local `gh auth token` is used to sign in the GitHub CLI on the machine. The office uses it to read the issue and PR boards, so it needs access to them (projects are listed and cloned with each person's own GitHub on Composio, not with this token). On the office password, commenting, merging, pushing and opening PRs use it too. People with accounts do those as themselves, with the GitHub account they sign in to in **🔐 Your sign-ins**. Every worker runs as the same user on the machine, so anyone who can use the office can get at that token: pass `--github-token <fine-grained token>` or `--no-github-token` if that's too much.
 
 ## Tailscale
 

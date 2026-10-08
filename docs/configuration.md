@@ -4,7 +4,7 @@ Back to the [README](../README.md).
 
 ## Where the office keeps things
 
-**The database.** Everything the office remembers lives in its PostgreSQL database, which it won't start without: `--database-url`, or `DATABASE_URL` / `AGENT_OFFICE_DATABASE_URL` (a `.env` file in the folder it starts in is read too). A [Neon](https://neon.tech) database works, or any Postgres. In it are the office's config (the password's hash, the key sessions are signed with, the self-signed certificate), the accounts and open invites, **each account's own settings** (its character, sound and panels, board filters, best laps and the rest the browser used to keep for itself) and which logins it picked, the floors, the chat, the spend, the arcade's scores, and each floor's workers, queue, decor, plan, whiteboard, jukebox, meetings and so on. It's one table, `office_state`: a row of JSON per thing, keyed by the folder it belongs to and its name (`/home/me/agent-office/.agent-office|floors`, `…|users/<account>/config`), so several offices can share a database. Nothing of it is written to JSON files any more. The JSON files an older version kept in `.agent-office/` are not read: an office from before starts empty. An office that used the earlier optional database mode keeps its `accounts` and `composio` rows, which are read from the database when the office has none of its own yet. The office reads it all as it starts and writes each change back as it happens, and the `agent-office accounts`, `setup` and `prune` commands use the same database. The tests use an in-memory stand-in (`tests/support/db.ts`).
+**The database.** Everything the office remembers lives in its PostgreSQL database, which it won't start without: `--database-url`, or `DATABASE_URL` / `AGENT_OFFICE_DATABASE_URL` (a `.env` file in the folder it starts in is read too). A [Neon](https://neon.tech) database works, or any Postgres. In it are the office's config (the password's hash, the key sessions are signed with, the self-signed certificate), the accounts and open invites, **each account's own settings** (its character, sound and panels, board filters, best laps and the rest the browser used to keep for itself) and which logins it picked, the floors, the chat, the spend, the arcade's scores, and each floor's workers, queue, decor, plan, whiteboard, jukebox, meetings and so on. It's one table, `office_state`: a row of JSON per thing, keyed by the folder it belongs to and its name (`/home/me/agent-office/.agent-office|floors`, `…|users/<account>/config`), so several offices can share a database. Nothing of it is written to JSON files any more. The JSON files an older version kept in `.agent-office/` are not read: an office from before starts empty. An office that used the earlier optional database mode keeps its `accounts` and `composio` rows, which are read from the database when the office has none of its own yet. The office reads it all as it starts and writes each change back as it happens, and the `agent-office accounts` and `prune` commands use the same database. The tests use an in-memory stand-in (`tests/support/db.ts`).
 
 What stays on disk is the work itself and what other programs read for themselves: workers' worktrees and the clones under way, each account's own Claude and GitHub logins (`.agent-office/homes/<account>/`, where `claude` and `gh` keep them). No JSON file is written anywhere: Claude Code gets its hooks and MCP servers as JSON on its command line (a Composio key in an environment variable it reads), and Cursor, Grok and Muse, which only read hooks from files, get none, so those workers are followed by their terminals alone. Maps of your own, when there are any, are in the database too (see [Maps](maps.md)).
 
@@ -48,13 +48,10 @@ agent-office [dir] [options]
       --weather <kind>    Pin the weather: clear, cloudy, rain, storm, snow or fog
       --real-time-sky     Start the sky on the real clock, not a day an hour (env AGENT_OFFICE_SKY_CLOCK=real; ⚙️ Settings can switch it)
 
-agent-office setup [--projects <dir> | --default-projects <dir>] [--project <owner/repo>]... [--home <dir>]
-
-  The first-start walkthrough again: the workspace folder, GitHub sign-in and
-  repositories to clone as floors. With --projects / --project it asks nothing.
-  --default-projects sets the folder only if nobody has picked one yet (the
-  container runs it at every start).
-  Run it while the office is stopped.
+--default-projects <dir> (env AGENT_OFFICE_DEFAULT_PROJECTS) is --projects until an admin picks a
+folder in ⚙️ Settings: the deploy scripts and the container use it, so the folder they set up is
+the starting point and not an order. Nothing is asked in the terminal, and there is no `setup`
+command: projects are added in the office, by whoever is signed in, with their own GitHub.
 
 agent-office prune [dir] [-n|--dry-run] [-f|--force]
 

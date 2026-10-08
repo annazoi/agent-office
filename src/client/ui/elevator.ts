@@ -6,9 +6,10 @@ import type { Net } from '../shared/net';
 import { store } from '../state';
 import { h, openModal, timeAgo, toast, type Modal } from './dom';
 import { confirmDialog } from './prompt';
+import { connect } from './integrations/api';
 
 // The elevator's panel: a button for every floor (every project), and "add a project", which clones
-// one of the repositories the office's gh login can see and makes it a new floor. The first time
+// one of the repositories your own GitHub (connected through Composio) shows and makes it a new floor. The first time
 // the office runs there are no floors, and this is where you start. Admins can take a floor off the
 // building here too; its checkout stays on disk. Under the floors, it goes down to the garage.
 
@@ -28,7 +29,7 @@ export interface ElevatorOptions {
 
 /** How many repositories the list shows at once; typing narrows it down. */
 const SHOWN = 60;
-/** Ask gh for the repositories again after this long. */
+/** Ask GitHub for the repositories again after this long. */
 const REPOS_STALE_MS = 5 * 60_000;
 /** Longer than the office takes to ask GitHub about a repository before its clone starts. */
 const START_MS = 60_000;
@@ -292,8 +293,16 @@ export function openElevator(opts: ElevatorOptions): void {
           on ? h('p.note', {}, [cloneStep(on.clone), on.clone?.detail].filter(Boolean).join(' · ')) : null,
           h('p.note', {}, 'You can close this and carry on: everyone hears when the new floor opens.'),
         ]
-      : [h('p.note', {}, `Cloned into ${dest} with this machine's gh login. Everything on the new floor works in that checkout.`, change)];
-    statusEl.replaceChildren(...lines.filter((l): l is HTMLElement => !!l), ...[r.error, error].filter(Boolean).map((e) => h('p.err', {}, e)));
+      : [h('p.note', {}, `Cloned into ${dest} with your own GitHub access. Everything on the new floor works in that checkout.`, change)];
+    // GitHub isn't connected for you yet: the way to do it is right here.
+    const connectBtn = r.error && store.composio.office.configured && store.composio.mine.toolkits.github !== 'connected' ? h('button.btn.primary', { type: 'button' }, '🔌 Connect GitHub') : null;
+    connectBtn?.addEventListener('click', () => {
+      connect('github').then(
+        () => toast('Finish connecting GitHub in the tab that opened, then press ↻'),
+        (err: Error) => toast(`🛗 ${err.message}`, 'warn'),
+      );
+    });
+    statusEl.replaceChildren(...lines.filter((l): l is HTMLElement => !!l), ...[r.error, error].filter(Boolean).map((e) => h('p.err', {}, e)), ...(connectBtn ? [connectBtn] : []));
     addBtn.disabled = !!adding || !pick || store.floors.some((f) => sameRepo(f.repo, pick));
     addBtn.textContent = adding ? '⏳ Cloning…' : pick ? `🛗 Add ${pick}` : '🛗 Add floor';
     input.disabled = !!adding;
@@ -400,7 +409,7 @@ export function openElevator(opts: ElevatorOptions): void {
     h('div.body', {}, intro, floorsEl, addEl),
     h('footer', {}, h('span.grow', {}, setup ? 'Your office, one floor per project · Esc to look around first' : 'Pick a floor · Esc to stay here'), addBtn),
   );
-  const unsubs = [store.on('floors', () => (checkAdding(), renderFloors(), renderAdd())), store.on('repos', renderAdd), store.on('projectsDir', () => (editDir(false), renderAdd())), store.on('floor', renderFloors), store.on('peers', renderFloors), store.on('me', () => (renderFloors(), renderAdd()))];
+  const unsubs = [store.on('floors', () => (checkAdding(), renderFloors(), renderAdd())), store.on('repos', renderAdd), store.on('projectsDir', () => (editDir(false), renderAdd())), store.on('floor', renderFloors), store.on('peers', renderFloors), store.on('me', () => (renderFloors(), renderAdd())), store.on('composio', () => (store.repos.error && store.composio.mine.toolkits.github === 'connected' ? (store.repos = { ...store.repos, error: undefined, at: 0 }, needRepos(), renderAdd()) : renderAdd()))];
   const modal = openModal(el, {
     doing: '🛗 at the elevator',
     // A stray click shouldn't lose the first-run panel; ✕ and Esc still close it.

@@ -1,5 +1,6 @@
 import os from 'node:os';
 import path from 'node:path';
+import tty from 'node:tty';
 // A .env file where the office starts (DATABASE_URL and the like), if there is one.
 import 'dotenv/config';
 import { ConfigDone, loadConfig, ensureSelfSigned, type Config } from './config.js';
@@ -31,10 +32,6 @@ if (argv[0] === 'accounts') {
   const { accountsCommand } = await import('./accounts/accounts.js');
   await done(await accountsCommand(argv.slice(1)));
 }
-if (argv[0] === 'setup') {
-  const { setupCommand } = await import('./setup.js');
-  await done(await setupCommand(argv.slice(1)));
-}
 
 let cfg: Config;
 try {
@@ -44,10 +41,9 @@ try {
   throw err;
 }
 await ensureSelfSigned(cfg);
-const { interactive, welcome } = await import('./setup.js');
-const atTerminal = interactive();
-// A new office started in a terminal: where projects go, GitHub, and the first floor, before it opens.
-if (!cfg.project && atTerminal) await welcome(cfg);
+// Someone's at a terminal (asked of the file descriptors, not process.stdin: on Windows, opening stdin
+// when another process is reading it, as `npm run dev` does, blocks forever).
+const atTerminal = tty.isatty(1) && tty.isatty(0) && !process.env.CI;
 
 let office: Awaited<ReturnType<typeof startServer>>;
 try {

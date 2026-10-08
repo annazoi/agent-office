@@ -17,7 +17,7 @@
 # office, so workers never run as root. Run it again to update; it's idempotent.
 #
 # deploy/aws.sh pipes this over SSH to the EC2 machine it creates, with these exported: APP_REPO
-# APP_REF PROJECT_REPO CLAIM_TOKEN PUBLIC_HOST GH_TOKEN CLAUDE_CODE_OAUTH_TOKEN ANTHROPIC_API_KEY
+# APP_REF CLAIM_TOKEN PUBLIC_HOST GH_TOKEN CLAUDE_CODE_OAUTH_TOKEN ANTHROPIC_API_KEY
 # GIT_NAME GIT_EMAIL DATABASE_URL, and TAILSCALE TAILSCALE_AUTH_KEY TAILSCALE_HOSTNAME for --tailscale. They all
 # have defaults, and the options below set the common ones.
 #
@@ -42,7 +42,6 @@ Usage: provision.sh [options]      (curl … | bash -s -- [options])
                         the Keys page of Tailscale's admin console). Implies --tailscale
   --tailscale-hostname <name>
                         Its machine name on the tailnet (default agent-office)
-  --project <repo>      Clone this GitHub repository (owner/name) as the first floor
   --public-host <addr>  The address teammates SSH to (default: --domain, else this server's public IP)
   --user <name>         Who runs the office when this runs as root (default agentoffice)
   --database-url <url>  Keep the office in this Postgres database (e.g. Neon) instead of one
@@ -63,7 +62,7 @@ while [[ $# -gt 0 ]]; do
     --tailscale) TAILSCALE=1; shift ;;
     --tailscale-auth-key) TAILSCALE_AUTH_KEY="${2:?--tailscale-auth-key needs a key}"; TAILSCALE=1; shift 2 ;;
     --tailscale-hostname) TAILSCALE_HOSTNAME="${2:?--tailscale-hostname needs a name}"; shift 2 ;;
-    --project) PROJECT_REPO="${2:?--project needs owner/name}"; shift 2 ;;
+    --project) echo "provision: --project is ignored: the office starts with no project, and everyone adds theirs from its elevator" >&2; shift 2 ;;
     --public-host) PUBLIC_HOST="${2:?--public-host needs an address}"; shift 2 ;;
     --user) AGENT_OFFICE_USER="${2:?--user needs a name}"; shift 2 ;;
     -h | --help) usage; exit 0 ;;
@@ -360,10 +359,10 @@ echo "    at $(as_user git -C /opt/agent-office log -1 --format='%h %s')"
 step "npm install (builds the office)"
 quiet as_user sh -c 'cd /opt/agent-office && npm install --no-audit --no-fund'
 
-# The office keeps its data (password, accounts, the list of floors) in its database, its workers'
-# worktrees in ~/agent-office, and clones
-# projects into ~/workspace/<owner>/<repo>. It starts with no project: its elevator lists every
-# repository the GitHub token can see, and cloning one makes it the first floor.
+# The office keeps its data (accounts, the list of floors) in its database, its workers'
+# worktrees in ~/agent-office, and clones projects into ~/workspace/<owner>/<repo>. It starts with
+# no project: everyone connects their own GitHub (through Composio) and adds theirs from the
+# elevator, and the first one added makes the first floor.
 OFFICE_HOME="$RUN_HOME/agent-office"
 WORKSPACE="$RUN_HOME/workspace"
 as_user mkdir -p "$WORKSPACE"
@@ -381,17 +380,6 @@ if [[ -n "$LEGACY_DIR" ]]; then
 else
   RUN_DIR="$RUN_HOME"
   OFFICE_ARGS=""
-  setup_args=()
-  # Unless one was picked already: after the first time, the folder is the admins' to move in ⚙️ Settings.
-  setup_args+=(--default-projects "$WORKSPACE")
-  [[ -n "${PROJECT_REPO:-}" ]] && setup_args+=(--project "$PROJECT_REPO")
-  if [[ ${#setup_args[@]} -gt 0 ]]; then
-    step "Setting up the office${PROJECT_REPO:+: cloning $PROJECT_REPO as a floor}"
-    # It won't touch a running office's floors (the service restarts below anyway).
-    sudo systemctl stop agent-office >/dev/null 2>&1 || true
-    as_user node /opt/agent-office/bin/agent-office.js setup "${setup_args[@]}" </dev/null ||
-      echo "    (carrying on: add projects from the office's elevator)"
-  fi
   sudo rm -f /etc/agent-office/dir
 fi
 echo "$OFFICE_HOME" | sudo tee /etc/agent-office/home >/dev/null
@@ -563,7 +551,7 @@ Environment=PATH=$RUN_PATH
 # Restart=always brings it back up on that version.
 Environment=AGENT_OFFICE_SELF_UPDATE=1
 # Loopback only: the office is reached through an SSH tunnel (or Caddy, or Tailscale Serve), never straight from the internet.
-ExecStart=/usr/bin/env node /opt/agent-office/bin/agent-office.js ${OFFICE_ARGS}--host 127.0.0.1 --port 4600${PROXY_ARGS}
+ExecStart=/usr/bin/env node /opt/agent-office/bin/agent-office.js ${OFFICE_ARGS}--default-projects $WORKSPACE --host 127.0.0.1 --port 4600${PROXY_ARGS}
 Restart=always
 RestartSec=3
 # Stopping or restarting the office stops the office, not its workers: their terminals run in a

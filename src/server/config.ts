@@ -79,18 +79,17 @@ const HELP = `agent-office — a 3D office for your team and its ${AGENT_PROVIDE
 Usage:
   agent-office [options]
   agent-office [dir] [options]
-  agent-office setup [--projects <dir>] [--project <owner/repo>]...
   agent-office prune [dir] [--dry-run] [--force]
   agent-office accounts [list|invite|revoke|role|registration] ...
   agent-office tunnel [office@address | url]
 
-Runs the office. Every project is a floor of the building: ride the elevator,
-pick one of the repositories your \`gh\` login can see, and the office clones it
-into the projects folder as a new floor. Workers, terminals, boards and the
-task queue on a floor all belong to that floor's checkout.
-
-The first time it starts in a terminal with no floors, it walks you through
-where projects are cloned, signing the GitHub CLI in, and your first project.
+Runs the office. Nothing is asked in the terminal: open it in a browser, register
+(the first account is the admin), and from there everything is set up in the office.
+Every project is a floor of the building: ride the elevator, connect your own GitHub
+(through Composio, which an admin gives an API key in ⚙️ Settings → Connections),
+pick one of the repositories you can see, and the office clones it into the projects
+folder as a new floor. Workers, terminals, boards and the task queue on a floor all
+belong to that floor's checkout.
 
 Started from anywhere, the office keeps its data in --home. Given a [dir] (or
 started in a project where an office already ran), it keeps its data in
@@ -98,9 +97,6 @@ started in a project where an office already ran), it keeps its data in
 (an admin can take it off in the elevator like any other).
 
 Commands:
-  setup                   Pick the folder projects are cloned into and clone
-                          projects as floors: a walkthrough in a terminal, or
-                          just --projects / --project for scripts (see setup --help)
   prune                   Remove leftover worker worktrees (.agent-office/worktrees/)
                           and their office/* branches. Anything with uncommitted
                           changes or unpushed commits is kept unless --force is given.
@@ -116,6 +112,10 @@ Options:
       --projects <dir>    Where new floors are cloned, as <dir>/<owner>/<repo>
                           (default ~/agent-office, env AGENT_OFFICE_PROJECTS).
                           Also settable from ⚙️ Settings in the office
+      --default-projects <dir>
+                          The same, but only until an admin picks a folder in
+                          ⚙️ Settings (env AGENT_OFFICE_DEFAULT_PROJECTS), for
+                          deploy scripts that start the office every time
   -p, --port <n>          Port to listen on (default 4600, env PORT)
   -H, --host <addr>       Address to bind (default 127.0.0.1: only this machine).
                           0.0.0.0 lets other computers on your network in
@@ -259,6 +259,7 @@ export function loadConfig(argv: string[]): Config {
   let home = officeHome();
   let homeGiven = !!process.env.AGENT_OFFICE_HOME;
   let projects = process.env.AGENT_OFFICE_PROJECTS ? path.resolve(process.env.AGENT_OFFICE_PROJECTS) : '';
+  let defaultProjects = process.env.AGENT_OFFICE_DEFAULT_PROJECTS ? path.resolve(process.env.AGENT_OFFICE_DEFAULT_PROJECTS) : '';
   let port = Number(process.env.PORT) || 4600;
   // Loopback unless asked: an office lets whoever signs in run commands on this machine.
   let host = '127.0.0.1';
@@ -364,6 +365,9 @@ export function loadConfig(argv: string[]): Config {
       case '--projects':
         projects = path.resolve(takeValue(argv, i++, a));
         break;
+      case '--default-projects':
+        defaultProjects = path.resolve(takeValue(argv, i++, a));
+        break;
       case '--city':
         city = takeValue(argv, i++, a);
         break;
@@ -393,7 +397,7 @@ export function loadConfig(argv: string[]): Config {
   }
   const dir = project || home;
   // New floors go next to the office's data when it has a home of its own, and never into a project.
-  const projectsDir = project ? path.join(os.homedir(), 'agent-office') : home;
+  const projectsDir = defaultProjects || (project ? path.join(os.homedir(), 'agent-office') : home);
   if (!Number.isInteger(port) || port <= 0 || port > 65535) {
     console.error('agent-office: invalid --port');
     process.exit(2);

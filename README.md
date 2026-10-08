@@ -52,7 +52,7 @@ On the machine that runs the office:
 - **Node.js 20+**
 - **A PostgreSQL database**, which the office keeps everything in: its password, everyone's accounts and their own settings, the floors, chat and the rest. A free [Neon](https://neon.tech) database works, or Postgres on the same machine. Give it as `DATABASE_URL` (or `--database-url`); a `.env` file in the folder you start the office from is read too. The servers set up by the deploy scripts below get one of their own. The office does not read the JSON files an older version kept: it starts empty (an office that used the earlier optional database keeps its accounts and Composio key, which are read from that database).
 - At least one agent CLI, signed in as the user that runs the office: **Claude Code** (`claude`), **Codex** (`codex`), **OpenCode** (`opencode`), **Grok** (`grok`), **Muse** (`muse`), **DeepSeek Harness** (`dsh`), **Pi** (`pi`, 0.87.1+) or the **Cursor** CLI (`cursor-agent`). With [accounts](#add-users), everyone can sign in to their own Claude from the office instead.
-- **git**, and the **GitHub CLI** (`gh auth login`) for cloning repos and the issue and PR boards
+- **git**, and the **GitHub CLI** (`gh auth login`) for the issue and PR boards (cloning projects goes through each person's own GitHub on Composio, below)
 
 ## Run locally
 
@@ -74,16 +74,13 @@ irm https://raw.githubusercontent.com/AgentSystemLabs/agent-office/main/install.
 
 This puts an `agent-office` command on your PATH, so next time just run `agent-office`. Run the install line again to update. The installer's settings (a particular release, install without starting) are listed at the top of [`install.sh`](install.sh) and [`install.ps1`](install.ps1).
 
-The first time it starts, it walks you through setting up, right in the terminal:
+Nothing is asked in the terminal. The office opens in your browser on a link that works once, to **register your account**: the first one is the office's admin. The terminal also prints the office password: it's what teammates register their own accounts with (it's kept in the database, and only as a hash once it's been claimed). Everything else is set up inside the office, as yourself:
 
-1. **Where to clone your projects.** It suggests a code folder you already have (`~/Workspace`, `~/code`…), else `~/agent-office`. Each project goes in `<folder>/<owner>/<repo>`.
-2. **GitHub.** If the GitHub CLI isn't signed in, it offers to run `gh auth login` for you.
-3. **Your first project.** Pick one of your repos by number, or type `owner/name`, and the office clones it as the first floor.
-4. **Composio** (optional). Paste a Composio API key to put Linear, Notion, Slack, Google Calendar and Gmail in the office as stations and give the workers those tools ([Composio integrations](#composio-integrations)). Enter skips it.
+1. **Composio** (an admin, once). Paste a Composio API key in **⚙️ Settings → 🔌 Connections** (or start the office with `--composio-key`). It's how the office reaches GitHub, Linear, Notion, Slack, Google Calendar and Gmail for each person ([Composio integrations](#composio-integrations)).
+2. **Your GitHub** (everyone). Ride the elevator, press **🔌 Connect GitHub** and approve it on github.com. Composio keeps the connection under your account, so nobody uses anyone else's access.
+3. **Your project.** Pick one of the repositories your GitHub shows (or type `owner/name`) and the office clones it into the projects folder as a floor. An admin can change that folder in **⚙️ Settings**.
 
-Press Enter to skip a step: the elevator in the office asks for your first project too. Then the office opens in your browser on a link that works once, to **register your account**: the first one is the office's admin. The terminal also prints the office password: it's what teammates register their own accounts with (it's kept in the database, and only as a hash once it's been claimed).
-
-Walk to an empty desk, press **E** and hire a worker.
+Then walk to an empty desk, press **E** and hire a worker.
 
 Common options:
 
@@ -94,7 +91,7 @@ agent-office --database-url postgres://…     # the database, instead of DATABA
 agent-office --port 4700
 agent-office --agent pi                     # default agent: claude, codex, opencode, grok, muse, dsh, pi or cursor-agent
 agent-office --no-open                      # print the registration link instead of opening a browser
-agent-office setup                          # the first-start walkthrough again (office stopped)
+agent-office --projects ~/code              # clone new projects into ~/code/<owner>/<repo>
 ```
 
 Every option is in [docs/configuration.md](docs/configuration.md). Choosing models and providers per worker is in [docs/agents.md](docs/agents.md).
@@ -116,7 +113,7 @@ One script, using only the AWS CLI. You need the **AWS CLI signed in** (`aws con
 
 ```bash
 git clone https://github.com/AgentSystemLabs/agent-office && cd agent-office
-deploy/aws.sh up --project your-org/your-repo --claude-token "$(claude setup-token)"
+deploy/aws.sh up --claude-token "$(claude setup-token)"
 ```
 
 In about two minutes, `up`:
@@ -126,7 +123,7 @@ In about two minutes, `up`:
 3. Runs [`deploy/provision.sh`](deploy/provision.sh) on it: Node 22, git, the GitHub CLI, Claude Code and the office, under systemd, so it comes back after a crash or reboot and workers keep running through a restart.
 4. Opens a tunnel and your browser at http://localhost:4600. **The first page shows the office password once. Write it down.**
 
-`--project` is optional: it clones that repo as the first floor. Leave it out and pick projects in the elevator.
+The office starts with no project: everyone connects their own GitHub and adds theirs in the elevator.
 
 **Signing in the agents.** `--claude-token` uses your Claude subscription; `--anthropic-api-key <key>` uses an API key instead. Leave both out and run `/login` in the first worker's terminal. Codex and OpenCode aren't installed by the script: `deploy/aws.sh ssh` and install them yourself.
 
@@ -135,7 +132,7 @@ In about two minutes, `up`:
 **On Tailscale, no tunnels.** If your team uses [Tailscale](https://tailscale.com), add `--tailscale`:
 
 ```bash
-deploy/aws.sh up --tailscale --project your-org/your-repo --claude-token "$(claude setup-token)"
+deploy/aws.sh up --tailscale --claude-token "$(claude setup-token)"
 ```
 
 The machine joins your tailnet, and Tailscale Serve puts the office on `https://agent-office.<your-tailnet>.ts.net` with a real certificate. Anyone on your tailnet just opens that link: no terminal to keep open, no SSH keys, no IPs to allow, and voice and screen sharing work. `up` opens Tailscale's page to add the machine (or pass `--tailscale-auth-key tskey-auth-…`) and, the first time, the page that turns on HTTPS for your tailnet. SSH stays open to your IP only, for `deploy/aws.sh` itself. More in [docs/aws.md](docs/aws.md#tailscale).
@@ -171,7 +168,7 @@ The same thing on an Azure VM, using only the Azure CLI. You need the **Azure CL
 
 ```bash
 git clone https://github.com/AgentSystemLabs/agent-office && cd agent-office
-deploy/azure.sh up --project your-org/your-repo --claude-token "$(claude setup-token)"
+deploy/azure.sh up --claude-token "$(claude setup-token)"
 ```
 
 `up` puts everything in a resource group of its own, `agent-office`, and launches a **Standard_D4as_v5** VM (4 vCPU and 16 GiB, like the t3.xlarge on AWS, at about the same price) with Ubuntu 24.04, a 64 GiB Premium SSD and a static IP. Its firewall opens **only SSH, only to your IP**. Then it runs the same [`deploy/provision.sh`](deploy/provision.sh) and opens the office through an SSH tunnel at http://localhost:4600. **The first page shows the office password once. Write it down.**
@@ -325,10 +322,10 @@ Whatever anyone does through a station (*📐 created Linear issue "Fix login"*,
 
 **Setup.** The office needs one Composio API key, and every person connects their own accounts:
 
-1. An admin makes a project API key at [app.composio.dev](https://app.composio.dev) and gives it to the office: in the first-run walkthrough, in **⚙️ Settings → 🔌 Connections**, or with `--composio-key <key>` (env `AGENT_OFFICE_COMPOSIO_API_KEY`). The office checks it with Composio before saving it. `--composio-toolkits linear,gmail` (env `AGENT_OFFICE_COMPOSIO_TOOLKITS`) narrows which stations the office shows; admins can switch toolkits on and off in Connections too.
+1. An admin makes a project API key at [app.composio.dev](https://app.composio.dev) and gives it to the office: in **⚙️ Settings → 🔌 Connections**, or with `--composio-key <key>` (env `AGENT_OFFICE_COMPOSIO_API_KEY`). The office checks it with Composio before saving it. `--composio-toolkits linear,gmail` (env `AGENT_OFFICE_COMPOSIO_TOOLKITS`) narrows which stations the office shows; admins can switch toolkits on and off in Connections too.
 2. Everyone connects their own Linear, Notion, Slack, Google Calendar and Gmail: press **E** at a station and **Connect**, or open **⚙️ Settings → 🔌 Connections**. Composio's consent page opens in a new tab and comes back to the office when it's done. Each person connects as their own [account](#add-users).
 
-**GitHub without the GitHub CLI.** Composio's GitHub toolkit is a sixth connection, with no station of its own: where `gh` isn't installed on the office machine, the elevator lists your repositories through your connected GitHub instead, and clones with `git` itself over https. Public repositories clone as they are; a private one needs git on the office machine to have a way in of its own (a credential helper with a token, say), because Composio never hands out your OAuth token. The issue and PR boards, merging and the rest still need `gh`.
+**GitHub, per person.** Composio's GitHub toolkit is a sixth connection, with no station of its own, and it's how projects are added: the elevator lists your repositories, checks the one you typed, and clones it with `git` over https, all through your own connected GitHub, never the office machine's `gh` login. A private repository clones with your own token, which the office asks Composio for and hands to git in its environment only (never on a command line, in a `.git/config` or in a log); if your Composio project masks connection secrets (a setting in its dashboard), only public repositories clone. The issue and PR boards, merging and the rest still use `gh` (the machine's, or each account's own in **🔐 Your sign-ins**).
 
 **Workers get the tools too. A worker hired by someone who connected something gets a second MCP server, `composio`, with that person's own connections (and nobody else's): Claude Code through a `--mcp-config` file of theirs, Codex through `-c mcp_servers.composio.*` with the credential in an environment variable, OpenCode through its config in the environment. Ask a worker to "file a Linear issue for this" or "post the summary in #dev", and the card over its desk says what it's doing (*Creating Linear issue…*). The endpoint is made when its owner opens the office, so a worker hired a moment after connecting may start without it: press **R** at its desk to restart it with the tools.
 

@@ -1,19 +1,20 @@
-// GitHub through Composio, for the elevator where the GitHub CLI isn't installed: the repositories
-// the signed-in person can see, and whether one exists, from their own connected GitHub (the
-// "github" toolkit, connected in ⚙️ Settings → Connections). Cloning itself is git's (clone.ts):
-// Composio never hands out the account's token, so a private repository still needs git to have a
-// way in of its own (an ssh key, or a credential helper), as the error says when it doesn't.
+// GitHub, one person at a time, through Composio: the repositories the signed-in person can see,
+// whether one exists, and the token to clone it with, all from their own connected GitHub (the
+// "github" toolkit, connected in ⚙️ Settings → Connections, or from the elevator itself). The
+// office keeps no GitHub login of its own, so nobody clones with anyone else's access.
 import { normalizeRepo } from '../../shared/building/floors.js';
 import type { RepoChoice } from '../../shared/protocol.js';
 import type { ComposioHub } from './composio.js';
 
-/** Where the building asks about repositories when `gh` can't answer (see Building.repoSource). */
+/** Where the building asks about repositories (see Building.repoSource). */
 export interface RepoSource {
-  /** Whether this account could answer at all (it has GitHub connected), so a `gh` error is worth falling back from. */
-  ready(account: string): boolean;
+  /** Why this account can't use GitHub yet, or undefined when it can (it has connected it). */
+  blocked(account: string | undefined): Promise<string | undefined>;
   list(account: string): Promise<RepoChoice[]>;
   /** The repository's real name (case as GitHub has it) and whether it's empty; throws when it can't be seen. */
   view(account: string, repo: string): Promise<{ repo: string; empty: boolean }>;
+  /** The account's GitHub token for git, when Composio hands it out (otherwise only public repositories clone). */
+  token(account: string): Promise<string | undefined>;
 }
 
 type Data = Record<string, unknown>;
@@ -22,14 +23,20 @@ const s = (x: unknown, max = 300) => (typeof x === 'string' ? x.slice(0, max) : 
 export class ComposioGitHub implements RepoSource {
   constructor(private hub: ComposioHub) {}
 
-  ready(account: string): boolean {
-    return this.hub.configured && this.hub.toolkits.includes('github') && !this.hub.blocked(account) && this.hub.connectedTo(account, 'github');
+  async blocked(account: string | undefined): Promise<string | undefined> {
+    const why = this.hub.blocked(account);
+    if (why) return why;
+    if (!this.hub.toolkits.includes('github')) return 'GitHub is switched off in this office (an admin turns it on in ⚙️ Settings → Connections)';
+    const mine = await this.hub.connections(account);
+    if (mine.blocked) return mine.blocked;
+    if (mine.toolkits.github !== 'connected') return 'Connect your GitHub first (☰ → ⚙️ Settings → Connections)';
+    return undefined;
   }
 
   async list(account: string): Promise<RepoChoice[]> {
     const repos: RepoChoice[] = [];
     const seen = new Set<string>();
-    // A page at a time, most recently pushed first, as `gh api --paginate` would; 5 pages is plenty for a picker.
+    // A page at a time, most recently pushed first; 5 pages is plenty for a picker.
     for (let page = 1; page <= 5; page++) {
       const d = await this.hub.execute(account, 'github', 'GITHUB_LIST_REPOSITORIES_FOR_THE_AUTHENTICATED_USER', { per_page: 100, page, sort: 'pushed', direction: 'desc', type: 'all' });
       const items = Array.isArray(d.repositories) ? (d.repositories as Data[]) : [];
@@ -51,5 +58,9 @@ export class ComposioGitHub implements RepoSource {
     const full = normalizeRepo(d.full_name) ?? repo;
     // GitHub reports a repository with nothing pushed yet as size 0 (kilobytes).
     return { repo: full, empty: d.size === 0 };
+  }
+
+  token(account: string): Promise<string | undefined> {
+    return this.hub.githubToken(account);
   }
 }

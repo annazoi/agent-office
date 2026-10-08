@@ -30,6 +30,7 @@ export interface ComposioSdk {
   connectedAccounts: {
     list(query: { userIds: string[]; toolkitSlugs?: string[] }): Promise<{ items: { id: string; status: string; toolkit: { slug: string } }[] }>;
     delete(id: string): Promise<unknown>;
+    get(id: string): Promise<{ state?: { val?: { access_token?: unknown } } }>;
   };
   toolkits: { get(query: Record<string, never>, options?: { signal?: AbortSignal }): Promise<unknown> };
 }
@@ -184,6 +185,24 @@ export class ComposioHub implements ComposioForWorkers {
     const { items } = await sdk.connectedAccounts.list({ userIds: [composioUserId(accountId)], toolkitSlugs: [toolkit] });
     for (const it of items) await sdk.connectedAccounts.delete(it.id);
     this.announce(accountId);
+  }
+
+  /**
+   * The OAuth token of this person's connected GitHub, for cloning with their own access (a private
+   * repository they can see, nobody else's). Undefined when they haven't connected GitHub, or the
+   * Composio project hides its connections' secrets.
+   */
+  async githubToken(accountId: string): Promise<string | undefined> {
+    this.assertOn(accountId, 'github');
+    const sdk = await this.client();
+    const { items } = await sdk.connectedAccounts.list({ userIds: [composioUserId(accountId)], toolkitSlugs: ['github'] });
+    for (const it of items) {
+      if (it.status !== 'ACTIVE') continue;
+      const token = (await sdk.connectedAccounts.get(it.id)).state?.val?.access_token;
+      // A masked secret ("gho_abc...") is no use to git.
+      if (typeof token === 'string' && /^[A-Za-z0-9_-]{20,255}$/.test(token)) return token;
+    }
+    return undefined;
   }
 
   /** Runs one Composio tool as this person. Throws with Composio's own words when it fails. */
