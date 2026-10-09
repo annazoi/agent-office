@@ -185,7 +185,7 @@ export const arena: Fixture<'arena'> = (site) => {
   ];
 
   const interactables: Interactable[] = [
-    { kind: 'arena', x: DOOR.x - 0.5, z: DOOR.z, radius: 1.4 },
+    { kind: 'arena', x: DOOR.x - 1.2, z: DOOR.z, radius: 2.6 },
     { kind: 'arenaExit', x: EXIT_DOOR.x + ARENA_SITE.x, z: EXIT_DOOR.z + ARENA_SITE.z - 0.5, radius: 1.2 },
     { kind: 'arenaBoard', x: LOBBY_BOARD.x + ARENA_SITE.x, z: LOBBY_BOARD.z + ARENA_SITE.z - 0.5, radius: 1.6 },
   ];
