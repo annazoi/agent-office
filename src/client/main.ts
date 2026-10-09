@@ -28,6 +28,7 @@ import { installKeyboard, installKeyGuards } from './input/keyboard';
 import { installFocus } from './input/focus';
 import { installPointer } from './input/pointer';
 import { installArcade } from './features/arcade';
+import { installArena } from './features/arena';
 import { installBar } from './features/bar';
 import { installBarGames } from './features/bargames';
 import { installBasketball } from './features/basketball';
@@ -162,6 +163,7 @@ parts.coffee = installCoffee(ctx);
 parts.smoking = installSmoke(ctx);
 installLamplight(ctx, parts);
 parts.hoops = installBasketball(ctx, { remotes: parts.peers.remotes, reach });
+parts.arena = installArena(ctx, { placeAt: (at) => parts.place.placeAt(at), remotes: parts.peers.remotes, standUp, stopWalking });
 parts.cards = installCarrying(ctx, {
   hold: (card) => void (core.carrying = card),
   boards: parts.boards,

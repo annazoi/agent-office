@@ -16,6 +16,7 @@ import type { Confetti } from '../world/confetti';
 import type { Hands } from '../world/hands';
 import type { Smoke } from '../world/smoke';
 import type { installArcade } from '../features/arcade';
+import type { installArena } from '../features/arena';
 import type { installBar } from '../features/bar';
 import type { installBarGames } from '../features/bargames';
 import type { installBasketball } from '../features/basketball';
@@ -97,6 +98,8 @@ export interface Parts {
   gallery: Made<typeof installGallery>;
   tv: Made<typeof installTv>;
   arcade: Made<typeof installArcade>;
+  /** The gaming room off the lounge, and you in a match (see features/arena). */
+  arena: Made<typeof installArena>;
   rooftop: Made<typeof installRooftop>;
   telescope: Made<typeof installTelescope>;
   dog: Made<typeof installDog>;

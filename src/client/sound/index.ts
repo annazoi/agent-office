@@ -14,8 +14,10 @@
  * (features/golf/sound.ts, features/dog/sound.ts and so on), and this class only hands them the core.
  */
 import type { GongWhy } from '../../shared/protocol';
+import type { Weapon } from '../../shared/games/fps/weapons';
 import { birdsong, Fridge, nightCrickets, startRoomTone, startWind } from './ambience';
 import { ding } from './alerts';
+import { burst as gearBurst, gunshot, hitMark, reload as gunReload, roundChime, scope as gunScope, throwGear } from '../features/arena/sound';
 import { arcade } from '../features/cabinet/sound';
 import { ball, type BallSound } from '../features/basketball/sound';
 import { Dj, hiccup, pour } from '../features/bar/sound';
@@ -212,6 +214,40 @@ export class OfficeSound {
 
   toss(kind: TossSound, at: Pos) {
     toss(this.a, kind, at);
+  }
+
+  // ---- The arena (features/arena) -----------------------------------------------------------------
+
+  /** A gun going off, where it went off. */
+  arenaShot(weapon: Weapon, at: Pos) {
+    gunshot(this.a, weapon, at);
+  }
+
+  arenaReload(at: Pos) {
+    gunReload(this.a, at);
+  }
+
+  arenaScope() {
+    gunScope(this.a);
+  }
+
+  arenaThrow(at: Pos) {
+    throwGear(this.a, at);
+  }
+
+  /** A grenade going off. */
+  arenaBurst(kind: 'smoke' | 'flash' | 'frag', at: Pos) {
+    gearBurst(this.a, kind, at);
+  }
+
+  /** A shot of yours landing on somebody. */
+  arenaHit(headshot: boolean) {
+    hitMark(this.a, headshot);
+  }
+
+  /** The round turning over, won or lost. */
+  arenaRound(won: boolean) {
+    roundChime(this.a, won);
   }
 
   ball(kind: BallSound, at: Pos, speed: number) {

@@ -1,0 +1,49 @@
+/* The arena's lobby: who's in, which side they're on, the match's settings, and the controls. */
+.arena-modal { width: min(860px, 94vw); }
+.arena-modal .body { display: flex; flex-direction: column; gap: 12px; }
+
+.arena-tabs { display: flex; gap: 6px; }
+.arena-tabs .btn { padding: 4px 12px; font-size: 13px; }
+.arena-tabs .btn.on { background: var(--ink); color: #fff; }
+
+.arena-sides { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.arena-side { border: 3px solid var(--ink); border-radius: 14px; overflow: hidden; background: #fff; }
+.arena-side > h4 { margin: 0; padding: 6px 12px; font-size: 14px; display: flex; align-items: center; gap: 8px; color: #10131a; }
+.arena-side > h4 .grow { flex: 1; }
+.arena-side ul { list-style: none; margin: 0; padding: 6px; display: flex; flex-direction: column; gap: 4px; min-height: 64px; }
+.arena-side li { display: flex; align-items: center; gap: 8px; padding: 5px 8px; border-radius: 10px; background: var(--panel, #f3f5f8); font-weight: 800; font-size: 13px; }
+.arena-side li.me { outline: 3px solid var(--ink); }
+.arena-side li .grow { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.arena-side li .lvl { font-size: 11px; font-weight: 900; padding: 1px 6px; border-radius: 6px; background: var(--ink); color: #fff; }
+.arena-side li .kd { font-size: 12px; color: var(--muted); font-weight: 700; }
+.arena-side li .btn { padding: 1px 7px; font-size: 12px; }
+.arena-side li.down { opacity: 0.5; }
+
+.arena-bench { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 13px; font-weight: 700; }
+.arena-info { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 13px; font-weight: 700; color: var(--muted); }
+.arena-info b { color: var(--ink); }
+
+.arena-admin { border: 3px dashed var(--ink); border-radius: 14px; padding: 10px 12px; display: flex; flex-direction: column; gap: 10px; }
+.arena-admin h4 { margin: 0; font-size: 14px; }
+.arena-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 8px; }
+.arena-grid label { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; }
+.arena-grid label span { flex: 1; }
+.arena-grid input[type='number'] { width: 76px; }
+.arena-grid select { max-width: 120px; }
+.arena-controls { display: flex; flex-wrap: wrap; gap: 6px; }
+.arena-controls .btn { padding: 4px 10px; font-size: 13px; }
+
+.arena-board { width: 100%; border-collapse: collapse; font-size: 13px; }
+.arena-board th, .arena-board td { padding: 5px 8px; text-align: right; }
+.arena-board th:nth-child(2), .arena-board td:nth-child(2) { text-align: left; }
+.arena-board tbody tr { border-top: 2px solid var(--panel, #e7eaef); font-weight: 800; }
+.arena-board tbody tr.you { background: #fff6cf; }
+.arena-board .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; vertical-align: -1px; }
+
+.arena-buy { width: min(760px, 94vw); }
+.arena-buy .guns { display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; }
+.arena-buy .gun { display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: 3px solid var(--ink); border-radius: 12px; background: #fff; font-weight: 800; font-size: 13px; text-align: left; cursor: pointer; }
+.arena-buy .gun:disabled { opacity: 0.45; cursor: default; }
+.arena-buy .gun .grow { flex: 1; }
+.arena-buy .gun small { display: block; font-weight: 600; color: var(--muted); }
+.arena-buy .money { font-weight: 900; }
