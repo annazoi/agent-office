@@ -28,6 +28,8 @@ import type { OfficePrompts } from '../floor/prompts.js';
 import type { LeaveOnMerge } from '../floor/leave-on-merge.js';
 import type { ChatLog } from '../floor/history.js';
 import type { Arcade, HighScores } from '../floor/cabinet.js';
+import type { GameStats } from '../games/stats.js';
+import type { GameId } from '../../shared/games/games.js';
 import type { AgentProvider, FloorInfo, Me, ServerMsg, ServiceInfo, ServicesState, SignInKind } from '../../shared/protocol.js';
 import type { Client } from './client.js';
 import type { Spot } from './input.js';
@@ -52,6 +54,8 @@ export interface Core {
   /** The arcade's high scores: one table for the whole building, on every floor's cabinet. */
   highScores: HighScores;
   arcade: Arcade;
+  /** Who has played what, a record per game, for the gaming rooms' stats and leaderboards. */
+  games(game: GameId): GameStats;
   /** What the office is called where it has no project of its own to go by (webhooks, invites). */
   officeName: string;
   /** The models each provider's own CLI lists, for the ones that list them (see models.ts). */

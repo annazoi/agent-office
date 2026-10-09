@@ -18,12 +18,16 @@ import { Docs } from './docs.js';
 import { Dog } from './dog.js';
 import { Court } from './court.js';
 import { Jail } from './jail.js';
+import { Arena } from './arena.js';
 import { Garage } from './garage.js';
 import { Jukebox } from './jukebox.js';
 import { Whiteboard } from './whiteboard.js';
 import { MeetingRoom } from './meetings.js';
 import { Worktrees, type WorktreeCleanup } from '../workers/worktrees.js';
 import { landedWork, landedWorkers, type Landed } from './leave-on-merge.js';
+import type { GameStats } from '../games/stats.js';
+import type { GameId } from '../../shared/games/games.js';
+import type { Client } from '../office/client.js';
 import type { Ledger } from '../usage/usage.js';
 import type { Capacity } from '../ops/machine.js';
 import { officePrompt, type PromptSource } from './prompts.js';
@@ -49,6 +53,10 @@ export interface FloorContext {
   ghAs(owner: string | undefined): GhAs | undefined | string;
   /** To everyone on this floor. */
   emit(floor: Floor, msg: ServerMsg, droppable?: boolean): void;
+  /** To one person, wherever they are: what only they see of a match they're in. */
+  toClient(c: Client, msg: ServerMsg): void;
+  /** Who has played what, for the gaming room's stats and leaderboards. */
+  stats(game: GameId): GameStats;
   toast(floor: Floor, text: string, level?: ToastLevel): void;
   /** A worker's terminal output, for whoever has that terminal open. */
   termData(workerId: string, data: string, viewers: string[]): void;
@@ -135,6 +143,8 @@ export class Floor {
   readonly garage = new Garage();
   /** Workers sent home on a map that locks them up (see MapPlan.sendHome). */
   readonly jail: Jail;
+  /** The gaming room off the lounge: its lobby, and the match it's running (see arena.ts). */
+  readonly arena: Arena;
   private timer: NodeJS.Timeout;
   /** Pull requests merging, to ring the gong for. */
   private merges = new MergeWatch();
@@ -157,6 +167,12 @@ export class Floor {
     // Before the workers and the dog: the back office's desks are only there once it's built.
     this.plan = new FloorPlanStore(dataDir);
     this.jail = new Jail(dataDir);
+    this.arena = new Arena({
+      stats: (game) => ctx.stats(game),
+      toFloor: (msg, droppable) => ctx.emit(this, msg, droppable),
+      toClient: (c, msg) => ctx.toClient(c, msg),
+      toast: (text, level) => ctx.toast(this, text, level),
+    });
 
     // Before the workers, so it hears about the ones who wake up needing input.
     this.dog = new Dog(def.id, dataDir, {
@@ -419,6 +435,7 @@ export class Floor {
     this.meetings.shutdown();
     this.changes.stop();
     this.whiteboard.flush();
+    this.arena.close();
     this.workers.shutdown(keep);
   }
 }

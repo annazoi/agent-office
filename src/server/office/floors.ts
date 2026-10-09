@@ -98,6 +98,8 @@ export async function openFloors(ctx: Ctx, hookPort: number): Promise<FloorsOpen
     capacity: ctx.machine,
     prompts: ctx.prompts,
     emit: ctx.toFloor,
+    toClient: ctx.sendTo,
+    stats: ctx.games,
     toast: ctx.toastFloor,
     termData: (workerId, data, viewers) => {
       const json = JSON.stringify({ t: 'term.data', workerId, data } satisfies ServerMsg);

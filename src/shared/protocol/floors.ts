@@ -4,6 +4,7 @@ import type { CabinetView } from '../toys/cabinet.js';
 import type { Decoration } from '../building/decor.js';
 import type { DogState } from '../toys/dog.js';
 import type { FloorPlan } from '../building/floorplan.js';
+import type { MatchState } from '../games/match.js';
 import type { CarState } from '../toys/garage.js';
 import type { BallState } from '../toys/hoop.js';
 import type { JukeboxState } from '../toys/jukebox.js';
@@ -130,6 +131,8 @@ export interface FloorView {
   cars: CarState[];
   /** Workers sent home and locked up in the dungeon, on a map that has one. */
   jail: JailState;
+  /** The gaming room's lobby and the match it's running, if any (see shared/games). */
+  game: MatchState;
 }
 
 export type FloorClientMsg =
