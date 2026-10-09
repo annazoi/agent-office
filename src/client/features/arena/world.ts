@@ -99,7 +99,7 @@ function spawnPad(color: string): THREE.Mesh {
 }
 
 /** The arena, built once, far out past the city. */
-function buildArena(): { group: THREE.Group; setLive(live: boolean): void } {
+function buildArena(): { group: THREE.Group; setLive(live: boolean): void; board: THREE.Object3D; out: THREE.Object3D } {
   const group = new THREE.Group();
   group.position.set(ARENA_SITE.x, ARENA_SITE.y, ARENA_SITE.z);
   const mats: Record<string, THREE.Material> = {
@@ -163,7 +163,7 @@ function buildArena(): { group: THREE.Group; setLive(live: boolean): void } {
     for (const s of strips) (s.material as THREE.MeshToonMaterial).emissive.set(live ? '#eaf2ff' : '#52607a');
   };
   setLive(false);
-  return { group, setLive };
+  return { group, setLive, board, out };
 }
 
 /** The gaming room: the shutter in the office, and the arena it opens onto. */
@@ -184,11 +184,16 @@ export const arena: Fixture<'arena'> = (site) => {
     ...ARENA_BOXES.map(boxCollider),
   ];
 
-  const interactables: Interactable[] = [
+  const [shutterUse, exitUse, boardUse]: Interactable[] = [
     { kind: 'arena', x: DOOR.x - 1.2, z: DOOR.z, radius: 2.6 },
     { kind: 'arenaExit', x: EXIT_DOOR.x + ARENA_SITE.x, z: EXIT_DOOR.z + ARENA_SITE.z - 0.5, radius: 1.2 },
     { kind: 'arenaBoard', x: LOBBY_BOARD.x + ARENA_SITE.x, z: LOBBY_BOARD.z + ARENA_SITE.z - 0.5, radius: 1.6 },
   ];
+  // What the crosshair lands on has to carry the thing it uses (see aimedAt in input/pointer.ts).
+  door.userData.interact = shutterUse;
+  built.out.userData.interact = exitUse;
+  built.board.userData.interact = boardUse;
+  const interactables: Interactable[] = [shutterUse, exitUse, boardUse];
 
   const bounds = { minX: PITCH.minX + ARENA_SITE.x, maxX: PITCH.maxX + ARENA_SITE.x, minZ: PITCH.minZ + ARENA_SITE.z, maxZ: LOBBY.maxZ + ARENA_SITE.z };
   const handle: ArenaWorld = {

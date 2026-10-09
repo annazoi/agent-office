@@ -76,8 +76,7 @@ export function installArena(ctx: Ctx, deps: ArenaDeps) {
     // Sealed and roofed: no sky, no weather and no night out here (see Sky.setIndoors).
     ctx.sky.setIndoors(true);
     ctx.sound.arenaScope();
-    if (store.game.phase === 'idle' && !store.me.admin) toast('🎯 Nobody has opened a match in here yet — an administrator can', 'info');
-    else showLobby();
+    showLobby();
   }
 
   function goOut() {

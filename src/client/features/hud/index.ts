@@ -47,9 +47,9 @@ export function installHud(ctx: Ctx, core: CoreState, parts: HudParts) {
 
   // ---- The HUD: a few buttons on the top bar, everything else in the ☰ menu ----------------------------
   const waitingNow = () => waitingInOrder(store.workers.values());
-  const noMedia = () => (window.isSecureContext ? undefined : 'Voice and screen sharing need HTTPS or localhost — use a TLS proxy, --self-signed, or an SSH tunnel');
   // Issues and pull requests are a project's: the office's own floor isn't on GitHub.
   const onGitHub = () => !!store.project?.remote;
+  const noMedia = () => (window.isSecureContext ? undefined : 'Voice and screen sharing need HTTPS or localhost — use a TLS proxy, --self-signed, or an SSH tunnel');
   const hud = mountHud(
     [
       { id: 'issues', icon: '📌', label: 'Issues', section: 'Open', shown: onGitHub, count: () => store.issues.items.filter((i) => i.state === 'OPEN').length, run: () => openBoard('issues', net, actions.boardActions()) },
