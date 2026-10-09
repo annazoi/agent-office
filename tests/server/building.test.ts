@@ -6,6 +6,8 @@ import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { Building, type FloorDef } from '../../src/server/floor/building.js';
 import { stateDoc } from '../../src/server/db/state.js';
+import { prepareHome } from '../../src/server/floor/home.js';
+import { HOME_FLOOR } from '../../src/shared/building/floors.js';
 
 function office(t: { after(fn: () => void): void }) {
   const root = mkdtempSync(path.join(tmpdir(), 'agent-office-building-'));
@@ -23,6 +25,23 @@ function office(t: { after(fn: () => void): void }) {
 }
 
 const saved = (dataDir: string) => (stateDoc<any>(dataDir, 'floors').read() as FloorDef[]).map((d) => d.id);
+
+test("the office's own floor is always first, a git folder with no repository, and never comes off", (t) => {
+  const { root, dataDir } = office(t);
+  const building = new Building(dataDir, root);
+  const dir = prepareHome(path.join(dataDir, 'office'));
+  assert.equal(execFileSync('git', ['rev-parse', '--abbrev-ref', 'HEAD'], { cwd: dir, encoding: 'utf8' }).trim(), 'main');
+
+  const home = building.ensureHome(dir);
+  assert.equal(home.repo, undefined);
+  assert.deepEqual(building.list().map((d) => d.id), [HOME_FLOOR, 'api', 'web', 'docs']);
+  assert.equal(typeof building.remove(HOME_FLOOR), 'string');
+
+  // A restart finds it again rather than adding a second one, and preparing it twice is harmless.
+  const again = new Building(dataDir, root);
+  again.ensureHome(prepareHome(dir));
+  assert.deepEqual(again.list().map((d) => d.id), [HOME_FLOOR, 'api', 'web', 'docs']);
+});
 
 test('a floor comes off the building and stays off, with its checkout left where it was', (t) => {
   const { root, dataDir, defs } = office(t);

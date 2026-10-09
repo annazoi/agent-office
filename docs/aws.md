@@ -28,7 +28,7 @@ What `up` does, in about 2 minutes:
 4. Runs the same [`deploy/provision.sh`](../deploy/provision.sh) as [any server](self-hosting.md): it installs Node 22, git, the GitHub CLI and **Claude Code**, clones the latest agent-office from GitHub and runs `npm i`. The office keeps its data in `~/agent-office` on the machine and clones projects into `~/workspace/<owner>/<repo>`.
 5. Runs the office under systemd with `Restart=always`, so it comes back after a crash or a reboot, and `KillMode=process`, so restarting it leaves the workers running. It listens on `127.0.0.1:4600` on the machine, so the only way in is an SSH tunnel.
 6. Opens an SSH tunnel and your browser at `http://localhost:4600`. **The first page shows the office password once. Write it down.** The server then keeps only a hash, so nobody can display the password again.
-7. The office opens on its elevator with no floors yet. It lists every repository your GitHub token can see: pick one and it becomes the first floor.
+7. The office opens on its own **Office** floor, which isn't a project. The elevator lists every repository your GitHub token can see: pick one and it becomes a floor of its own.
 
 Everything goes through SSH, so there are no certificate warnings, and `localhost` counts as a secure origin: voice and screen sharing just work. Keep the terminal open while you use the office; Ctrl-C closes the tunnel. Next time, run `deploy/aws.sh open`. If port 4600 is taken on your machine, it picks the next free one.
 

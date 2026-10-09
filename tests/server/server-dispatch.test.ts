@@ -13,6 +13,7 @@ import WebSocket from 'ws';
 import { loadConfig } from '../../src/server/config.js';
 import { startServer } from '../../src/server/server.js';
 import type { ServerMsg } from '../../src/shared/protocol.js';
+import { HOME_FLOOR } from '../../src/shared/building/floors.js';
 
 type Office = Awaited<ReturnType<typeof startServer>>;
 type Msg<T extends ServerMsg['t']> = Extract<ServerMsg, { t: T }>;
@@ -317,8 +318,8 @@ test('welcomes a browser and dispatches what it sends', async () => {
   assert.equal(welcome.project?.name, floor.project.name);
   assert.deepEqual(welcome.me, { account: { name: 'Ada', role: 'admin' }, admin: true });
   assert.deepEqual(welcome.workers, []);
-  assert.equal(welcome.floors.length, 1);
-  assert.equal(welcome.floors[0].id, floor.id);
+  // The project it was started in, first, then the office's own floor, which is always there.
+  assert.deepEqual(welcome.floors.map((f) => f.id), [floor.id, HOME_FLOOR]);
   const ada = welcome.peers.find((p) => p.id === welcome.you);
   assert.equal(ada?.name, 'Ada');
   assert.equal(ada?.color, '#ff8a5b');

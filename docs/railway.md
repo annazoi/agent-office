@@ -27,7 +27,7 @@ What `up` does, in about five minutes the first time:
 6. Signs the GitHub CLI in with your local `gh auth token` (kept on the volume), and gives git your name and email.
 7. Opens an SSH tunnel and your browser at `http://localhost:4600`. **The first page shows the office password once. Write it down.** The office then keeps only a hash of it.
 
-The office listens on `127.0.0.1:4600` inside its container, and everyone reaches it through the tunnel. `localhost` counts as a secure origin, so voice and screen sharing work, with no certificates to manage. Your key logs in as `agentoffice`, the user that runs the office (`deploy/railway.sh ssh` gives you its shell). The office starts with no floors: ride the elevator and pick one of the repositories your GitHub token can see.
+The office listens on `127.0.0.1:4600` inside its container, and everyone reaches it through the tunnel. `localhost` counts as a secure origin, so voice and screen sharing work, with no certificates to manage. Your key logs in as `agentoffice`, the user that runs the office (`deploy/railway.sh ssh` gives you its shell). The office starts on its own **Office** floor, which isn't a project: ride the elevator and pick one of the repositories your GitHub token can see to add one.
 
 **What survives a restart.** Railway replaces the container on every restart and redeploy; the volume stays. On it:
 

@@ -47,10 +47,12 @@ export function installHud(ctx: Ctx, core: CoreState, parts: HudParts) {
   // ---- The HUD: a few buttons on the top bar, everything else in the ☰ menu ----------------------------
   const waitingNow = () => waitingInOrder(store.workers.values());
   const noMedia = () => (window.isSecureContext ? undefined : 'Voice and screen sharing need HTTPS or localhost — use a TLS proxy, --self-signed, or an SSH tunnel');
+  // Issues and pull requests are a project's: the office's own floor isn't on GitHub.
+  const onGitHub = () => !!store.project?.remote;
   const hud = mountHud(
     [
-      { id: 'issues', icon: '📌', label: 'Issues', section: 'Open', count: () => store.issues.items.filter((i) => i.state === 'OPEN').length, run: () => openBoard('issues', net, actions.boardActions()) },
-      { id: 'pulls', icon: '🔀', label: 'Pull requests', section: 'Open', count: () => store.pulls.items.filter((p) => p.state === 'OPEN').length, run: () => openBoard('pulls', net, actions.boardActions()) },
+      { id: 'issues', icon: '📌', label: 'Issues', section: 'Open', shown: onGitHub, count: () => store.issues.items.filter((i) => i.state === 'OPEN').length, run: () => openBoard('issues', net, actions.boardActions()) },
+      { id: 'pulls', icon: '🔀', label: 'Pull requests', section: 'Open', shown: onGitHub, count: () => store.pulls.items.filter((p) => p.state === 'OPEN').length, run: () => openBoard('pulls', net, actions.boardActions()) },
       { id: 'queue', icon: '📋', label: 'Task queue', section: 'Open', count: () => store.queue.tasks.filter((t) => t.status !== 'done').length, title: () => 'Issues and tasks waiting for a worker', run: waiting.showQueue },
       { id: 'services', icon: '🌐', label: 'Services', section: 'Open', count: () => store.services.items.length, title: () => 'Web servers the workers are running', run: () => openServices() },
       { id: 'whiteboard', icon: '📝', label: 'Whiteboard', section: 'Open', title: () => 'Draw together, live', run: () => openWhiteboard(net) },

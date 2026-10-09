@@ -28,7 +28,7 @@ What `up` does, in about five minutes the first time:
 6. Signs the GitHub CLI in with your local `gh auth token` (kept on the volume), and gives git your name and email.
 7. Opens an SSH tunnel and your browser at `http://localhost:4600`. **The first page shows the office password once. Write it down.** The office then keeps only a hash of it.
 
-The office listens on `127.0.0.1:4600` inside its container, and everyone reaches it through the tunnel. `localhost` counts as a secure origin, so voice and screen sharing work, with no certificates to manage. Your key logs in as `agentoffice`, the user that runs the office (`deploy/dokploy.sh ssh` gives you its shell). The office starts with no floors: ride the elevator and pick one of the repositories your GitHub token can see.
+The office listens on `127.0.0.1:4600` inside its container, and everyone reaches it through the tunnel. `localhost` counts as a secure origin, so voice and screen sharing work, with no certificates to manage. Your key logs in as `agentoffice`, the user that runs the office (`deploy/dokploy.sh ssh` gives you its shell). The office starts on its own **Office** floor, which isn't a project: ride the elevator and pick one of the repositories your GitHub token can see to add one.
 
 **The SSH address.** You and your teammates SSH to the server's IP as Dokploy knows it: the remote server's IP, or for Dokploy's own server the one under **Settings → Web Server**. If that isn't the address to use (a DNS name, or a server behind NAT), pass `--ssh-host <host>` to `up`. Docker opens published ports past `ufw`, but a firewall in front of the server (Hetzner's, an AWS security group, DigitalOcean's) has to allow TCP on the SSH port. Don't pick port 22: that's the server's own SSH.
 

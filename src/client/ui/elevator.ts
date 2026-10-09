@@ -1,6 +1,6 @@
 import './elevator.css';
 import type { CloneProgress, FloorInfo, RepoChoice, ServerMsg } from '../../shared/protocol';
-import { cloneLabel, cloneStep, floorPalette, normalizeRepo, sameRepo } from '../../shared/building/floors';
+import { HOME_FLOOR, cloneLabel, cloneStep, floorPalette, normalizeRepo, sameRepo } from '../../shared/building/floors';
 import { ROOF, ROOF_NAME } from '../../shared/building/rooftop';
 import type { Net } from '../shared/net';
 import { store } from '../state';
@@ -174,7 +174,7 @@ export function openElevator(opts: ElevatorOptions): void {
       if (!f.shared) return net.send({ t: 'floor.share', floor: f.id, shared: true });
       confirmDialog(`Stop sharing ${f.name}?`, 'Only its owner and admins see it again: anyone else on it rides the elevator to another floor. Their workers there keep running.', '🔒 Stop sharing', () => net.send({ t: 'floor.share', floor: f.id, shared: false }));
     });
-    const mayRemove = store.me.admin || (f.mine && !f.shared);
+    const mayRemove = f.id !== HOME_FLOOR && (store.me.admin || (f.mine && !f.shared));
     if (!share && !mayRemove) return btn;
     const off = mayRemove ? h('button.btn.floor-off', { type: 'button', title: `Take ${f.name} off the building`, 'aria-label': `Remove ${f.name}` }, '🗑') : null;
     off?.addEventListener('click', () => confirmRemove(f));

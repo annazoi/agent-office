@@ -82,7 +82,7 @@ Nothing is asked in the terminal. The office opens in your browser on a link tha
 
 Until the server has its `COMPOSIO_API_KEY`, the elevator says so instead of listing repositories.
 
-None of it is required to come in: you can look around the office with no project, no GitHub and no AI sign-in. Whatever needs one asks for it when you get there: a desk, a board or the queue without a project offers **🛗 Add a project**, adding one without GitHub shows **🔌 Connect GitHub**, and hiring a Claude worker without your Claude sign-in opens **🔐 Your sign-ins** (Cursor and the other agents use the office machine's own login). Then walk to an empty desk, press **E** and hire a worker.
+None of it is required to come in: the office has a floor of its own, **Office**, that isn't a project, so with no project, no GitHub and no AI sign-in you can still draw on the whiteboard, hire workers at its desks, queue tasks and play. Only what's about a GitHub repository (its issues, pull requests and cloning) needs a project, and asks for it when you get there: adding one without GitHub shows **🔌 Connect GitHub**, and hiring a Claude worker without your Claude sign-in opens **🔐 Your sign-ins** (Cursor and the other agents use the office machine's own login). Then walk to an empty desk, press **E** and hire a worker.
 
 Common options:
 
@@ -125,7 +125,7 @@ In about two minutes, `up`:
 3. Runs [`deploy/provision.sh`](deploy/provision.sh) on it: Node 22, git, the GitHub CLI, Claude Code and the office, under systemd, so it comes back after a crash or reboot and workers keep running through a restart.
 4. Opens a tunnel and your browser at http://localhost:4600. **The first page shows the office password once. Write it down.**
 
-The office starts with no project: everyone connects their own GitHub and adds theirs in the elevator.
+The office starts on its own **Office** floor, with no project: everyone connects their own GitHub and adds theirs in the elevator.
 
 **Signing in the agents.** `--claude-token` uses your Claude subscription; `--anthropic-api-key <key>` uses an API key instead. Leave both out and run `/login` in the first worker's terminal. Codex and OpenCode aren't installed by the script: `deploy/aws.sh ssh` and install them yourself.
 

@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process';
 import { accessSync, constants, existsSync, mkdirSync, readdirSync, statSync } from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { FLOOR_PALETTES, MAX_FLOORS, normalizeRepo, sameRepo } from '../../shared/building/floors.js';
+import { FLOOR_PALETTES, HOME_FLOOR, MAX_FLOORS, normalizeRepo, sameRepo } from '../../shared/building/floors.js';
 import type { CloneProgress, ProjectsDirState, RepoChoice } from '../../shared/protocol.js';
 import { CloneRun, dropLog, whyCloneFailed, type CloneEnd, type CloneRunOptions } from '../integrations/clone.js';
 import type { RepoSource } from '../integrations/github-composio.js';
@@ -253,6 +253,24 @@ export class Building {
     return def;
   }
 
+  /**
+   * Puts the office's own floor (HOME_FLOOR, in `dir`) first in the building, every time it starts.
+   * It isn't a project: no repository, nobody's in particular, and it can't be taken off.
+   */
+  ensureHome(dir: string): FloorDef {
+    const known = this.defs.find((d) => d.id === HOME_FLOOR);
+    if (known) {
+      known.dir = dir;
+      this.defs = [known, ...this.defs.filter((d) => d !== known)];
+      this.save();
+      return known;
+    }
+    const def: FloorDef = { id: HOME_FLOOR, name: 'Office', dir, palette: 0, addedBy: 'the office', addedAt: Date.now() };
+    this.defs.unshift(def);
+    this.save();
+    return def;
+  }
+
   /** The office keeps its own data in this floor's checkout. */
   isLocal(id: string): boolean {
     return id === this.localId;
@@ -265,6 +283,7 @@ export class Building {
    * in). Returns the floor, or why it can't.
    */
   remove(id: string, by = '?'): FloorDef | string {
+    if (id === HOME_FLOOR) return "The office's own floor stays: it's where everyone works when there's no project";
     const def = this.defs.find((d) => d.id === id);
     if (!def) return this.pendingFloor(id) ? "That floor is still being cloned — stop it, or take it off once it's there" : 'No such floor';
     this.defs = this.defs.filter((d) => d !== def);
@@ -410,7 +429,7 @@ export class Building {
   }
 
   private newDef(name: string, repo: string | undefined, dir: string, by: string, owner?: string): FloorDef {
-    const taken = new Set([...this.defs, ...this.pending()].map((d) => d.id));
+    const taken = new Set([HOME_FLOOR, ...[...this.defs, ...this.pending()].map((d) => d.id)]);
     const base = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 32) || 'floor';
     let id = base;
     for (let n = 2; taken.has(id); n++) id = `${base}-${n}`;

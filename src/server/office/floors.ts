@@ -2,6 +2,8 @@ import { existsSync } from 'node:fs';
 import { WebSocket } from 'ws';
 import type { FloorDef } from '../floor/building.js';
 import { Floor, type FloorContext } from '../floor/floor.js';
+import { prepareHome } from '../floor/home.js';
+import path from 'node:path';
 import { ROOF } from '../../shared/building/rooftop.js';
 import { seesFloor } from '../../shared/building/floors.js';
 import type { FloorInfo, ServerMsg } from '../../shared/protocol.js';
@@ -155,6 +157,12 @@ export async function openFloors(ctx: Ctx, hookPort: number): Promise<FloorsOpen
       return undefined;
     }
   };
+  // The office's own floor, first, so there's always somewhere to work without a project.
+  try {
+    ctx.building.ensureHome(prepareHome(path.join(cfg.dataDir, 'office')));
+  } catch (err) {
+    console.error(`agent-office: couldn't make the office's own floor: ${(err as Error).message}`);
+  }
   // Started in a project: it's a floor too (the one it has always been).
   if (cfg.project) ctx.building.ensureLocal(cfg.project, 'the office');
   for (const def of ctx.building.list()) openFloor(def);

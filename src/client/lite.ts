@@ -49,7 +49,10 @@ const notifier = new DesktopNotifier(() => settings.notify, (id) => openWorker(i
 /** The server version this page was loaded with. */
 let bootVersion = '';
 
-net.onStatus((up) => $('conn').classList.toggle('hidden', up));
+net.onStatus((up) => {
+  $('conn').classList.toggle('hidden', up);
+  if (up) net.send({ t: 'composio.get' });
+});
 net.onMessage((msg) => {
   store.apply(msg);
   routeTerminalMessage(msg);

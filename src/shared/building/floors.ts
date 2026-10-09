@@ -3,6 +3,12 @@
 
 import type { CloneProgress } from '../protocol.js';
 
+/**
+ * The office's own floor, always there and first: a plain local folder rather than a project, so
+ * everything that isn't about GitHub (drawing, hiring, the queue, the dog) works before anyone adds one.
+ */
+export const HOME_FLOOR = 'office';
+
 /** The most floors a building has. */
 export const MAX_FLOORS = 16;
 

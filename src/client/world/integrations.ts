@@ -375,7 +375,8 @@ export function installIntegrations(ctx: Ctx, deps: IntegrationsDeps) {
   let calendarLines: string[] = [];
   store.on('composio', paint);
   paint();
-  ctx.net.send({ t: 'composio.get' });
+  // Asked on every (re)connect: a send before the socket is open is dropped, and a restart can change it.
+  ctx.net.onStatus((up) => up && ctx.net.send({ t: 'composio.get' }));
 
   ctx.messages.on('composio:activity', (msg) => {
     const text = `${msg.summary}`;

@@ -126,7 +126,7 @@ export function gate(toolkit: ComposioStationToolkit, panel: Panel, retry: () =>
   const { office, mine } = store.composio;
   const meta = COMPOSIO_TOOLKIT_META[toolkit];
   const note = (text: string, ...more: Node[]) => h('div.cx-gate', {}, h('p', {}, text), ...more);
-  if (!office.configured) return note(`The office isn't connected to Composio yet. An admin can set the API key in ⚙️ Settings → Connections.`);
+  if (!office.configured) return note(`The office isn't connected to Composio yet. Whoever runs the server sets COMPOSIO_API_KEY in its environment (or its .env) and restarts it.`);
   if (!office.available) return note(office.error ?? 'Composio needs Node 22.22 or newer on the office machine.');
   if (!office.toolkits.includes(toolkit)) return note(`${meta.label} is switched off in this office (⚙️ Settings → Connections).`);
   if (mine.blocked) return note(mine.blocked);

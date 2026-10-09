@@ -310,10 +310,11 @@ export class Floor {
     this.whiteboard = new Whiteboard(dataDir);
     this.ready = this.workers.start();
 
-    void this.github.refresh();
+    // A floor that isn't on GitHub (the office's own) has no boards to keep fresh.
+    if (this.project.remote) void this.github.refresh();
     // A floor with people on it, or work under way, keeps its boards fresh; the others check in now and then.
     this.timer = setInterval(() => {
-      if (this.active() || Date.now() - this.github.issues.fetchedAt > IDLE_REFRESH_MS) void this.github.refresh();
+      if (this.project.remote && (this.active() || Date.now() - this.github.issues.fetchedAt > IDLE_REFRESH_MS)) void this.github.refresh();
     }, REFRESH_MS);
   }
 
@@ -382,7 +383,7 @@ export class Floor {
 
   /** Someone just walked in: boards that haven't been looked at in a while get fetched again. */
   arrived() {
-    if (Date.now() - Math.max(this.github.issues.fetchedAt, this.github.pulls.fetchedAt) > REFRESH_MS) void this.github.refresh();
+    if (this.project.remote && Date.now() - Math.max(this.github.issues.fetchedAt, this.github.pulls.fetchedAt) > REFRESH_MS) void this.github.refresh();
   }
 
   private active(): boolean {
