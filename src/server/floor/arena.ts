@@ -390,7 +390,7 @@ export class Arena {
     const need = Math.floor(this.settings.rounds / 2) + 1;
     if (this.score.a >= need || this.score.b >= need || this.round >= this.settings.rounds) {
       const champion: Side = this.score.a === this.score.b ? 'none' : this.score.a > this.score.b ? 'a' : 'b';
-      return this.finish(champion, this.score.a === this.score.b ? 'Drawn' : `${need} rounds taken`);
+      return this.finish(champion, this.score.a === this.score.b ? 'Drawn' : `${need} round${need === 1 ? '' : 's'} taken`);
     }
     this.phase = 'between';
     this.until = Date.now() + this.settings.betweenRounds * 1000;

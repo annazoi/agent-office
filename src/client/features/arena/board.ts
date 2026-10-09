@@ -1,5 +1,5 @@
 import { FPS } from '../../../shared/games/games';
-import { BOARDS, BOARD_NAMES, SPANS, SPAN_NAMES, type BoardKey, type BoardRow, type Span } from '../../../shared/games/stats';
+import { BOARDS, BOARD_NAMES, RANKED_MATCHES, SPANS, SPAN_NAMES, type BoardKey, type BoardRow, type Span } from '../../../shared/games/stats';
 import type { Net } from '../../shared/net';
 import { h } from '../../ui/dom';
 
@@ -37,10 +37,11 @@ function table(rows: BoardRow[]): HTMLElement {
           cell(r.level),
           cell(r.xp.toLocaleString()),
           cell(r.wins),
-          cell(r.matches ? `${Math.round(r.winRate * 100)}%` : '—'),
+          // A rate off one or two matches isn't a rate: the office leaves it out until there are enough.
+          cell(r.matches >= RANKED_MATCHES ? `${Math.round(r.winRate * 100)}%` : '—'),
           cell(r.kills),
           cell(r.deaths),
-          cell(r.kd ? r.kd.toFixed(2) : '—'),
+          cell(r.matches >= RANKED_MATCHES ? r.kd.toFixed(2) : '—'),
           cell(r.headshots),
         ),
       ),
