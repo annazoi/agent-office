@@ -1,7 +1,6 @@
 // The gaming room on every floor: its lobby, its match, and the game being played in it. The floor's
 // Arena (server/floor/arena.ts) owns all of it; this file only hands it what a browser asked for,
 // having first checked who is allowed to ask.
-import { EMPTY_MATCH } from '../../../shared/games/match.js';
 import { isGameId, isTeam } from '../../../shared/games/games.js';
 import { isBoard, isSpan } from '../../../shared/games/stats.js';
 import type { GamesClientMsg } from '../../../shared/protocol.js';
@@ -9,17 +8,19 @@ import { LOBBY_EVERY } from '../../floor/arena.js';
 import { throttle, type Client } from '../../office/client.js';
 import type { Ctx } from '../../office/context.js';
 import { str } from '../../office/input.js';
-import { here } from './common.js';
 import type { FeatureHooks, HandlerMap, ViewPieces } from './types.js';
 
-/** The match on the floor someone walks onto; an empty one in the lobby and on the roof. */
-export const gameView: ViewPieces['game'] = (_ctx, floor) => floor?.arena.state() ?? EMPTY_MATCH;
+/** The gaming room `c` is in: their floor's, or the building's own while they're on none (the roof has none). */
+const arenaOf = (ctx: Ctx, c: Client) => ctx.floorOf(c)?.arena ?? (c.peer.floor ? undefined : ctx.lobbyArena);
+
+/** The match on the floor someone walks onto, or the building's own when they're on none. */
+export const gameView: ViewPieces['game'] = (ctx, floor) => (floor ? floor.arena.state() : ctx.lobbyArena.state());
 
 /** Anything to do with the lobby: the floor's arena, and a limit on how often anyone can ask. */
 function lobby(ctx: Ctx, c: Client) {
-  const floor = here(ctx, c);
-  if (!floor || !throttle(c, 'game.lobby', LOBBY_EVERY)) return undefined;
-  return floor.arena;
+  const arena = arenaOf(ctx, c);
+  if (!arena || !throttle(c, 'game.lobby', LOBBY_EVERY)) return undefined;
+  return arena;
 }
 
 export const gamesHandlers = {
@@ -38,8 +39,7 @@ export const gamesHandlers = {
     if (arena) ctx.warn(c, arena.join(c));
   },
   'game.leave'(ctx, c) {
-    const floor = ctx.floorOf(c);
-    floor?.arena.leave(c);
+    arenaOf(ctx, c)?.leave(c);
   },
   'game.ready'(ctx, c, msg) {
     const arena = lobby(ctx, c);
@@ -85,11 +85,12 @@ export const gamesHandlers = {
 
 /** Something done inside a match, passed to the floor's arena. */
 function play(ctx: Ctx, c: Client, msg: GamesClientMsg) {
-  ctx.floorOf(c)?.arena.play(c, msg);
+  arenaOf(ctx, c)?.play(c, msg);
 }
 
 export const gamesHooks: FeatureHooks = {
   // The match is the floor's: leaving the floor leaves the match.
-  leaving: (ctx, c, was) => void was?.arena.leave(c, 'left'),
+  leaving: (ctx, c, was) => void (was?.arena ?? ctx.lobbyArena).leave(c, 'left'),
+  closed: (ctx, c) => ctx.lobbyArena.leave(c, 'left'),
   closedOn: (ctx, c, floor) => floor.arena.leave(c, 'left'),
 };

@@ -12,6 +12,7 @@ import type { Floor } from '../floor/floor.js';
 import { ChatLog } from '../floor/history.js';
 import { Arcade, HighScores } from '../floor/cabinet.js';
 import { GameStats } from '../games/stats.js';
+import { Arena } from '../floor/arena.js';
 import { GAME_IDS, type GameId } from '../../shared/games/games.js';
 import { scoreText } from '../../shared/toys/cabinet.js';
 import { cabinetChanged } from '../ws/handlers/cabinet.js';
@@ -39,6 +40,18 @@ export async function createCore(ctx: Ctx, cfg: Config, publicDir: string): Prom
   const gameStats = new Map<GameId, GameStats>(GAME_IDS.map((id) => [id, new GameStats(cfg.dataDir, id)]));
   const games = (game: GameId) => gameStats.get(game)!;
 
+  // The arena for whoever is on no floor, so the gaming room works before any project is added.
+  const lobbyArena = new Arena({
+    stats: games,
+    toFloor: (msg) => {
+      for (const c of clients.values()) if (!c.peer.floor) ctx.sendTo(c, msg);
+    },
+    toClient: (c, msg) => ctx.sendTo(c, msg),
+    toast: (text, level) => {
+      for (const c of clients.values()) if (!c.peer.floor) ctx.sendTo(c, { t: 'toast', text, level: level ?? 'info' });
+    },
+  });
+
   /** What the office is called where it has no project of its own to go by (webhooks, invites). */
   const officeName = cfg.project ? path.basename(cfg.project) : 'the office';
   // The model lists come from the provider's own CLI: the office's --agent when it's that one.
@@ -55,5 +68,5 @@ export async function createCore(ctx: Ctx, cfg: Config, publicDir: string): Prom
     if (err) console.error(`agent-office: --projects: ${err}`);
   }
   const floors = new Map<string, Floor>();
-  return { cfg, publicDir, accounts, orgs, mailer, auth, clients, chat, highScores, arcade, games, officeName, models, building, floors };
+  return { cfg, publicDir, accounts, orgs, mailer, auth, clients, chat, highScores, arcade, games, lobbyArena, officeName, models, building, floors };
 }
