@@ -144,6 +144,14 @@ export function installArena(ctx: Ctx, deps: ArenaDeps) {
     repeat: false,
     run: () => void showLobby(),
   });
+  // The buy menu is open through the count-in and between rounds too, when there's no round to take
+  // the key (see Fighter.key, which has it while one is live).
+  ctx.keys.bind({
+    code: 'KeyB',
+    when: () => inArena() && store.gameYou.in && !modalOpen(),
+    repeat: false,
+    run: () => void openBuyWindow(),
+  });
 
   // ---- The mouse while you're fighting --------------------------------------------------------------
 

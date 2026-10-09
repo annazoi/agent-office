@@ -61,7 +61,8 @@ The rest of `src/server/` is grouped by what it's for, and only the entry points
 
 | Folder | What's in it |
 | --- | --- |
-| `floor/` | A floor and what it keeps: `floor.ts` (made by the office), `building.ts`, `floorplan.ts`, `queue.ts`, `meetings.ts` and `meetings/`, and a module per thing on it (`dog.ts`, `jukebox.ts`, `whiteboard.ts`, `cabinet.ts`, `decor.ts`, `garage.ts`, `court.ts`, `jail.ts`, the bookshelf in `docs.ts`, `maps.ts`, `history.ts`, `theme.ts`, `sky.ts`). |
+| `floor/` | A floor and what it keeps: `floor.ts` (made by the office), `building.ts`, `floorplan.ts`, `queue.ts`, `meetings.ts` and `meetings/`, and a module per thing on it (`dog.ts`, `jukebox.ts`, `whiteboard.ts`, `cabinet.ts`, `arena.ts`, `decor.ts`, `garage.ts`, `court.ts`, `jail.ts`, the bookshelf in `docs.ts`, `maps.ts`, `history.ts`, `theme.ts`, `sky.ts`). |
+| `games/` | The gaming platform's games: the seam a game plugs into (`types.ts`), the registry (`index.ts`), the people in a match (`seats.ts`), everyone's profiles and the leaderboards (`stats.ts`), and a rules module per game (`fps.ts`). The lobby, the sides and the clock are the floor's `arena.ts`; see [Gaming rooms](games.md#adding-a-game). |
 | `agents/` | The agent CLIs' own support: `codex.ts`, `cursor.ts`, `grok.ts`, `muse.ts`, `opencode.ts`, `pi.ts`, `dsh.ts` and `dsh/`, and `models.ts` (their model lists). `providers/` holds the adapters. |
 | `usage/` | What the workers use: `usage.ts`, `reported-usage.ts`, `codex-usage.ts` and the plan `limits.ts`. |
 | `integrations/` | GitHub and Composio: `github.ts`, `github-composio.ts` (each person's GitHub through Composio: the repository list, lookup and clone token), `clone.ts`, and the Composio files below. |
@@ -79,6 +80,7 @@ The Composio integrations are the one feature laid out by its own name rather th
 - **`agents/`** is what the office knows about workers: `providers.ts` (the provider table: every agent a worker can run, and what the office knows about each), `actions.ts`, `status.ts`, `prompts.ts`, `machine.ts` and `meetings.ts` (the meeting patterns).
 - **`building/`** is the building and what it's made of: `layout.ts`, `floors.ts`, `floorplan.ts`, `rooftop.ts`, `scenic.ts`, `sun.ts`, `theme.ts`, `nav.ts`, `decor.ts`, `docs.ts`, `drops.ts` and the maps in `building/maps/`.
 - **`toys/`** is what's on a floor to play with: `hoop.ts`, `garage.ts`, `bargames.ts`, `cabinet.ts`, `dog.ts`, `jukebox.ts` and `whiteboard.ts`.
+- **`games/`** is the gaming rooms: the game table (`games.ts`), a match's settings, sides and lifecycle (`match.ts`), everyone's profiles and the leaderboards (`stats.ts`), and a folder per game with the numbers both sides go by (`fps/`: the arena as plain boxes, the weapons, the equipment, and the hit arithmetic the office and the page both run).
 - **`people/`** is how a person looks and acts (`avatar.ts`, `emotes.ts`), **`integrations/`** is the Composio stations (`integrations.ts`, `composio-api.ts`), and **`util/`** is `rng.ts`, `search.ts` and `palette.ts`.
 
 The rest is data and pure code both sides use.
