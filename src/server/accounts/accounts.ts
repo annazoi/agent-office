@@ -108,6 +108,11 @@ export class Accounts {
     return this.data.accounts.find((a) => a.id === id);
   }
 
+  /** Every account. */
+  list(): Account[] {
+    return [...this.data.accounts];
+  }
+
   byName(name: string): Account | undefined {
     const n = cleanName(name);
     return n ? this.data.accounts.find((a) => sameName(a.name, n)) : undefined;

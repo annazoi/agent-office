@@ -65,7 +65,7 @@ The rest of `src/server/` is grouped by what it's for, and only the entry points
 | `agents/` | The agent CLIs' own support: `codex.ts`, `cursor.ts`, `grok.ts`, `muse.ts`, `opencode.ts`, `pi.ts`, `dsh.ts` and `dsh/`, and `models.ts` (their model lists). `providers/` holds the adapters. |
 | `usage/` | What the workers use: `usage.ts`, `reported-usage.ts`, `codex-usage.ts` and the plan `limits.ts`. |
 | `integrations/` | GitHub and Composio: `github.ts`, `github-composio.ts` (each person's GitHub through Composio: the repository list, lookup and clone token), `clone.ts`, and the Composio files below. |
-| `accounts/` | Who's signed in: `accounts.ts` (registering, invites, roles), `auth.ts` (sessions), `user-config.ts` (each account's own settings), `signins.ts` and `signins/`. |
+| `accounts/` | Who's signed in: `accounts.ts` (registering, invites, roles), `auth.ts` (sessions), `user-config.ts` (each account's own settings), `signins.ts` and `signins/`, and `orgs/` (organisations: `store.ts` with its migration, `roles.ts`, `mailer.ts` for Resend, `notify.ts`; their messages are `ws/handlers/orgs.ts`, the invite link's route `http/routes/orgs.ts`, and on the client `ui/orgs.ts`, `state/slices/orgs.ts` and the `/invite` page). |
 | `db/` | The office's database: `state.ts` (`StateDb`, the documents every store reads and writes, and `stateDoc`) and `postgres.ts` (the Postgres backend, required at start-up). |
 | `ops/` | Running the office on a machine: `machine.ts`, `upgrade.ts`, `team.ts`, `tailnet.ts`, `relay.ts`, `webhook.ts`. |
 

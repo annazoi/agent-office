@@ -11,6 +11,7 @@ import { ROOF, ROOF_NAME } from '../../shared/building/rooftop';
 import { renderTitle } from '../shared/title';
 import { lastFloor, lastSpot, store, type Spot } from '../state';
 import { routeAccountsMessage } from '../ui/accounts';
+import { routeOrgsMessage } from '../ui/orgs';
 import { openChangesFor, routeChangesMessage } from '../ui/changes';
 import { $, toast } from '../ui/dom';
 import { routeElevatorMessage } from '../ui/elevator';
@@ -64,6 +65,7 @@ export function installArrival(ctx: Ctx, core: CoreState, parts: ArrivalParts) {
   ctx.messages.onAny(routeChangesMessage);
   ctx.messages.onAny(routeTeamMessage);
   ctx.messages.onAny(routeAccountsMessage);
+  ctx.messages.onAny(routeOrgsMessage);
   ctx.messages.onAny(routePullMessage);
   ctx.messages.onAny(routeElevatorMessage);
   ctx.messages.onAny((msg) => routeWhiteboardMessage(msg, net));

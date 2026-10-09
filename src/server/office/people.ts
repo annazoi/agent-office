@@ -2,6 +2,7 @@ import type { Accounts } from '../accounts/accounts.js';
 import type { Me } from '../../shared/protocol.js';
 import type { Ctx, People } from './context.js';
 import type { Client } from './client.js';
+import { orgsChanged } from '../accounts/orgs/notify.js';
 
 /** WebSocket close code for a session that stopped counting: its account was revoked. */
 const SIGNED_OUT = 4001;
@@ -36,6 +37,8 @@ export function people(ctx: Ctx): People {
       }
       if (me.admin) ctx.sendTo(c, { t: 'accounts', state: (state ??= ctx.accounts.state(onlineAccounts())) });
     }
+    // Someone new is in an organisation of their own, and someone revoked is out of theirs.
+    orgsChanged(ctx);
   };
   return { meOf, stillIn, signOut, onlineAccounts, accountsChanged };
 }

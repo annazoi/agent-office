@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Agent Office · Invite</title>
+    <link rel="icon" href="/favicon.svg" />
+    <link rel="stylesheet" href="./login.css" />
+  </head>
+  <body>
+    <main class="card">
+      <div class="logo" aria-hidden="true">
+        <svg viewBox="0 0 64 64" width="72" height="72"><rect x="6" y="30" width="52" height="8" rx="3" fill="#e0a96d"/><rect x="18" y="14" width="28" height="18" rx="3" fill="#2b2d42"/><rect x="21" y="17" width="22" height="12" rx="1" fill="#7cf29a"/><circle cx="32" cy="50" r="9" fill="#ff8a5b"/><circle cx="29" cy="48" r="1.8" fill="#222"/><circle cx="35" cy="48" r="1.8" fill="#222"/></svg>
+      </div>
+      <h1 id="title">You're invited 🎉</h1>
+      <p class="sub" id="sub">Checking your invite…</p>
+      <div id="accept-row" hidden>
+        <button type="button" id="accept">Accept the invite</button>
+        <p class="note" id="switch-note"></p>
+      </div>
+      <div class="tabs" id="tabs" role="tablist" hidden>
+        <button type="button" role="tab" id="tab-login" aria-selected="true">I have an account</button>
+        <button type="button" role="tab" id="tab-register" aria-selected="false">I'm new here</button>
+      </div>
+      <form id="form" hidden>
+        <label>Your name<input id="name" type="text" maxlength="24" autocomplete="username" spellcheck="false" required /></label>
+        <label>Password<input id="password" type="password" autocomplete="current-password" required /></label>
+        <label id="again-row" hidden>Once more<input id="again" type="password" minlength="8" autocomplete="new-password" /></label>
+        <p class="note" id="form-note"></p>
+        <button type="submit" id="submit">Sign in and accept</button>
+      </form>
+      <p id="error" class="error" role="alert"></p>
+      <a id="home" href="/" hidden>Go to the office →</a>
+    </main>
+    <script type="module" src="./invite.ts"></script>
+  </body>
+</html>

@@ -5,6 +5,8 @@
 import type { Config } from '../config.js';
 import type { Auth } from '../accounts/auth.js';
 import type { Accounts } from '../accounts/accounts.js';
+import type { Orgs } from '../accounts/orgs/store.js';
+import type { Mailer } from '../accounts/orgs/mailer.js';
 import type { SignIns, GhAs } from '../accounts/signins.js';
 import type { ModelCatalogue } from '../agents/models.js';
 import type { Tailnet } from '../ops/tailnet.js';
@@ -38,6 +40,10 @@ export interface Core {
   /** The client bundle the office serves. */
   publicDir: string;
   accounts: Accounts;
+  /** The organisations everyone is in, and the invites out to join them. */
+  orgs: Orgs;
+  /** Emails organisation invites (through Resend), when the office has a key for it. */
+  mailer: Mailer;
   auth: Auth;
   /** Everyone in the office, by connection. */
   clients: Map<string, Client>;

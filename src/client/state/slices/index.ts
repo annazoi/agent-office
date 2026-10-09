@@ -24,6 +24,7 @@ import { machine } from './machine';
 import { map } from './map';
 import { meeting } from './meeting';
 import { notify } from './notify';
+import { orgs } from './orgs';
 import { prompts } from './prompts';
 import { services } from './services';
 import { signins } from './signins';
@@ -63,4 +64,5 @@ export const SLICES: readonly Slice[] = [
   accounts,
   signins,
   composio,
+  orgs,
 ];

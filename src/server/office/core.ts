@@ -2,6 +2,8 @@ import path from 'node:path';
 import type { Config } from '../config.js';
 import { Auth } from '../accounts/auth.js';
 import { Accounts } from '../accounts/accounts.js';
+import { Orgs } from '../accounts/orgs/store.js';
+import { mailerFromEnv } from '../accounts/orgs/mailer.js';
 import { providerCommand } from '../agents/agents.js';
 import type { AgentProvider } from '../../shared/agents/providers.js';
 import { createModelCatalogues } from '../agents/models.js';
@@ -18,6 +20,9 @@ import type { Client } from './client.js';
 export async function createCore(ctx: Ctx, cfg: Config, publicDir: string): Promise<Core> {
   const accounts = new Accounts(cfg.dataDir, { watch: true });
   const auth = new Auth(cfg.verifier, cfg.salt, cfg.secret, accounts);
+  // Every account is in an organisation: opening them migrates the database and gives anyone in none one of their own.
+  const orgs = new Orgs(cfg.dataDir, { get: (id) => accounts.get(id), all: () => accounts.list() });
+  const mailer = mailerFromEnv();
   const clients = new Map<string, Client>();
   // Kept in the database, so a restart doesn't wipe it.
   const chat = new ChatLog(cfg.dataDir);
@@ -44,5 +49,5 @@ export async function createCore(ctx: Ctx, cfg: Config, publicDir: string): Prom
     if (err) console.error(`agent-office: --projects: ${err}`);
   }
   const floors = new Map<string, Floor>();
-  return { cfg, publicDir, accounts, auth, clients, chat, highScores, arcade, officeName, models, building, floors };
+  return { cfg, publicDir, accounts, orgs, mailer, auth, clients, chat, highScores, arcade, officeName, models, building, floors };
 }
