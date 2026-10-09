@@ -36,7 +36,7 @@ export function installBookshelf(ctx: Ctx) {
     });
   }
 
-  ctx.interactions.define('bookshelf', {
+  ctx.interactions.define('bookshelf', { needsProject: true,
     reach: 4,
     hint: () => {
       const names = [...store.peers.values()].filter((p) => p.reading && p.id !== store.you && store.onMyFloor(p)).map((p) => p.name).join(', ');

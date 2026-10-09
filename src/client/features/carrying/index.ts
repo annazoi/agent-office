@@ -4,7 +4,7 @@
  * Which card you hold is the office's (ctx.carrying), since so much else looks at it.
  */
 import type { AgentEffort, AgentProvider, CarriedIssue, GhIssue, WorkerInfo } from '../../../shared/protocol';
-import { isAsleep } from '../../../shared/status';
+import { isAsleep } from '../../../shared/agents/status';
 import type { Ctx, Hint } from '../../core/context';
 import { aside, key } from '../../core/hint';
 import { store } from '../../state';

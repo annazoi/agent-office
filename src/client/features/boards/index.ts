@@ -100,7 +100,7 @@ export function installBoards(ctx: Ctx, deps: BoardsDeps) {
   const queueTex = new QueueBoardTexture();
   const renderQueueBoard = () => queueTex.render(store.queue, store.workers);
   mountBoard(office.boardMeshes.queue, queueTex.texture, renderQueueBoard, ['queue', 'workers']);
-  ctx.interactions.define('issues', {
+  ctx.interactions.define('issues', { needsProject: true,
     reach: 9,
     hint: () => {
       const aimedNote = deps.aimedNote();
@@ -114,17 +114,17 @@ export function installBoards(ctx: Ctx, deps: BoardsDeps) {
       if (key === 'E') openBoard('issues', ctx.net, deps.boardActions());
     },
   });
-  ctx.interactions.define('pulls', {
+  ctx.interactions.define('pulls', { needsProject: true,
     reach: 9,
     hint: () => boardHint('🔀 Pull request board'),
     use: onE(() => openBoard('pulls', ctx.net, deps.boardActions())),
   });
-  ctx.interactions.define('services', {
+  ctx.interactions.define('services', { needsProject: true,
     reach: 9,
     hint: () => boardHint('🌐 Services board'),
     use: onE(() => openServices()),
   });
-  ctx.interactions.define('queue', {
+  ctx.interactions.define('queue', { needsProject: true,
     reach: 9,
     hint: () => {
       const n = store.queue.tasks.filter((t) => t.status !== 'done').length;

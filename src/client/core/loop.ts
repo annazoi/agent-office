@@ -4,7 +4,7 @@
  * else's (see installLoop), so within a phase they come first.
  */
 import * as THREE from 'three';
-import { SlowFrames } from '../framerate';
+import { SlowFrames } from './framerate';
 import { EYE_HEIGHT } from '../player';
 import { renderCaffeine } from '../features/coffee/meter';
 import type { Ctx } from './context';

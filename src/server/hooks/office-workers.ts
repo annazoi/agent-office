@@ -1,9 +1,9 @@
 import type http from 'node:http';
-import { notLeaving } from '../leave-on-merge.js';
+import { notLeaving } from '../floor/leave-on-merge.js';
 import { findWorker, readHireRequest, readHomeRequest, readPrRequest, workerRow, type PullsView } from '../office-workers.js';
-import { gh } from '../github.js';
-import type { Floor } from '../floor.js';
-import { nextFreeSeat } from '../../shared/layout.js';
+import { gh } from '../integrations/github.js';
+import type { Floor } from '../floor/floor.js';
+import { nextFreeSeat } from '../../shared/building/layout.js';
 import type { WorkerInfo } from '../../shared/protocol.js';
 import type { Ctx } from '../office/context.js';
 import { str } from '../office/input.js';

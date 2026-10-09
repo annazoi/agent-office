@@ -4,7 +4,7 @@
  */
 import * as THREE from 'three';
 import type { GongWhy } from '../../../shared/protocol';
-import { isAsleep } from '../../../shared/status';
+import { isAsleep } from '../../../shared/agents/status';
 import type { Ctx } from '../../core/context';
 import { aside, hintTitle, key, onE } from '../../core/hint';
 import { store, workerForPull } from '../../state';

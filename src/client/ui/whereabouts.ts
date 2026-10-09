@@ -1,8 +1,8 @@
-import { BALCONY, DANCE_FLOOR, FIRE_PIT, FLOOR, LOFT, MEETING_ROOM, ROOF_BAR, ROOF_TABLES, SEATING_BY_ID, STAGE, WING, inWing, seatAt } from '../../shared/layout';
+import { BALCONY, DANCE_FLOOR, FIRE_PIT, FLOOR, LOFT, MEETING_ROOM, ROOF_BAR, ROOF_TABLES, SEATING_BY_ID, STAGE, WING, inWing, seatAt } from '../../shared/building/layout';
 import type { PeerInfo } from '../../shared/protocol';
-import { ROOF } from '../../shared/rooftop';
-import { CARS, type CarSeat } from '../../shared/garage';
-import { seatOn, type MapPlan } from '../../shared/maps';
+import { ROOF } from '../../shared/building/rooftop';
+import { CARS, type CarSeat } from '../../shared/toys/garage';
+import { seatOn, type MapPlan } from '../../shared/building/maps/index';
 import { store } from '../state';
 
 /**

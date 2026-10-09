@@ -1,10 +1,10 @@
 /**
- * The building's map as it's built (see shared/maps and world/world.ts): the office, or a map of its
+ * The building's map as it's built (see shared/building/maps and world/world.ts): the office, or a map of its
  * own (the castle). Only one is in the scene at a time, like the office and the rooftop; core/maps.ts
  * puts up the one the building's on.
  */
-import type { MapPlan } from '../../shared/maps';
-import { ROOF } from '../../shared/rooftop';
+import type { MapPlan } from '../../shared/building/maps/index';
+import { ROOF } from '../../shared/building/rooftop';
 import { groundAt } from '../player';
 import { store } from '../state';
 import { Court } from '../world/court';

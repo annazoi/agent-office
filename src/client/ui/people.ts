@@ -1,6 +1,6 @@
-import { ROOF, ROOF_NAME } from '../../shared/rooftop';
+import { ROOF, ROOF_NAME } from '../../shared/building/rooftop';
 import { store } from '../state';
-import type { Voice } from '../voice';
+import type { Voice } from '../sound/voice';
 import { $, h } from './dom';
 import { whereabouts } from './whereabouts';
 

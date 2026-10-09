@@ -3,13 +3,13 @@
  * (a twirl round it on the bottom floor), and what that does to your view on the way.
  */
 import * as THREE from 'three';
-import { LADDER, POLE, POLES, WALL_HEIGHT } from '../../../shared/layout';
+import { LADDER, POLE, POLES, WALL_HEIGHT } from '../../../shared/building/layout';
 import type { FloorInfo } from '../../../shared/protocol';
 import { Climber, type Arrival, type Grip, type Way } from './controller';
 import type { Ctx } from '../../core/context';
 import { builtFloors } from '../../core/floors';
 import { aside, hintTitle, key, onE } from '../../core/hint';
-import { DESK_KEYS } from '../../interaction';
+import { DESK_KEYS } from '../../input/interaction';
 import { store } from '../../state';
 import { $, h, toast } from '../../ui/dom';
 

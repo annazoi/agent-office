@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { Emote } from '../../../shared/emotes';
+import type { Emote } from '../../../shared/people/emotes';
 import { emoteEnvelope, popCurve } from './curves';
 import type { PersonRig } from './rig';
 

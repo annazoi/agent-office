@@ -1,5 +1,5 @@
 import './palette.css';
-import { rankItems, type PaletteItem, type PaletteMatch } from '../../shared/palette';
+import { rankItems, type PaletteItem, type PaletteMatch } from '../../shared/util/palette';
 import { h, openModal, type Modal } from './dom';
 
 // The command palette (Ctrl+K, ⌘K on a Mac): a few letters find a worker, an issue, a pull request,

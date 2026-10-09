@@ -1,11 +1,11 @@
 import './settings.css';
-import type { Net } from '../net';
+import type { Net } from '../shared/net';
 import type { OfficeSound } from '../sound';
 import { store, type NeedsYouSound, type Settings, type ViewMode } from '../state';
-import { askNotifyPermission, notifyPermission, type DesktopNotifier } from '../notify';
+import { askNotifyPermission, notifyPermission, type DesktopNotifier } from '../shared/notify';
 import type { ThemePick, WebhookKind } from '../../shared/protocol';
-import { THEME_PICKS } from '../../shared/theme';
-import { mapChoices } from '../../shared/maps';
+import { THEME_PICKS } from '../../shared/building/theme';
+import { mapChoices } from '../../shared/building/maps/index';
 import { dogSetting } from './settings-dog';
 import { connectionsSettings } from './settings-connections';
 import { h, openModal, timeAgo } from './dom';
@@ -38,7 +38,7 @@ const PANES: { id: SettingsPane; icon: string; label: string; blurb: string }[] 
 /** Who a setting is for, shown by its name: some are yours alone, some the whole office's. */
 type Scope = 'you' | 'floor' | 'office';
 const SCOPE: Record<Scope, [label: string, title: string]> = {
-  you: ['Just you', 'Only for you, kept in this browser'],
+  you: ['Just you', 'Only for you, kept with your account'],
   floor: ['This floor', 'The same for everyone on this floor'],
   office: ['Everyone', 'The same for everyone in the building'],
 };
@@ -191,7 +191,7 @@ export function openSettings(net: Net, settings: Settings, onChange: (s: Setting
       ),
     );
     const now = choices.find((m) => m.id === pick) ?? choices[0];
-    mapNote.textContent = `${now.description} It’s the same on every floor, for everyone in the building${by ? `, picked by ${by}${at ? ` ${timeAgo(at)}` : ''}` : ''}. Maps of your own go in the office’s .agent-office/maps/ folder as JSON (see docs/maps.md).`;
+    mapNote.textContent = `${now.description} It’s the same on every floor, for everyone in the building${by ? `, picked by ${by}${at ? ` ${timeAgo(at)}` : ''}` : ''}. How a map of your own is made is in docs/maps.md.`;
     const broken = choices.filter((m) => m.error);
     mapBad.textContent = broken.map((m) => `⚠️ ${m.id} won't load: ${m.error}`).join('\n');
     mapBad.hidden = !broken.length;
@@ -451,7 +451,7 @@ export function openSettings(net: Net, settings: Settings, onChange: (s: Setting
     you: [
       setting('Your character', null, character),
       setting('Camera view', 'you', seg, note),
-      setting('Signed in', null, h('div.volume', {}, signOut), h('p.setting-note', {}, account ? `As ${account.name}, with your own account (${account.role}).` : 'With the shared office password.')),
+      setting('Signed in', null, h('div.volume', {}, signOut), h('p.setting-note', {}, `As ${account.name}, with your own account (${account.role}).`)),
     ],
     sound: [
       setting('Office sounds', 'you', soundRow, h('p.setting-note', {}, 'Workers typing, footsteps, the coffee machine, birds and rain outside, the dog, the ding when a worker is done and the alarm when one needs you. Voice chat isn’t affected.')),

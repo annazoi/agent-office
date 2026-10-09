@@ -49,7 +49,7 @@ export function fmtCost(usd: number): string {
   return `$${usd.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 }
 
-/** Spend across the whole office, kept on disk (see server/usage.ts). */
+/** Spend across the whole office, kept on disk (see server/usage/usage.ts). */
 export interface UsageState {
   /** Every worker the office ever ran, including ones sent home. */
   total: Usage;
@@ -75,7 +75,7 @@ export interface PlanWindow {
 
 /**
  * The Claude plan limits of the account the office's Claude workers run on, as Claude Code's
- * /usage shows them (see server/limits.ts). One account for the whole building.
+ * /usage shows them (see server/usage/limits.ts). One account for the whole building.
  */
 export interface PlanLimits {
   /** 'pro', 'max', 'team', 'enterprise'…, when known. */

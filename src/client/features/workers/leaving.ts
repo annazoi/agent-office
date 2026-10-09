@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { BALCONY, PARACHUTE } from '../../../shared/layout';
-import { walkOff, type Pt } from '../../../shared/nav';
+import { BALCONY, PARACHUTE } from '../../../shared/building/layout';
+import { walkOff, type Pt } from '../../../shared/building/nav';
 import type { Worker } from '../../world/character';
 import type { Laptop } from './laptop';
 import type { DeskView } from '../../world/types';

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // office-queue: the task queue from inside Agent Office, for the agents standing by the boards (see
-// src/server/stations.ts). The office puts it on their PATH and gives them their own address and token
+// src/server/floor/stations.ts). The office puts it on their PATH and gives them their own address and token
 // in AGENT_OFFICE_HOOK_URL, AGENT_OFFICE_WORKER_ID and AGENT_OFFICE_HOOK_TOKEN; this talks to the
 // /office/queue endpoint with them. Plain Node, no build step, no dependencies.
 

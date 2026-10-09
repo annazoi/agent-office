@@ -1,12 +1,12 @@
 // The shapes the workers' modules and the provider adapters (server/providers/) share.
-import type { ComposioMcp } from '../composio-mcp.js';
+import type { ComposioMcp } from '../integrations/composio-mcp.js';
 import type serialize from '@xterm/addon-serialize';
 import type { Run, WorkerInfo, WorkerStatus } from '../../shared/protocol.js';
-import type { DshSession } from '../dsh.js';
-import type { PromptSource } from '../prompts.js';
-import type { Pty } from '../ptys.js';
-import type { UsageTracker } from '../usage.js';
-import type { Worktrees } from '../worktrees.js';
+import type { DshSession } from '../agents/dsh.js';
+import type { PromptSource } from '../floor/prompts.js';
+import type { Pty } from './ptys.js';
+import type { UsageTracker } from '../usage/usage.js';
+import type { Worktrees } from './worktrees.js';
 import type { HeadlessTerminal } from './terminal.js';
 
 export type Worktree = NonNullable<WorkerInfo['worktree']>;
@@ -48,8 +48,8 @@ export interface RunAs {
   claudeReady(owner: string): boolean;
   /** What to tell the account when it hasn't. */
   why(which: 'claude'): string;
-  /** Puts the account's sign-ins in place of the office's in `env`; `dirs` are where the worker starts. */
-  apply(owner: string, env: Record<string, string>, dirs: string[]): Record<string, string>;
+  /** Puts the account's sign-ins in place of the office's in `env`. */
+  apply(owner: string, env: Record<string, string>): Record<string, string>;
   /** The account's own Composio MCP endpoint for its workers' tools, once it has one (see composio-mcp.ts). */
   composioMcp?(owner: string): ComposioMcp | undefined;
 }
@@ -140,7 +140,7 @@ export interface WorkerHandle<S = unknown> {
   setStatus(status: WorkerStatus): void;
   /** Tells everyone how it's doing now. */
   emit(): void;
-  /** Saves every worker (workers.json). */
+  /** Saves every worker (the workers document). */
   persist(): void;
   /** A new message for it: shown right away, and its task (re)named. */
   notePrompt(prompt: string): void;
@@ -173,7 +173,7 @@ export interface WorkerContext {
   readonly closing: boolean;
   /** Tells everyone how `w` is doing now. */
   emit(w: Worker): void;
-  /** Saves every worker (workers.json). */
+  /** Saves every worker (the workers document). */
   persist(): void;
   setStatus(w: Worker, status: WorkerStatus): void;
   /** Starts a worker that isn't running again (see WorkerManager.resume). */

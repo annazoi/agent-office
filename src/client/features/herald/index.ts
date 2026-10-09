@@ -2,7 +2,7 @@
  * The herald (the castle's Hand of the King): E at him, or K from the throne, sends out a new worker,
  * hired at the first free seat at the tables and running off there from beside him.
  */
-import { officeFull, pressureNote } from '../../../shared/machine';
+import { officeFull, pressureNote } from '../../../shared/agents/machine';
 import type { Ctx } from '../../core/context';
 import { aside, hintTitle, key, onE } from '../../core/hint';
 import type { Parts } from '../../core/parts';
@@ -61,7 +61,7 @@ export function installHerald(ctx: Ctx, parts: Pick<Parts, 'place' | 'you' | 'ac
     });
   }
 
-  ctx.interactions.define('herald', {
+  ctx.interactions.define('herald', { needsProject: true,
     reach: 5,
     hint: () => {
       const hd = plan().herald;

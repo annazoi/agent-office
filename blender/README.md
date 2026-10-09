@@ -67,7 +67,7 @@ These are what the office's code counts on. A model that breaks one looks wrong 
   `src/client/lab/dog.html` for the dogs. A model the world is built with (read with `model(name)`) is marked
   `preload` in `world/models.ts`; one only some pages need loads with `loadModel(name)` instead. They run on the Vite dev server (`npx vite`), and
   `node src/client/lab/shot.mjs <url> <out.png>` screenshots one headless and prints what the page found.
-- **A test** per model, `tests/<name>-model.test.ts`, reads the `.glb` with `tests/glb.ts` and checks what
+- **A test** per model, `tests/<name>-model.test.ts`, reads the `.glb` with `tests/support/glb.ts` and checks what
   the code counts on: the node and material names it looks for, and its size and facing.
 
 ## Git

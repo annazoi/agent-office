@@ -1,8 +1,9 @@
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, statSync } from 'node:fs';
 import { rm } from 'node:fs/promises';
 import { execFileSync } from 'node:child_process';
 import path from 'node:path';
-import { WORKSPACE_FILES, WORKTREES_DIR, Worktrees, describeWork, gitError } from './worktrees.js';
+import { stateDoc } from './db/state.js';
+import { WORKSPACE_FILES, WORKTREES_DIR, Worktrees, describeWork, gitError } from './workers/worktrees.js';
 
 const HELP = `agent-office prune — remove leftover worker worktrees and branches
 
@@ -29,14 +30,10 @@ interface SavedWorker {
   repos?: { path?: string; branch?: string }[];
 }
 
-/** The workers an office keeps in a project's .agent-office/workers.json; none when it has no office there. */
+/** The workers an office keeps for a project in its database; none when it has no office there. */
 function savedWorkers(dir: string): SavedWorker[] {
-  try {
-    const saved = JSON.parse(readFileSync(path.join(dir, '.agent-office', 'workers.json'), 'utf8'));
-    return Array.isArray(saved) ? saved : [];
-  } catch {
-    return [];
-  }
+  const saved = stateDoc<unknown>(path.join(dir, '.agent-office'), 'workers').read();
+  return Array.isArray(saved) ? saved : [];
 }
 
 /**

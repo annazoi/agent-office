@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { CREEK, LOOP, LOOP_HALF, LOOP_LENGTH, LOOP_PAVED, PLACES, STREET_END, STREET_Z, type Place } from '../../../shared/scenic';
+import { CREEK, LOOP, LOOP_HALF, LOOP_LENGTH, LOOP_PAVED, PLACES, STREET_END, STREET_Z, type Place } from '../../../shared/building/scenic';
 import { roadTexture } from '../outside';
 import { tilingCanvasTexture } from '../texture';
 import { mesh, textPlane, toon } from '../toon';

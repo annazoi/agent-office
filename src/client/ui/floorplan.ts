@@ -1,14 +1,15 @@
 import './floorplan.css';
-import { LABEL_IDEAS, MAX_LABEL, SIGN_COLORS, cleanLabel, rowDesks, signColor, signInk } from '../../shared/floorplan';
-import { DESK_BY_ID, WING } from '../../shared/layout';
-import type { Net } from '../net';
+import { LABEL_IDEAS, MAX_LABEL, SIGN_COLORS, cleanLabel, rowDesks, signColor, signInk } from '../../shared/building/floorplan';
+import { DESK_BY_ID, WING } from '../../shared/building/layout';
+import type { Net } from '../shared/net';
 import { store } from '../state';
 import { h, openModal } from './dom';
+import { userStorage } from '../state/user-storage';
 
 const COLOR_KEY = 'agent-office.signColor';
 function lastColor(): string {
   try {
-    return signColor(localStorage.getItem(COLOR_KEY));
+    return signColor(userStorage.getItem(COLOR_KEY));
   } catch {
     return SIGN_COLORS[0].color;
   }
@@ -60,7 +61,7 @@ export function openDeskLabel(net: Net, deskId: string) {
         onclick: () => {
           color = c.color;
           try {
-            localStorage.setItem(COLOR_KEY, color);
+            userStorage.setItem(COLOR_KEY, color);
           } catch {
             // private mode: the color just isn't remembered
           }

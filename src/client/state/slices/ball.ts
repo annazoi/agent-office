@@ -1,4 +1,4 @@
-import type { BallState } from '../../../shared/hoop';
+import type { BallState } from '../../../shared/toys/hoop';
 import type { Slice } from '../store';
 
 declare module '../store' {

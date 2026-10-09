@@ -1,10 +1,10 @@
 import { randomBytes } from 'node:crypto';
 import type { WebSocket } from 'ws';
-import type { Session } from '../auth.js';
+import type { Session } from '../accounts/auth.js';
 import type { ClientMsg } from '../../shared/protocol.js';
-import { elevatorSpot } from '../../shared/layout.js';
-import { lookFromSeed, sanitizeLook } from '../../shared/avatar.js';
-import { ROOF } from '../../shared/rooftop.js';
+import { elevatorSpot } from '../../shared/building/layout.js';
+import { lookFromSeed, sanitizeLook } from '../../shared/people/avatar.js';
+import { ROOF } from '../../shared/building/rooftop.js';
 import type { Ctx } from '../office/context.js';
 import { newClient } from '../office/client.js';
 import { COLOR_RE, spotFrom, str } from '../office/input.js';
@@ -23,17 +23,20 @@ export function onConnection(ctx: Ctx, ws: WebSocket, url: URL, session: Session
   const id = randomBytes(5).toString('hex');
   // Back on the floor they were on before a reload, a restart or closing the tab, else the first floor.
   const wanted = url.searchParams.get('floor');
-  // Their floor's gone since (taken off the building, or its checkout deleted): up to the roof instead.
-  const gone = !!wanted && wanted !== ROOF && !floors.has(wanted);
-  // Up on the roof, as long as there's a building under it.
-  const onRoof = (wanted === ROOF || gone) && floors.size > 0;
-  const floor = onRoof ? undefined : arrivalFloor(wanted);
+  // Everyone sees their own floors, shared ones and everyone's (admins, all of them).
+  const viewer = { accountId: session.account?.id, admin: meOf(session.account?.id).admin };
+  const visible = [...floors.values()].filter((f) => ctx.sees(viewer, f.def));
+  // Their floor's gone since (taken off the building, its checkout deleted, or no longer theirs to see): up to the roof instead.
+  const gone = !!wanted && wanted !== ROOF && !visible.some((f) => f.id === wanted);
+  // Up on the roof, as long as there's a building of theirs under it.
+  const onRoof = (wanted === ROOF || gone) && visible.length > 0;
+  const floor = onRoof ? undefined : arrivalFloor(wanted, viewer);
   // Back where they were standing on it too; anywhere else, they arrive by elevator.
   const back = !gone && wanted !== null && (onRoof || floor?.id === wanted);
   const spot = (back && spotFrom(url.searchParams)) || { ...elevatorSpot(), y: 0, rotY: 0 };
   const account = session.account;
-  // An account's name is its own; on the shared password people pick one.
-  const name = account?.name ?? (str(url.searchParams.get('name'), 24).trim() || `Guest ${id.slice(0, 3)}`);
+  // Everyone goes by their account's name.
+  const name = account.name;
   const colorParam = url.searchParams.get('color') ?? '';
   const intParam = (k: string) => (url.searchParams.get(k) ? Number(url.searchParams.get(k)) : undefined);
   const me = meOf(account?.id);
@@ -51,7 +54,7 @@ export function onConnection(ctx: Ctx, ws: WebSocket, url: URL, session: Session
     voice: false,
     muted: true,
     sharing: false,
-    ...(account ? { account: true } : {}),
+    account: true,
     ...(url.searchParams.get('lite') === '1' ? { lite: true } : {}),
     ...(onRoof ? { floor: ROOF } : floor ? { floor: floor.id } : {}),
   });
@@ -59,14 +62,14 @@ export function onConnection(ctx: Ctx, ws: WebSocket, url: URL, session: Session
   const mapWas = maps.pick();
   if (maps.reload()) mapNews(ctx, mapWas);
   clients.set(id, client);
-  if (account) accounts.seen(account.id);
+  accounts.seen(account.id);
   ws.on('pong', () => (client.isAlive = true));
 
   sendTo(client, {
     t: 'welcome',
     you: id,
     peers: [...clients.values()].map((c) => c.peer),
-    floors: floorInfos(),
+    floors: floorInfos(client),
     projectsDir: building.projectsDirState(),
     ice: cfg.iceServers,
     chat: chat.recent(50),

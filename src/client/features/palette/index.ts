@@ -3,8 +3,8 @@
  * requests, issues and services, and the people in it. Enter does it; Shift+Enter walks you over to
  * where it's done first.
  */
-import { DESK_BY_ID, DESKS, WING_DESKS, deskSeat, type DeskDef } from '../../../shared/layout';
-import { isPaletteKey } from '../../../shared/palette';
+import { DESK_BY_ID, DESKS, WING_DESKS, deskSeat, type DeskDef } from '../../../shared/building/layout';
+import { isPaletteKey } from '../../../shared/util/palette';
 import type { Ctx } from '../../core/context';
 import { seatBuilt } from '../../core/floors';
 import type { Parts } from '../../core/parts';
@@ -12,6 +12,7 @@ import { STATION_INFO } from '../../core/stations';
 import { isTyping } from '../../player';
 import { store } from '../../state';
 import { openAccounts } from '../../ui/accounts';
+import { openOrgs } from '../../ui/orgs';
 import { openBoard } from '../../ui/boards';
 import { STATUS_LABEL, toast } from '../../ui/dom';
 import { paletteOpen, togglePalette, type PaletteEntry } from '../../ui/palette';
@@ -97,6 +98,7 @@ export function installPalette(ctx: Ctx, parts: PaletteParts) {
     out.push({ icon: '⚙️', kind: 'Action', title: 'Settings', keywords: ['preferences', 'options'], open: () => parts.hud.showSettings() });
     if (store.invites) out.push({ icon: '👥', kind: 'Action', title: 'Invite teammates', keywords: ['team', 'add people'], open: () => openTeam(net) });
     else if (store.me.admin) out.push({ icon: '👥', kind: 'Action', title: 'Invite people', detail: 'Accounts', keywords: ['invite teammates', 'accounts', 'team'], open: () => openAccounts(net) });
+    out.push({ icon: '🏢', kind: 'Action', title: 'Organisations', detail: 'Switch, make one, invite people by email', keywords: ['organization', 'org', 'invite', 'members', 'team', 'switch'], open: () => openOrgs(net) });
     out.push({ icon: '🖼️', kind: 'Action', title: 'Hang a picture', detail: 'On a wall of this floor', keywords: ['decorate', 'frame', 'art'], open: hanging.startHanging });
     out.push({ icon: '🔎', kind: 'Action', title: 'Search the chat and every terminal', keywords: ['find'], open: showSearch });
 

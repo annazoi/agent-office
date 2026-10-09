@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { CAR, CARS, SEATS, carPoint, type Box, type CarDef, type CarKind, type CarPose, type CarSeat, type CarState } from '../../../shared/garage';
-import { FLOOR, SLAB, STREET_Y, WALL_T, streetBelow } from '../../../shared/layout';
+import { CAR, CARS, SEATS, carPoint, type Box, type CarDef, type CarKind, type CarPose, type CarSeat, type CarState } from '../../../shared/toys/garage';
+import { FLOOR, SLAB, STREET_Y, WALL_T, streetBelow } from '../../../shared/building/layout';
 import type { Collider, Interactable } from '../../world/types';
 import type { Fixture, StreetSite } from '../../world/office/fixture';
 import { mergeByMaterial, mesh, toon } from '../../world/toon';
@@ -204,7 +204,7 @@ function underneath(p: CarPose): boolean {
 const SLICES = 3;
 
 /**
- * The floor's cars (see CARS in shared/garage.ts), down on the street under the floor you're on: in
+ * The floor's cars (see CARS in shared/toys/garage.ts), down on the street under the floor you're on: in
  * their spots, where somebody's driving them or where they were left.
  */
 export class Fleet {

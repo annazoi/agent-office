@@ -1,8 +1,8 @@
-import { ROAD } from '../../../shared/layout';
-import { CHECKPOINTS, nearLoop } from '../../../shared/scenic';
+import { ROAD } from '../../../shared/building/layout';
+import { CHECKPOINTS, nearLoop } from '../../../shared/building/scenic';
 
 /**
- * Timing laps of the scenic loop (see shared/scenic.ts): from the chequered line across the street in
+ * Timing laps of the scenic loop (see shared/building/scenic.ts): from the chequered line across the street in
  * front of the office, all the way round the loop (either way) past each of its checkpoints, and back
  * over the line. Crossing it without having been round just starts the clock again.
  */

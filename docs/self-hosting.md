@@ -27,7 +27,7 @@ It takes a few minutes the first time:
   It shows the office password once: write it down.
 ```
 
-Everything goes through SSH, so there are no certificates to manage, and `localhost` counts as a secure origin, so voice and screen sharing work. Claude signs in from the office: the first worker asks you to type `/login` in its terminal. If GitHub isn't signed in yet, run `gh auth login` from a shell at any desk (**B**). Do both while you're in on the office password: those are the machine's own sign-ins. Teammates you give [accounts](../README.md#add-users) sign in to their own Claude and GitHub in **☰ → 🔐 Your sign-ins**, and their workers run on their own plan. To update, run the same line again, or use **⬆️ Upgrade the office** in the **☰** menu. Options go after `bash -s --`: `--project owner/repo` clones a first floor, and `--help` lists the rest.
+Everything goes through SSH, so there are no certificates to manage, and `localhost` counts as a secure origin, so voice and screen sharing work. Claude signs in from the office: the first worker asks you to type `/login` in its terminal. If GitHub isn't signed in yet, run `gh auth login` from a shell at any desk (**B**). Do both while you're in on the office password: those are the machine's own sign-ins. Teammates you give [accounts](../README.md#add-users) sign in to their own Claude and GitHub in **☰ → 🔐 Your sign-ins**, and their workers run on their own plan. To update, run the same line again, or use **⬆️ Upgrade the office** in the **☰** menu. Options go after `bash -s --`; `--help` lists them.
 
 **On your own domain.** Point a DNS record at the server, open ports 80 and 443, and add `--domain`:
 
@@ -55,8 +55,7 @@ office.example.com {
 ```
 
 ```bash
-agent-office setup --projects ~/workspace --project owner/repo   # once; or pick projects in the office
-agent-office --host 127.0.0.1 --trust-proxy --password "$(openssl rand -base64 18)"
+agent-office --default-projects ~/workspace --host 127.0.0.1 --trust-proxy --password "$(openssl rand -base64 18)"
 ```
 
 Caddy proxies WebSockets out of the box. With nginx, forward the Host and Upgrade headers:

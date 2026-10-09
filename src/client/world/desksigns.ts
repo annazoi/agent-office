@@ -1,11 +1,11 @@
 import * as THREE from 'three';
-import { DESKS, DESK_BY_ID, DESK_SIZE, WALL_HEIGHT, WING_DESKS, type DeskDef } from '../../shared/layout';
-import { signInk, type DeskLabel } from '../../shared/floorplan';
+import { DESKS, DESK_BY_ID, DESK_SIZE, WALL_HEIGHT, WING_DESKS, type DeskDef } from '../../shared/building/layout';
+import { signInk, type DeskLabel } from '../../shared/building/floorplan';
 import type { Fixture } from './office/fixture';
 import { mergeByMaterial, mesh, roundedBox, toon } from './toon';
 
 // Big signs hung from the ceiling over the desks, naming what each one is for ("Operations", "Code
-// cleanup"), so you can tell from across the room where to look (see shared/floorplan.ts). Each
+// cleanup"), so you can tell from across the room where to look (see shared/building/floorplan.ts). Each
 // hangs over the far edge of its desk, facing the chair: stand behind whoever sits there and it's
 // over their laptop. Desks come in back-to-back pairs, so a pair's two signs hang back to back too,
 // and from either side you read the one for the desk on that side; while the other desk has none,
@@ -179,7 +179,7 @@ export function buildDeskSigns(): DeskSigns {
 
 declare module './types' {
   interface OfficeHandles {
-    /** The signs hung over the desks (see shared/floorplan.ts). */
+    /** The signs hung over the desks (see shared/building/floorplan.ts). */
     signs: DeskSigns;
   }
 }

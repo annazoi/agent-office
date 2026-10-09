@@ -1,5 +1,5 @@
-import type { Floor } from '../floor.js';
-import { ROOF } from '../../shared/rooftop.js';
+import type { Floor } from '../floor/floor.js';
+import { ROOF } from '../../shared/building/rooftop.js';
 import type { FloorView } from '../../shared/protocol.js';
 import { views } from '../ws/handlers/index.js';
 import type { Ctx } from './context.js';

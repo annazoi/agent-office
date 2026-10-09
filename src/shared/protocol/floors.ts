@@ -1,13 +1,14 @@
 // The building: its floors, going between them, and what each floor holds.
 
-import type { CabinetView } from '../cabinet.js';
-import type { Decoration } from '../decor.js';
-import type { DogState } from '../dog.js';
-import type { FloorPlan } from '../floorplan.js';
-import type { CarState } from '../garage.js';
-import type { BallState } from '../hoop.js';
-import type { JukeboxState } from '../jukebox.js';
-import type { WhiteboardView } from '../whiteboard.js';
+import type { CabinetView } from '../toys/cabinet.js';
+import type { Decoration } from '../building/decor.js';
+import type { DogState } from '../toys/dog.js';
+import type { FloorPlan } from '../building/floorplan.js';
+import type { MatchState } from '../games/match.js';
+import type { CarState } from '../toys/garage.js';
+import type { BallState } from '../toys/hoop.js';
+import type { JukeboxState } from '../toys/jukebox.js';
+import type { WhiteboardView } from '../toys/whiteboard.js';
 import type { AgentProvider } from './agents.js';
 import type { GhIssue, GhPull, GhState } from './github.js';
 import type { MeetingState } from './meetings.js';
@@ -50,6 +51,12 @@ export interface FloorInfo {
   local?: boolean;
   addedBy: string;
   addedAt: number;
+  /** It's someone's own floor (added with their GitHub), seen only by them, admins, and everyone once it's shared. */
+  personal?: boolean;
+  /** You added it: you can share it, or take it off the building. */
+  mine?: boolean;
+  /** Its owner shared it with everyone in the office. */
+  shared?: boolean;
   /**
    * For the elevator panel: who's there and what they're up to. `workers` counts the ones hired onto
    * desks, bean bags and the meeting room's table, not the board agents at their kiosks.
@@ -120,10 +127,12 @@ export interface FloorView {
   meeting: MeetingState;
   /** The basketball by the hoop: who has it, or how it was last thrown. */
   ball: BallState;
-  /** The cars in the garage (see CARS in shared/garage.ts): where each one is, and who's in it. */
+  /** The cars in the garage (see CARS in shared/toys/garage.ts): where each one is, and who's in it. */
   cars: CarState[];
   /** Workers sent home and locked up in the dungeon, on a map that has one. */
   jail: JailState;
+  /** The gaming room's lobby and the match it's running, if any (see shared/games). */
+  game: MatchState;
 }
 
 export type FloorClientMsg =
@@ -141,6 +150,8 @@ export type FloorClientMsg =
   | { t: 'floor.cancel'; floor: string }
   /** Take a floor off the building (admins only). Its checkout stays on disk; everyone on it rides to another floor. */
   | { t: 'floor.remove'; floor: string }
+  /** Share your own floor with everyone in the office, or keep it to yourself again (its owner, or admins). */
+  | { t: 'floor.share'; floor: string; shared: boolean }
   /** Where new floors are cloned from now on (admins only); '' goes back to the default. */
   | { t: 'floor.projectsDir'; dir: string };
 
@@ -159,6 +170,8 @@ export type FloorServerMsg =
   | { t: 'floor.repos'; repos: RepoChoice[]; error?: string }
   /** Sent to whoever asked for the floor, once it's cloned (or couldn't be). */
   | { t: 'floor.added'; repo: string; floor?: string; error?: string }
+  /** What you did needs a project, and you're not on a floor: the page offers to add one. */
+  | { t: 'floor.needed'; why: string }
   /** The projects folder moved (see floor.projectsDir). */
   | { t: 'projectsDir'; state: ProjectsDirState }
   /** Your floor's signs changed, or its back office was built out or walled up. */

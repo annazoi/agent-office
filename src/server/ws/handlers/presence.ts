@@ -1,11 +1,11 @@
 // People in the office: walking about, reaching for things, sitting, carrying issue cards, emotes,
 // their name and look, what they have open, voice and screen sharing, and chat.
 import type { ChatLine, PresenceClientMsg } from '../../../shared/protocol.js';
-import { seatHereOn } from '../../../shared/maps/index.js';
-import { sanitizeLook } from '../../../shared/avatar.js';
-import { isEmote } from '../../../shared/emotes.js';
-import { ROOF, isDrink } from '../../../shared/rooftop.js';
-import { isBarGame } from '../../../shared/bargames.js';
+import { seatHereOn } from '../../../shared/building/maps/index.js';
+import { sanitizeLook } from '../../../shared/people/avatar.js';
+import { isEmote } from '../../../shared/people/emotes.js';
+import { ROOF, isDrink } from '../../../shared/building/rooftop.js';
+import { isBarGame } from '../../../shared/toys/bargames.js';
 import { throttle } from '../../office/client.js';
 import { COLOR_RE, issueNumber, num, str } from '../../office/input.js';
 import type { HandlerMap } from './types.js';
@@ -87,8 +87,7 @@ export const presenceHandlers = {
     ctx.broadcast({ t: 'peer.update', peer: c.peer }, c.id);
   },
   profile(ctx, c, msg) {
-    const name = str(msg.name, 24).trim();
-    if (name && !c.accountId) c.peer.name = name;
+    // The name stays the account's.
     if (COLOR_RE.test(msg.color)) c.peer.color = msg.color;
     c.peer.look = sanitizeLook(msg.look, c.peer.look);
     ctx.broadcast({ t: 'peer.update', peer: c.peer });

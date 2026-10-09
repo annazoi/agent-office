@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import type { WallRect } from '../../../shared/decor';
-import type { FloorPalette } from '../../../shared/floors';
+import type { WallRect } from '../../../shared/building/decor';
+import type { FloorPalette } from '../../../shared/building/floors';
 import { street } from '../outside';
 import { cars } from '../../features/cars/world';
 import { scenic } from '../scenic';
@@ -9,6 +9,7 @@ import { elevator, garageLift } from '../elevator';
 import { gong } from '../../features/gong/world';
 import { jukebox } from '../../features/jukebox/world';
 import { bookshelf } from '../../features/bookshelf/world';
+import { arena } from '../../features/arena/world';
 import { cabinet } from '../../features/cabinet/world';
 import { whiteboard } from '../../features/whiteboard/world';
 import { integrations } from '../integrations';
@@ -59,6 +60,7 @@ function floorPlan() {
     lounge,
     jukebox,
     cabinet,
+    arena,
     bookshelf,
     kitchen,
     plants,

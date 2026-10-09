@@ -1,6 +1,6 @@
 import './accounts.css';
 import type { AccountInvite, AccountRole, ServerMsg } from '../../shared/protocol';
-import type { Net } from '../net';
+import type { Net } from '../shared/net';
 import { store } from '../state';
 import { h, openModal, timeAgo } from './dom';
 import { confirmDialog } from './prompt';
@@ -48,7 +48,7 @@ export function openAccounts(net: Net) {
   const render = () => {
     const s = store.accounts;
     const me = store.me;
-    signedInAs.textContent = me.account ? `You're signed in as ${me.account.name} (${me.account.role}).` : "You're signed in with the shared office password.";
+    signedInAs.textContent = `You're signed in as ${me.account.name} (${me.account.role}).`;
     const typing = document.activeElement === nameInput;
     body.replaceChildren();
     if (!s) return body.append(h('p.empty', {}, 'Loading…'));
@@ -75,7 +75,7 @@ export function openAccounts(net: Net) {
       revoke.addEventListener('click', () =>
         confirmDialog(
           `Revoke ${a.name}?`,
-          `Their account is deleted and they're signed out everywhere right away. Terminals they typed in keep running. ${s.sharedPassword ? `If ${a.name} also knows the shared office password, they can still use that: switch it off below.` : ''}`,
+          `Their account and everything it kept are deleted, and they're signed out everywhere right away. Terminals they typed in keep running. ${s.openRegistration ? `If ${a.name} knows the office password, they could register again: close registration below.` : ''}`,
           'Revoke',
           () => net.send({ t: 'accounts.revoke', accountId: a.id }),
         ),
@@ -119,28 +119,25 @@ export function openAccounts(net: Net) {
       body.append(h('h4', {}, 'Open invites ', h('span.count', {}, String(s.invites.length))), invites);
     }
 
-    // The shared password: the old way in, kept as a fallback until everyone has an account.
-    const toggle = h('button.btn', { type: 'button', class: s.sharedPassword ? 'danger' : '' }, s.sharedPassword ? 'Switch it off' : 'Switch it back on');
-    const canSwitchOff = me.account?.role === 'admin';
-    if (s.sharedPassword && !canSwitchOff) toggle.setAttribute('disabled', '');
+    // Registering: anyone with the office password may make an account of their own, until it's closed.
+    const toggle = h('button.btn', { type: 'button', class: s.openRegistration ? 'danger' : '' }, s.openRegistration ? 'Close it' : 'Open it again');
     toggle.addEventListener('click', () => {
-      if (!s.sharedPassword) return net.send({ t: 'accounts.shared', on: true });
+      if (!s.openRegistration) return net.send({ t: 'accounts.registration', on: true });
       confirmDialog(
-        'Switch off the shared password?',
-        'From now on only people with an account of their own can sign in. Everyone who came in with the shared password is signed out right away.',
-        'Switch it off',
-        () => net.send({ t: 'accounts.shared', on: false }),
+        'Close registration?',
+        'From now on new people need an invite link to get an account. Everyone who has one already keeps it.',
+        'Close it',
+        () => net.send({ t: 'accounts.registration', on: false }),
       );
     });
     body.append(
-      h('div.team-head', {}, h('h4', {}, 'Shared office password'), toggle),
+      h('div.team-head', {}, h('h4', {}, 'Registering with the office password'), toggle),
       h(
         'p.note',
         {},
-        s.sharedPassword
-          ? 'On. Anyone who knows it gets in as an admin and picks any name they like. Once everyone has an account, switch it off, so that revoking someone really locks them out.'
-          : 'Off: only accounts can sign in. If every admin is ever locked out, run agent-office accounts password on on the office’s machine.',
-        s.sharedPassword && !canSwitchOff ? h('b', {}, ' Make yourself an admin account and sign in with it before you switch it off.') : null,
+        s.openRegistration
+          ? 'Open: anyone who knows the office password can register an account of their own, as a member. Close it once everyone is in, so only invites make new accounts.'
+          : 'Closed: new people come in with an invite link. Run agent-office accounts registration on on the office’s machine to open it from there.',
       ),
     );
     if (typing) nameInput.focus();

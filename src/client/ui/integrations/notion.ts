@@ -1,5 +1,5 @@
 // The Notion bookshelf's panel: search, the pages edited last, a page to read, and a new page.
-import type { NotionPage, NotionPageContent } from '../../../shared/composio-api';
+import type { NotionPage, NotionPageContent } from '../../../shared/integrations/composio-api';
 import { h, toast } from '../dom';
 import { markdown } from '../markdown';
 import { act, get } from './api';

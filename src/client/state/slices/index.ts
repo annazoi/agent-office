@@ -17,6 +17,7 @@ import { cars } from './cars';
 import { decor } from './decor';
 import { dog } from './dog';
 import { floorPlan } from './floor-plan';
+import { games } from './games';
 import { jail } from './jail';
 import { jukebox } from './jukebox';
 import { leaveOnMerge } from './leave-on-merge';
@@ -24,6 +25,7 @@ import { machine } from './machine';
 import { map } from './map';
 import { meeting } from './meeting';
 import { notify } from './notify';
+import { orgs } from './orgs';
 import { prompts } from './prompts';
 import { services } from './services';
 import { signins } from './signins';
@@ -63,4 +65,6 @@ export const SLICES: readonly Slice[] = [
   accounts,
   signins,
   composio,
+  orgs,
+  games,
 ];

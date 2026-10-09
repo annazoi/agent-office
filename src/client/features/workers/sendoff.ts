@@ -1,6 +1,6 @@
 import type * as THREE from 'three';
-import type { SendHomePlace, SendHomeStep, Spot } from '../../../shared/maps';
-import type { Pt } from '../../../shared/nav';
+import type { SendHomePlace, SendHomeStep, Spot } from '../../../shared/building/maps/index';
+import type { Pt } from '../../../shared/building/nav';
 import type { Person, Worker } from '../../world/character';
 import type { DeskView } from '../../world/types';
 import type { World } from '../../world/world';

@@ -1,6 +1,6 @@
 // The Linear board's panel: your issues in three columns (Mine / In progress / Done), a form for a new
 // one, and "Give to a worker", which hands an issue to the office's workers the way the GitHub boards do.
-import type { LinearIssue, LinearIssuesResult } from '../../../shared/composio-api';
+import type { LinearIssue, LinearIssuesResult } from '../../../shared/integrations/composio-api';
 import { h, toast } from '../dom';
 import { act, get } from './api';
 import { busy, errorRow, field, footerNote, gate, input, loading, openPanel, row, rows, textarea, type PanelDeps } from './common';

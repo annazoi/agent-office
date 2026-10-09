@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { LOOP, LOOP_HALF, PLACES, RIDGE, TUNNEL, nearLoop } from '../../../shared/scenic';
+import { LOOP, LOOP_HALF, PLACES, RIDGE, TUNNEL, nearLoop } from '../../../shared/building/scenic';
 import { bulb } from '../outside';
 import { mesh, textPlane, toon } from '../toon';
 import { G, box, strip, type ScenicKit } from './kit';

@@ -1,11 +1,11 @@
 import './queue.css';
 import type { AgentProvider, QueueTask, Usage } from '../../shared/protocol';
-import type { Net } from '../net';
+import type { Net } from '../shared/net';
 import { store } from '../state';
 import { h, openModal, timeAgo, STATUS_LABEL } from './dom';
 import { confirmDialog } from './prompt';
 import { providerPicker, providerLabel, providerUsageState, providerWaitingLabel, resolvedProvider, modelBadge } from './provider';
-import { officeFull } from '../../shared/machine';
+import { officeFull } from '../../shared/agents/machine';
 import { dictateField } from './dictate';
 
 export interface QueueActions {

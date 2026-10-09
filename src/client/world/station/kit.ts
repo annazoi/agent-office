@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
-import type { MapPlan } from '../../../shared/maps';
-import { boxFootprint } from '../../../shared/maps/props';
+import type { MapPlan } from '../../../shared/building/maps/index';
+import { boxFootprint } from '../../../shared/building/maps/props';
 import type { Gong } from '../../features/gong/world';
 import type { Collider, DeskView, Interactable } from '../types';
 import { mesh, toon } from '../toon';

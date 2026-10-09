@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { FLOOR } from '../../../shared/layout';
-import { BALL, HOOP, RETURN_AFTER, THREE_POINT, backboard, launch, nearSolids, outOfReach, simulate, type BallHit, type BallShot, type BallSim, type BallState, type Solid } from '../../../shared/hoop';
+import { FLOOR } from '../../../shared/building/layout';
+import { BALL, HOOP, RETURN_AFTER, THREE_POINT, backboard, launch, nearSolids, outOfReach, simulate, type BallHit, type BallShot, type BallSim, type BallState, type Solid } from '../../../shared/toys/hoop';
 import type { Collider, Interactable } from '../../world/types';
 import type { Fixture } from '../../world/office/fixture';
 import { mergeByMaterial, mesh, toon, toonUnique } from '../../world/toon';

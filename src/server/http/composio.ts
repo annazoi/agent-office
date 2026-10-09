@@ -1,16 +1,16 @@
-// The Composio stations' API: /api/composio/… (see src/shared/composio-api.ts for the answers).
+// The Composio stations' API: /api/composio/… (see src/shared/integrations/composio-api.ts for the answers).
 // Every call runs as the signed-in person, on their own connected accounts, and whatever changes
 // something tells everyone on their floor with a `composio:activity` so a line floats over their
 // head. The office's API key and the OAuth tokens stay on the server: nothing here answers with them.
 import type { Ctx } from '../office/context.js';
 import type { Client } from '../office/client.js';
-import type { Session } from '../auth.js';
+import type { Session } from '../accounts/auth.js';
 import { str } from '../office/input.js';
 import { readBody, sameOrigin, send } from './util.js';
 import type { Route, RouteRequest } from './router.js';
-import { COMPOSIO_API, type ComposioDone, type ComposioStatus } from '../../shared/composio-api.js';
+import { COMPOSIO_API, type ComposioDone, type ComposioStatus } from '../../shared/integrations/composio-api.js';
 import { isComposioToolkit, type ComposioToolkit } from '../../shared/protocol.js';
-import { calendar, gmail, linear, notion, slack, type Run } from '../composio-actions.js';
+import { calendar, gmail, linear, notion, slack, type Run } from '../integrations/composio-actions.js';
 import { floorParam } from './routes/files.js';
 
 type Body = Record<string, unknown>;
@@ -34,7 +34,7 @@ function peersOf(ctx: Ctx, accountId: string, floorId: string | undefined): Clie
 function announce(ctx: Ctx, r: Req, toolkit: ComposioToolkit, summary: string) {
   const account = r.session.account;
   if (!account) return;
-  const floor = floorParam(ctx, r.url);
+  const floor = floorParam(ctx, r.url, r.session);
   if (!floor) return;
   const me = peersOf(ctx, account.id, floor.id)[0];
   ctx.toFloor(floor, { t: 'composio:activity', user: account.name, peer: me?.id, toolkit, summary });

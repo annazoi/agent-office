@@ -661,7 +661,7 @@ tunnel() {
 }
 
 # A worker's server from the 🌐 Services board: localhost:<port> tunnels to the office, which
-# relays it by that port (see src/server/relay.ts), so the local port must match the service's.
+# relays it by that port (see src/server/ops/relay.ts), so the local port must match the service's.
 service_tunnel() {
   local port="$1" pid i up=0
   port_busy "$port" && die "localhost:$port is already in use on this computer: stop whatever runs there first"
@@ -929,7 +929,7 @@ cmd_reset_password() {
   remote "node /opt/agent-office/bin/agent-office.js --reset-password >/dev/null" || die "reset failed"
   # A restart, so the office starts with the new claim token (and makes the new password).
   deploy restart
-  ok "Everyone has been signed out"
+  ok "The office password is new: it registers new accounts, and everyone keeps theirs"
   open_office
 }
 

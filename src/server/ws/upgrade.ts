@@ -2,7 +2,7 @@ import type http from 'node:http';
 import type https from 'node:https';
 import type { Duplex } from 'node:stream';
 import { WebSocketServer } from 'ws';
-import { relayUpgrade, tunneledService } from '../relay.js';
+import { relayUpgrade, tunneledService } from '../ops/relay.js';
 import { sameOrigin } from '../http/util.js';
 import type { Ctx } from '../office/context.js';
 import { onConnection } from './connection.js';

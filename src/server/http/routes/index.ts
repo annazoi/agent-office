@@ -7,6 +7,8 @@ import { authRoutes } from './auth.js';
 import { composioRoutes } from '../composio.js';
 import { fileRoutes } from './files.js';
 import { githubRoutes } from './github.js';
+import { meRoutes } from './me.js';
+import { orgRoutes } from './orgs.js';
 import { pageRoutes } from './pages.js';
 import { searchRoutes } from './search.js';
 import { serviceRoutes } from './services.js';
@@ -16,18 +18,23 @@ export const routes: readonly Route[] = [
   authRoutes.login,
   authRoutes.loginOptions,
   authRoutes.join,
+  authRoutes.register,
   authRoutes.claimable,
   authRoutes.claim,
   authRoutes.link,
   authRoutes.logout,
+  orgRoutes.invite,
   pageRoutes.health,
   pageRoutes.assets,
   pageRoutes.login,
   pageRoutes.claim,
   pageRoutes.join,
+  pageRoutes.invite,
   pageRoutes.favicon,
   // Signed in.
   authRoutes.whoami,
+  meRoutes.config,
+  meRoutes.saveConfig,
   agentRoutes.models,
   fileRoutes.image,
   fileRoutes.whiteboardFile,

@@ -1,6 +1,6 @@
 // The arcade cabinet on every floor: who's playing it, the game on its screen, and the high scores.
-import type { Floor } from '../../floor.js';
-import { checkFrame, type CabinetFrame, type CabinetState } from '../../../shared/cabinet.js';
+import type { Floor } from '../../floor/floor.js';
+import { checkFrame, type CabinetFrame, type CabinetState } from '../../../shared/toys/cabinet.js';
 import type { CabinetClientMsg } from '../../../shared/protocol.js';
 import type { Ctx } from '../../office/context.js';
 import { throttle, type Client } from '../../office/client.js';

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { JUKEBOX } from '../../../shared/layout';
+import { JUKEBOX } from '../../../shared/building/layout';
 import { mesh, roundedBox, textSprite, toon, toonUnique } from '../../world/toon';
 import type { Collider, Interactable } from '../../world/types';
 import type { Fixture } from '../../world/office/fixture';

@@ -1,5 +1,5 @@
 import type { GhCheck, GhMergeMethod, GhPull, GhPullDetail } from '../../../shared/protocol';
-import type { Net } from '../../net';
+import type { Net } from '../../shared/net';
 import { h, openModal } from '../dom';
 import { mergeWaiters } from './api';
 import { MERGE_KEY, mergePref, savePref } from './prefs';

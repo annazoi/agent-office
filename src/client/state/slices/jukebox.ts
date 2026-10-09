@@ -1,4 +1,4 @@
-import { JUKEBOX_TUNES, type JukeboxState } from '../../../shared/jukebox';
+import { JUKEBOX_TUNES, type JukeboxState } from '../../../shared/toys/jukebox';
 import type { Slice, Store } from '../store';
 
 declare module '../store' {

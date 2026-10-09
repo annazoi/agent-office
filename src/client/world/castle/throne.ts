@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { THRONE_SIZE, type MapPlan } from '../../../shared/maps';
+import { THRONE_SIZE, type MapPlan } from '../../../shared/building/maps/index';
 import type { Interactable } from '../types';
 import { mergeByMaterial, mesh, roundedBox, toon } from '../toon';
 import { collide, type Kit, type Mats } from './kit';

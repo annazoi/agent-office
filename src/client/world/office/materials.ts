@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { FLOOR, WALL_T, type Side } from '../../../shared/layout';
-import { FLOOR_PALETTES, type FloorPalette } from '../../../shared/floors';
+import { FLOOR, WALL_T, type Side } from '../../../shared/building/layout';
+import { FLOOR_PALETTES, type FloorPalette } from '../../../shared/building/floors';
 import { mesh } from '../toon';
 
 // What the office is painted and glazed with, the planks of its floors, and where on an outside wall a

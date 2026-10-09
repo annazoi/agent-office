@@ -3,8 +3,8 @@ import './ui.css';
 // whiteboard-app.ts, loaded the first time either needs it.
 
 import type { ServerMsg } from '../../../shared/protocol';
-import { byIndex } from '../../../shared/whiteboard';
-import type { Net } from '../../net';
+import { byIndex } from '../../../shared/toys/whiteboard';
+import type { Net } from '../../shared/net';
 import { store } from '../../state';
 import { h, openModal, toast, type Modal } from '../../ui/dom';
 import type { WhiteboardApp } from './whiteboard-app';

@@ -1,5 +1,5 @@
 /** The tab's title, the same in the 3D office and the 2D view (/lite). No three.js here: the 2D view imports it. */
-import { waitingOnSomeone } from '../notify';
+import { waitingOnSomeone } from './notify';
 import { store } from '../state';
 
 /** The tab title counts the workers waiting on someone, on every floor, so you can see them from another tab. */

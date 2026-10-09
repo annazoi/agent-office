@@ -5,17 +5,18 @@
  * order they register in, and a part can reach one installed after it. Each part names the ones it
  * reaches for (a `Pick` of these). Types only.
  */
-import type { Net } from '../net';
-import type { DesktopNotifier } from '../notify';
+import type { Net } from '../shared/net';
+import type { DesktopNotifier } from '../shared/notify';
 import type { PlayerController } from '../player';
 import type { OfficeSound } from '../sound';
 import type { Settings } from '../state';
-import type { Voice } from '../voice';
+import type { Voice } from '../sound/voice';
 import type { Person } from '../world/character';
 import type { Confetti } from '../world/confetti';
 import type { Hands } from '../world/hands';
 import type { Smoke } from '../world/smoke';
 import type { installArcade } from '../features/arcade';
+import type { installArena } from '../features/arena';
 import type { installBar } from '../features/bar';
 import type { installBarGames } from '../features/bargames';
 import type { installBasketball } from '../features/basketball';
@@ -97,6 +98,8 @@ export interface Parts {
   gallery: Made<typeof installGallery>;
   tv: Made<typeof installTv>;
   arcade: Made<typeof installArcade>;
+  /** The gaming room off the lounge, and you in a match (see features/arena). */
+  arena: Made<typeof installArena>;
   rooftop: Made<typeof installRooftop>;
   telescope: Made<typeof installTelescope>;
   dog: Made<typeof installDog>;

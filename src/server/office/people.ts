@@ -1,20 +1,21 @@
-import type { Accounts } from '../accounts.js';
+import type { Accounts } from '../accounts/accounts.js';
 import type { Me } from '../../shared/protocol.js';
 import type { Ctx, People } from './context.js';
 import type { Client } from './client.js';
+import { orgsChanged } from '../accounts/orgs/notify.js';
 
-/** WebSocket close code for a session that stopped counting: the account was revoked, or the shared password switched off. */
+/** WebSocket close code for a session that stopped counting: its account was revoked. */
 const SIGNED_OUT = 4001;
 
 /** Who the people in the office are signed in as, and telling them when that changes. */
 export function people(ctx: Ctx): People {
-  /** Who a connection is: its account's current name and role, or an admin guest on the shared password. */
+  /** Who a connection is: its account's current name and role (an account that's gone is nobody, and no admin). */
   const meOf = (accountId: string | undefined): Me => {
     const a = ctx.accounts.get(accountId);
-    return a ? { account: { name: a.name, role: a.role }, admin: a.role === 'admin' } : { admin: !accountId };
+    return a ? { account: { name: a.name, role: a.role }, admin: a.role === 'admin' } : { account: { name: '', role: 'member' }, admin: false };
   };
-  /** Still signed in: the account wasn't revoked, and the shared password wasn't switched off. */
-  const stillIn = (c: Client) => (c.accountId ? !!ctx.accounts.get(c.accountId) : ctx.accounts.sharedPassword);
+  /** Still signed in: the account wasn't revoked. */
+  const stillIn = (c: Client) => !!ctx.accounts.get(c.accountId);
   const signOut = (c: Client) => {
     c.out = true;
     c.ws.close(SIGNED_OUT, 'Signed out');
@@ -36,6 +37,8 @@ export function people(ctx: Ctx): People {
       }
       if (me.admin) ctx.sendTo(c, { t: 'accounts', state: (state ??= ctx.accounts.state(onlineAccounts())) });
     }
+    // Someone new is in an organisation of their own, and someone revoked is out of theirs.
+    orgsChanged(ctx);
   };
   return { meOf, stillIn, signOut, onlineAccounts, accountsChanged };
 }

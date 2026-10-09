@@ -1,6 +1,6 @@
 // A worker that runs over ACP rather than in a terminal (DeepSeek Harness, see ProviderAdapter.transport):
 // the office holds the connection and draws what it says into the worker's terminal itself.
-import { DshSession, terminalSafe } from '../dsh.js';
+import { DshSession, terminalSafe } from '../agents/dsh.js';
 import type { HeadlessTerminal } from './terminal.js';
 import type { Worker, WorkerContext } from './types.js';
 import { truncate } from './util.js';

@@ -9,7 +9,7 @@
 // registered in (./slices/index.ts), and that order is the order their topics fire in.
 
 import type { ChatLine, FloorInfo, FloorView, GhIssue, GhPull, GhState, Me, PeerInfo, ProjectInfo, ProjectsDirState, QueueState, QueueTask, RepoChoice, Run, ServerMsg, WorkerInfo } from '../../shared/protocol';
-import { randomLook } from '../../shared/avatar';
+import { randomLook } from '../../shared/people/avatar';
 import { AVATAR_COLORS, type Profile } from './persist';
 
 /** A worker's terminal as its laptop shows it, put together from the office's 'screen' frames. */
@@ -111,7 +111,7 @@ export class Store {
   invites = false;
   queue: QueueState = { tasks: [], maxWorkers: 0 };
   /** Who you're signed in as (see /api/whoami). */
-  me: Me = { admin: false };
+  me: Me = { account: { name: '', role: 'member' }, admin: false };
   private subs = new Map<Topic, Set<() => void>>();
   // The slices, and each message type's handlers in their order. Kept in # fields, which aren't among
   // the store's keys: those are its state (window.__office.store).

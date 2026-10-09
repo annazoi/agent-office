@@ -1,4 +1,4 @@
-import type { CabinetFrame, CabinetState } from '../../../shared/cabinet';
+import type { CabinetFrame, CabinetState } from '../../../shared/toys/cabinet';
 import type { Slice } from '../store';
 
 declare module '../store' {

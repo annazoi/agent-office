@@ -1,17 +1,18 @@
 /**
  * Darts and axes at the rooftop bar: stepping up to the line, throws landing (yours and everyone's
- * up there) and chalked up on the board, and your best rounds, kept in this browser.
+ * up there) and chalked up on the board, and your best rounds, kept with your account.
  */
 import * as THREE from 'three';
-import { ROUND, score, targetFrame, type BarGame, type Score, type Toss } from '../../../shared/bargames';
+import { ROUND, score, targetFrame, type BarGame, type Score, type Toss } from '../../../shared/toys/bargames';
 import type { Ctx, Hint } from '../../core/context';
 import { aside, hintTitle, key, onE } from '../../core/hint';
-import { DESK_KEYS } from '../../interaction';
+import { DESK_KEYS } from '../../input/interaction';
 import { store } from '../../state';
 import { Thrower } from './controller';
 import { clip, h, toast } from '../../ui/dom';
 import type { Person } from '../../world/character';
 import type { Rooftop } from '../rooftop/world';
+import { userStorage } from '../../state/user-storage';
 
 // The kinds of thing you can use that this defines (see InteractKinds in world/types.ts).
 declare module '../../world/types' {
@@ -33,11 +34,11 @@ export interface BarGamesDeps {
 }
 
 export function installBarGames(ctx: Ctx, deps: BarGamesDeps) {
-  /** Your best round at each (points), kept in this browser. */
+  /** Your best round at each (points), kept with your account. */
   const THROW_KEY = 'agent-office.bargames';
   const throwBests: Partial<Record<BarGame, number>> = (() => {
     try {
-      const r = JSON.parse(localStorage.getItem(THROW_KEY) ?? '{}') as Record<string, unknown>;
+      const r = JSON.parse(userStorage.getItem(THROW_KEY) ?? '{}') as Record<string, unknown>;
       const out: Partial<Record<BarGame, number>> = {};
       for (const g of ['darts', 'axe'] as BarGame[]) if (typeof r[g] === 'number') out[g] = r[g] as number;
       return out;
@@ -47,7 +48,7 @@ export function installBarGames(ctx: Ctx, deps: BarGamesDeps) {
   })();
   function saveThrowBests() {
     try {
-      localStorage.setItem(THROW_KEY, JSON.stringify(throwBests));
+      userStorage.setItem(THROW_KEY, JSON.stringify(throwBests));
     } catch {
       // private window: it's only for this visit then
     }

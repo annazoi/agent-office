@@ -4,12 +4,12 @@
  * the mouse points at, and clicking the world to use what's there.
  */
 import * as THREE from 'three';
-import { SLAB } from '../../shared/layout';
+import { SLAB } from '../../shared/building/layout';
 import type { GhIssue } from '../../shared/protocol';
 import type { Ctx } from '../core/context';
 import type { CoreState } from '../core/ctx';
 import type { Parts } from '../core/parts';
-import { interactionAvailable, type DeskKey } from '../interaction';
+import { interactionAvailable, type DeskKey } from './interaction';
 import { EYE_HEIGHT } from '../player';
 import { store } from '../state';
 import { modalOpen, toast } from '../ui/dom';

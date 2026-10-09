@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { AIRLOCK, HULL, type AirlockPlan } from '../../../shared/maps';
+import { AIRLOCK, HULL, type AirlockPlan } from '../../../shared/building/maps/index';
 import { canvasTexture } from '../texture';
 import { mesh, textPlane } from '../toon';
 import { box, placed, type Kit } from './kit';

@@ -1,6 +1,6 @@
 import type * as THREE from 'three';
 import type { WorkerStatus, WorkerTask } from '../../../shared/protocol';
-import { isAsleep, type WorkerPr } from '../../../shared/status';
+import { isAsleep, type WorkerPr } from '../../../shared/agents/status';
 import { cardSprite, textSprite } from '../toon';
 
 // What a worker shows of how it's getting on: its status light, and the bubble or task card over its head.

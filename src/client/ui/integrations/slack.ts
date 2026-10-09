@@ -1,6 +1,6 @@
 // The Slack TV's panel: your channels down the side, the last 20 messages of the one you pick
 // (refreshed every 30 s while it's open), and a box to post from.
-import type { SlackChannel, SlackMessage } from '../../../shared/composio-api';
+import type { SlackChannel, SlackMessage } from '../../../shared/integrations/composio-api';
 import { h, toast } from '../dom';
 import { act, get } from './api';
 import { busy, empty, errorRow, every, footerNote, gate, loading, openPanel, row, rows, textarea, type PanelDeps } from './common';

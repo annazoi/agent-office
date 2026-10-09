@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import type { MapPlan } from '../../../shared/maps';
+import type { MapPlan } from '../../../shared/building/maps/index';
 import { Person } from '../character';
 import type { Interactable } from '../types';
 import { mesh, toon } from '../toon';

@@ -1,9 +1,9 @@
 import * as THREE from 'three';
-import { GONG } from '../../../shared/layout';
+import { GONG } from '../../../shared/building/layout';
 import { mesh, roundedBox, textPlane, toon, toonUnique } from '../../world/toon';
 import type { Collider, Interactable } from '../../world/types';
 import type { Fixture } from '../../world/office/fixture';
-import { boxFootprint } from '../../../shared/maps/props';
+import { boxFootprint } from '../../../shared/building/maps/props';
 
 // The gong: a brass disc hung in a red lacquered frame, next to the PR board. It rings when a pull
 // request merges, and anyone can walk up and hit it.

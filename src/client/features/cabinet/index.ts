@@ -1,4 +1,4 @@
-import { GAME, scoreText } from '../../../shared/cabinet';
+import { GAME, scoreText } from '../../../shared/toys/cabinet';
 import type { Ctx } from '../../core/context';
 import { aside, hintTitle, key, onE } from '../../core/hint';
 import { store } from '../../state';

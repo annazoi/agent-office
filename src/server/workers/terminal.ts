@@ -4,8 +4,8 @@ import headless from '@xterm/headless';
 import serialize from '@xterm/addon-serialize';
 import type { Run, WorkerInfo } from '../../shared/protocol.js';
 import { FLAG_BOLD, FLAG_DIM, FLAG_INVERSE, RGB_FLAG } from '../../shared/protocol.js';
-import { SCROLLBACK } from '../ptys.js';
-import { screenSnapshot } from '../screen.js';
+import { SCROLLBACK } from './ptys.js';
+import { screenSnapshot } from './screen.js';
 import type { Worker, WorkerEvents } from './types.js';
 
 export type HeadlessTerminal = InstanceType<typeof headless.Terminal>;

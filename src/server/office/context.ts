@@ -3,29 +3,33 @@
 // time, in the order the office has always started up in (see each stage's interface), so a part
 // only ever uses what was already there when it was made.
 import type { Config } from '../config.js';
-import type { Auth } from '../auth.js';
-import type { Accounts } from '../accounts.js';
-import type { SignIns, GhAs } from '../signins.js';
-import type { ModelCatalogue } from '../models.js';
-import type { Tailnet } from '../tailnet.js';
-import type { Team } from '../team.js';
-import type { Upgrader } from '../upgrade.js';
-import type { Services } from '../services.js';
-import type { ImageProxy } from '../decor.js';
-import type { Ledger } from '../usage.js';
-import type { PlanLimitsReader } from '../limits.js';
-import type { Webhook } from '../webhook.js';
-import type { ComposioHub } from '../composio.js';
-import type { Machine } from '../machine.js';
-import type { Building, FloorDef } from '../building.js';
-import type { Floor } from '../floor.js';
-import type { Sky } from '../sky.js';
-import type { Themes } from '../theme.js';
-import type { Maps } from '../maps.js';
-import type { OfficePrompts } from '../prompts.js';
-import type { LeaveOnMerge } from '../leave-on-merge.js';
-import type { ChatLog } from '../history.js';
-import type { Arcade, HighScores } from '../cabinet.js';
+import type { Auth } from '../accounts/auth.js';
+import type { Accounts } from '../accounts/accounts.js';
+import type { Orgs } from '../accounts/orgs/store.js';
+import type { Mailer } from '../accounts/orgs/mailer.js';
+import type { SignIns, GhAs } from '../accounts/signins.js';
+import type { ModelCatalogue } from '../agents/models.js';
+import type { Tailnet } from '../ops/tailnet.js';
+import type { Team } from '../ops/team.js';
+import type { Upgrader } from '../ops/upgrade.js';
+import type { Services } from '../workers/services.js';
+import type { ImageProxy } from '../floor/decor.js';
+import type { Ledger } from '../usage/usage.js';
+import type { PlanLimitsReader } from '../usage/limits.js';
+import type { Webhook } from '../ops/webhook.js';
+import type { ComposioHub } from '../integrations/composio.js';
+import type { Machine } from '../ops/machine.js';
+import type { Building, FloorDef } from '../floor/building.js';
+import type { Floor } from '../floor/floor.js';
+import type { Sky } from '../floor/sky.js';
+import type { Themes } from '../floor/theme.js';
+import type { Maps } from '../floor/maps.js';
+import type { OfficePrompts } from '../floor/prompts.js';
+import type { LeaveOnMerge } from '../floor/leave-on-merge.js';
+import type { ChatLog } from '../floor/history.js';
+import type { Arcade, HighScores } from '../floor/cabinet.js';
+import type { GameStats } from '../games/stats.js';
+import type { GameId } from '../../shared/games/games.js';
 import type { AgentProvider, FloorInfo, Me, ServerMsg, ServiceInfo, ServicesState, SignInKind } from '../../shared/protocol.js';
 import type { Client } from './client.js';
 import type { Spot } from './input.js';
@@ -38,6 +42,10 @@ export interface Core {
   /** The client bundle the office serves. */
   publicDir: string;
   accounts: Accounts;
+  /** The organisations everyone is in, and the invites out to join them. */
+  orgs: Orgs;
+  /** Emails organisation invites (through Resend), when the office has a key for it. */
+  mailer: Mailer;
   auth: Auth;
   /** Everyone in the office, by connection. */
   clients: Map<string, Client>;
@@ -46,6 +54,8 @@ export interface Core {
   /** The arcade's high scores: one table for the whole building, on every floor's cabinet. */
   highScores: HighScores;
   arcade: Arcade;
+  /** Who has played what, a record per game, for the gaming rooms' stats and leaderboards. */
+  games(game: GameId): GameStats;
   /** What the office is called where it has no project of its own to go by (webhooks, invites). */
   officeName: string;
   /** The models each provider's own CLI lists, for the ones that list them (see models.ts). */
@@ -109,20 +119,31 @@ export interface Messaging {
   warn(c: Client, error: string | undefined): void;
 }
 
+/** Who's looking at the building: their account, and whether they're an admin. */
+export interface Viewer {
+  accountId?: string;
+  admin: boolean;
+}
+
 /** The building's floors (office/floors.ts). */
 export interface FloorHelpers {
   floorOf(c: Client): Floor | undefined;
   /** The floor a worker sits on. Worker ids are unique across the building. */
   workerFloor(workerId: string): Floor | undefined;
-  floorInfos(): FloorInfo[];
+  /** The floors `who` sees (theirs, shared ones and everyone's; all of them for an admin), for their elevator. */
+  floorInfos(who: Viewer): FloorInfo[];
+  /** Whether `who` sees a floor, and may go there or use it (see seesFloor). */
+  sees(who: Viewer, def: FloorDef): boolean;
+  /** A toast for everyone who sees the floor. */
+  toastSeers(def: FloorDef, text: string, level?: 'info' | 'warn'): void;
   /** The elevator's counts change with every worker update; tell everyone at most a few times a second. */
   floorsChanged(): void;
   /** Drops a `floorsChanged` still waiting to go out (the office is closing). */
   cancelFloorsChanged(): void;
-  /** Where someone arriving goes: the floor they asked for, else the first one there is. */
-  arrivalFloor(wanted: string | null): Floor | undefined;
+  /** Where someone arriving goes: the floor they asked for, else the first one they see. */
+  arrivalFloor(wanted: string | null, who: Viewer): Floor | undefined;
   /**
-   * Takes `floor` off the building (already out of floors.json): everyone on it rides the elevator to
+   * Takes `floor` off the building (already out of the floors document): everyone on it rides the elevator to
    * the next floor, or out to the lobby if it was the last (the roof goes with it), and its workers stop.
    */
   closeFloor(floor: Floor, who: string): void;
@@ -130,9 +151,9 @@ export interface FloorHelpers {
 
 /** Who's signed in (office/people.ts). */
 export interface People {
-  /** Who a connection is: its account's current name and role, or an admin guest on the shared password. */
+  /** Who a connection is: its account's current name and role. */
   meOf(accountId: string | undefined): Me;
-  /** Still signed in: the account wasn't revoked, and the shared password wasn't switched off. */
+  /** Still signed in: the account wasn't revoked. */
   stillIn(c: Client): boolean;
   signOut(c: Client): void;
   onlineAccounts(): Set<string>;

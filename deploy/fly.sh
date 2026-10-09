@@ -502,7 +502,7 @@ tunnel() {
 }
 
 # A worker's server from the 🌐 Services board: localhost:<port> tunnels to the office, which
-# relays it by that port (see src/server/relay.ts), so the local port must match the service's.
+# relays it by that port (see src/server/ops/relay.ts), so the local port must match the service's.
 service_tunnel() {
   local port="$1" pid i up=0
   port_busy "$port" && die "localhost:$port is already in use on this computer — stop whatever runs there first"
@@ -812,7 +812,7 @@ cmd_reset_password() {
   printf 'AGENT_OFFICE_CLAIM_TOKEN=%s\n' "$(cat "$CLAIM_FILE")" | fl secrets import -a "$APP" >/dev/null ||
     die "couldn't set the new claim token"
   wait_replaced "$was" || die "the office didn't come back — check: deploy/fly.sh logs$NAME_FLAG"
-  ok "Everyone has been signed out"
+  ok "The office password is new: it registers new accounts, and everyone keeps theirs"
   open_office
 }
 

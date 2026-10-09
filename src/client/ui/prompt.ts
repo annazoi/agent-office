@@ -4,6 +4,7 @@ import { h, openModal } from './dom';
 import { store } from '../state';
 import { providerPicker, type ProviderPicker } from './provider';
 import { dictateField } from './dictate';
+import { userStorage } from '../state/user-storage';
 
 export interface PromptOptions {
   title: string;
@@ -28,7 +29,7 @@ const WT_KEY = 'agent-office.worktree';
 /** Whether the last hire asked for its own git worktree (the Ask window shares the choice). */
 export function worktreePref(): boolean {
   try {
-    return localStorage.getItem(WT_KEY) === '1';
+    return userStorage.getItem(WT_KEY) === '1';
   } catch {
     return false;
   }
@@ -92,7 +93,7 @@ export function openPrompt(opts: PromptOptions) {
     modal.close();
     if (opts.worktreeOption) {
       try {
-        localStorage.setItem(WT_KEY, wtBox.checked ? '1' : '0');
+        userStorage.setItem(WT_KEY, wtBox.checked ? '1' : '0');
       } catch {
         // storage blocked
       }

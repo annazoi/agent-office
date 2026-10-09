@@ -1,11 +1,11 @@
 import * as THREE from 'three';
 import type { Theme, WorkerAction, WorkerStatus, WorkerTask } from '../../../shared/protocol';
-import { isAsleep, type WorkerPr } from '../../../shared/status';
+import { isAsleep, type WorkerPr } from '../../../shared/agents/status';
 import { beard, grime, peasantGarb, type Beard, type PeasantGarb } from '../costumes';
 import { disposeSprite, mesh, textSprite, toon, toonUnique } from '../toon';
 import type { WorkerRig } from './rig';
 import { ease, popIn } from './curves';
-import { undress } from './props';
+import { dropSprite, undress } from './props';
 import { ACT_MIN, DESPAIR_MIN, TWIRL_TIME, WAIT_CYCLE, WAIT_HOPS, blendStance, type Act, type Stance } from './worker-stance';
 import { STATUS_BULB, bubbleFor } from './worker-badges';
 import { globe, papers } from './worker-props';
@@ -321,10 +321,7 @@ export class Worker {
     for (const p of this.pupils) p.position.y = 0.7;
     this.bulb.color.set(STATUS_BULB.exited);
     this.bulb.emissive.set('#000000');
-    if (this.bubble) {
-      this.root.remove(this.bubble);
-      disposeSprite(this.bubble);
-    }
+    dropSprite(this.root, this.bubble);
     this.bubbleKey = 'leaving';
     this.bubbleIsCard = false;
     this.bubble = textSprite(farewell, { bg: '#e9ecef', size: 34 });
@@ -334,10 +331,7 @@ export class Worker {
 
   /** On its way out: says something else over its head in place of its farewell (or whatever was over it, before it packed up). */
   say(text: string) {
-    if (this.bubble) {
-      this.root.remove(this.bubble);
-      disposeSprite(this.bubble);
-    }
+    dropSprite(this.root, this.bubble);
     this.bubbleKey = 'said';
     this.bubbleIsCard = false;
     this.bubble = textSprite(text, { bg: '#e9ecef', size: 34 });
@@ -351,11 +345,8 @@ export class Worker {
     const { key, draw } = bubbleFor(status, bounce, task, pr, lost);
     if (key === this.bubbleKey) return;
     this.bubbleKey = key;
-    if (this.bubble) {
-      this.root.remove(this.bubble);
-      disposeSprite(this.bubble);
-      this.bubble = null;
-    }
+    dropSprite(this.root, this.bubble);
+    this.bubble = null;
     this.bubbleIsCard = !!task;
     this.bubble = draw();
     if (this.bubble) this.root.add(this.bubble);
@@ -378,11 +369,8 @@ export class Worker {
       for (const prop of [this.papers.group, this.globe.group]) prop.visible = false;
       this.bulb.color.set(STATUS_BULB.exited);
       this.bulb.emissive.set('#000000');
-      if (this.bubble) {
-        this.root.remove(this.bubble);
-        disposeSprite(this.bubble);
-        this.bubble = null;
-      }
+      dropSprite(this.root, this.bubble);
+      this.bubble = null;
       this.bubbleKey = 'jailed';
       this.fell = Math.random() < 0.5 ? -1 : 1;
     }
@@ -404,10 +392,7 @@ export class Worker {
   /** Mutters something in its cell (only while it's alive). */
   mutter(text: string, seconds = 4) {
     if (!this.jailed || this.jailed.dead) return;
-    if (this.bubble) {
-      this.root.remove(this.bubble);
-      disposeSprite(this.bubble);
-    }
+    dropSprite(this.root, this.bubble);
     this.bubble = textSprite(text, { bg: '#e9ecef', size: 30 });
     this.bubble.position.y = 1.5;
     this.root.add(this.bubble);
@@ -422,9 +407,8 @@ export class Worker {
     this.blink(dt, dead ? 1 : 1 - 0.55 * thin);
     if (this.mutterT > 0) {
       this.mutterT -= dt;
-      if (this.mutterT <= 0 && this.bubble) {
-        this.root.remove(this.bubble);
-        disposeSprite(this.bubble);
+      if (this.mutterT <= 0) {
+        dropSprite(this.root, this.bubble);
         this.bubble = null;
       }
     }

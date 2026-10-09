@@ -1,6 +1,6 @@
 // The whiteboard on every floor: who's drawing, and what they draw.
 import { WebSocket } from 'ws';
-import type { Floor } from '../../floor.js';
+import type { Floor } from '../../floor/floor.js';
 import type { ServerMsg, WhiteboardClientMsg } from '../../../shared/protocol.js';
 import type { Ctx } from '../../office/context.js';
 import { throttle, type Client } from '../../office/client.js';

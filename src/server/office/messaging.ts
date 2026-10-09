@@ -1,7 +1,7 @@
 import { WebSocket } from 'ws';
 import type { Ctx, Messaging, ToastLevel } from './context.js';
 import type { Client } from './client.js';
-import type { Floor } from '../floor.js';
+import type { Floor } from '../floor/floor.js';
 import type { ServerMsg } from '../../shared/protocol.js';
 
 /** Sending to the browsers in `ctx.clients`: one, everyone, a floor, or someone's neighbors. */

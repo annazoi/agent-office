@@ -2,7 +2,7 @@ import http from 'node:http';
 import https from 'node:https';
 import net from 'node:net';
 import tls from 'node:tls';
-import { COOKIE_NAME } from '../auth.js';
+import { COOKIE_NAME } from '../accounts/auth.js';
 import { FORWARDS_PATH, LOOPBACK_NAME, type ForwardList } from './wire.js';
 
 const TIMEOUT_MS = 10_000;
@@ -96,12 +96,6 @@ export class Office {
     } catch {
       return false;
     }
-  }
-
-  /** Which fields its sign-in asks for: a name when there are accounts, the shared password while it's on. */
-  async loginOptions(): Promise<{ accounts: boolean; shared: boolean }> {
-    const o = parse((await this.call('GET', '/api/login')).body) as { accounts?: unknown; shared?: unknown } | undefined;
-    return { accounts: o?.accounts === true, shared: o?.shared !== false };
   }
 
   /** Signs in; resolves to why it didn't work, or '' when it did (and `token` is set). */

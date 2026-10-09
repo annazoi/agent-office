@@ -1,8 +1,8 @@
 import type * as THREE from 'three';
-import type { FloorPalette } from '../../shared/floors';
-import { LOFT, WALL_HEIGHT, WALL_T, FLOOR, type DeskDef } from '../../shared/layout';
-import { OFFICE_PLAN, type BoardKey, type MapPlan, type Spot } from '../../shared/maps';
-import { officeNav, wayHome, wayIn, wayToBalcony, type Bounds, type NavGrid, type Pt } from '../../shared/nav';
+import type { FloorPalette } from '../../shared/building/floors';
+import { LOFT, WALL_HEIGHT, WALL_T, FLOOR, type DeskDef } from '../../shared/building/layout';
+import { OFFICE_PLAN, type BoardKey, type MapPlan, type Spot } from '../../shared/building/maps/index';
+import { officeNav, wayHome, wayIn, wayToBalcony, type Bounds, type NavGrid, type Pt } from '../../shared/building/nav';
 import type { DungeonView } from './dungeon';
 import type { AirlockView } from './station/airlock';
 import type { Person } from './character';
@@ -12,7 +12,7 @@ import type { Collider, DeskView, Interactable, Office } from './types';
 import type { SkyLights } from './sky';
 
 /*
- * A world: the building's map, built and ready to walk round (see shared/maps). main.ts shows one at
+ * A world: the building's map, built and ready to walk round (see shared/building/maps). main.ts shows one at
  * a time, the way it swaps the office for the rooftop, and talks to it through this: where the
  * seats and the boards are, what's in the way, how workers walk in and out. The office has a great
  * deal more of its own (the elevator, the balcony, the lounge…), which main.ts only uses while the

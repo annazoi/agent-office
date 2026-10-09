@@ -1,4 +1,4 @@
-import type { DogState } from '../../../shared/dog';
+import type { DogState } from '../../../shared/toys/dog';
 import type { Slice, Store } from '../store';
 
 declare module '../store' {

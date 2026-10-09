@@ -1,6 +1,6 @@
 import './windows.css';
 import type { GhPull, GhPullDetail, GhReviewComment } from '../../../shared/protocol';
-import type { Net } from '../../net';
+import type { Net } from '../../shared/net';
 import { store, workerForPull } from '../../state';
 import { h, openModal, type Modal } from '../dom';
 import { officePrompt } from '../prompts';

@@ -1,11 +1,11 @@
 // ⚙️ Settings: team notifications, the worker limit, upgrades, the holiday theme, the building's map,
 // the office's prompts and default worker, and whether merged workers go home by themselves.
 import path from 'node:path';
-import { OPEN_CODE_MODEL_MAX } from '../../../shared/providers.js';
-import { MAX_WORKER_LIMIT, parseWorkerLimit } from '../../machine.js';
-import { OFFICE_MAP } from '../../../shared/maps/index.js';
-import { isThemePick } from '../../../shared/theme.js';
-import { PROMPTS, PROMPT_MAX, isPromptId } from '../../../shared/prompts.js';
+import { OPEN_CODE_MODEL_MAX } from '../../../shared/agents/providers.js';
+import { MAX_WORKER_LIMIT, parseWorkerLimit } from '../../ops/machine.js';
+import { OFFICE_MAP } from '../../../shared/building/maps/index.js';
+import { isThemePick } from '../../../shared/building/theme.js';
+import { PROMPTS, PROMPT_MAX, isPromptId } from '../../../shared/agents/prompts.js';
 import type { SettingsClientMsg } from '../../../shared/protocol.js';
 import type { Ctx } from '../../office/context.js';
 import { str } from '../../office/input.js';

@@ -1,9 +1,9 @@
 // People in the office: where they are and what they do, chat, voice and the welcome.
 
-import type { Look } from '../avatar.js';
-import type { BarGame } from '../bargames.js';
-import type { EmoteId } from '../emotes.js';
-import type { DrinkId } from '../rooftop.js';
+import type { Look } from '../people/avatar.js';
+import type { BarGame } from '../toys/bargames.js';
+import type { EmoteId } from '../people/emotes.js';
+import type { DrinkId } from '../building/rooftop.js';
 import type { Me } from './accounts.js';
 import type { FloorInfo, FloorView, ProjectsDirState } from './floors.js';
 import type { LeaveOnMergeState, MachineState, MapState, NotifyState, PromptsState, SkyState, ThemeState, UpgradeState } from './settings.js';

@@ -1,5 +1,5 @@
 // The calendar on the wall: today as a timeline, and the next seven days.
-import type { CalendarEvent } from '../../../shared/composio-api';
+import type { CalendarEvent } from '../../../shared/integrations/composio-api';
 import { h } from '../dom';
 import { get } from './api';
 import { empty, errorRow, footerNote, gate, loading, openPanel, type PanelDeps } from './common';

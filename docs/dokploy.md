@@ -28,7 +28,7 @@ What `up` does, in about five minutes the first time:
 6. Signs the GitHub CLI in with your local `gh auth token` (kept on the volume), and gives git your name and email.
 7. Opens an SSH tunnel and your browser at `http://localhost:4600`. **The first page shows the office password once. Write it down.** The office then keeps only a hash of it.
 
-The office listens on `127.0.0.1:4600` inside its container, and everyone reaches it through the tunnel. `localhost` counts as a secure origin, so voice and screen sharing work, with no certificates to manage. Your key logs in as `agentoffice`, the user that runs the office (`deploy/dokploy.sh ssh` gives you its shell). The office starts with no floors: ride the elevator and pick one of the repositories your GitHub token can see.
+The office listens on `127.0.0.1:4600` inside its container, and everyone reaches it through the tunnel. `localhost` counts as a secure origin, so voice and screen sharing work, with no certificates to manage. Your key logs in as `agentoffice`, the user that runs the office (`deploy/dokploy.sh ssh` gives you its shell). The office starts on its own **Office** floor, which isn't a project: ride the elevator and pick one of the repositories your GitHub token can see to add one.
 
 **The SSH address.** You and your teammates SSH to the server's IP as Dokploy knows it: the remote server's IP, or for Dokploy's own server the one under **Settings → Web Server**. If that isn't the address to use (a DNS name, or a server behind NAT), pass `--ssh-host <host>` to `up`. Docker opens published ports past `ufw`, but a firewall in front of the server (Hetzner's, an AWS security group, DigitalOcean's) has to allow TCP on the SSH port. Don't pick port 22: that's the server's own SSH.
 
@@ -36,7 +36,8 @@ The office listens on `127.0.0.1:4600` inside its container, and everyone reache
 
 | On the volume | What it holds |
 | --- | --- |
-| `/data/home/agent-office` | The office's own data: the password hash, accounts and invites, floors, chat, settings, arcade scores, each account's own Claude and GitHub sign-ins |
+| `/data/postgres` | The office's database: the password hash, accounts and invites, everyone's own settings, floors, chat, arcade scores (unless `DATABASE_URL` names another, such as Neon) |
+| `/data/home/agent-office` | The office's folder: each account's own Claude and GitHub logins, and `.env` with the database's address |
 | `/data/home/workspace` | The projects, cloned as `<owner>/<repo>`, with the workers' worktrees |
 | `/data/home/.local`, `.claude`, `.claude.json` | Claude Code itself, its sign-in, and the sessions workers resume |
 | `/data/home/.config/gh`, `.gitconfig` | The GitHub CLI's sign-in and git's name and email |
@@ -62,7 +63,7 @@ deploy/dokploy.sh team                 # who's invited
 deploy/dokploy.sh status               # its page in Dokploy, last deployment, SSH address, office up?, team
 deploy/dokploy.sh update               # upload this checkout again, build it and redeploy it
 deploy/dokploy.sh restart              # restart the container without rebuilding
-deploy/dokploy.sh reset-password       # new password, shown once; signs everyone out
+deploy/dokploy.sh reset-password       # new office password (what people register with), shown once
 deploy/dokploy.sh ssh | logs           # a shell in the container / follow the office's logs
 ```
 

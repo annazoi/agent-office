@@ -4,11 +4,11 @@
  * they are to you.
  */
 import * as THREE from 'three';
-import { sameLook } from '../../../shared/avatar';
-import { seatOn } from '../../../shared/maps';
+import { sameLook } from '../../../shared/people/avatar';
+import { seatOn } from '../../../shared/building/maps/index';
 import type { PeerInfo } from '../../../shared/protocol';
-import { DRINK_BY_ID } from '../../../shared/rooftop';
-import { SEAT_HIPS } from '../../../shared/garage';
+import { DRINK_BY_ID } from '../../../shared/building/rooftop';
+import { SEAT_HIPS } from '../../../shared/toys/garage';
 import { gripOf, type Grip } from '../climbing/controller';
 import type { Ctx } from '../../core/context';
 import type { CoreState } from '../../core/ctx';

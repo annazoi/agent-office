@@ -1,16 +1,17 @@
 /**
  * Golf off the balcony: the tee (a club out, a swing, the camera following the ball), everyone's balls
- * in the air or lying where they stopped, and your records, kept in this browser.
+ * in the air or lying where they stopped, and your records, kept with your account.
  */
-import { GOLF_HOLE } from '../../../shared/layout';
+import { GOLF_HOLE } from '../../../shared/building/layout';
 import type { Ctx } from '../../core/context';
 import { aside, hintTitle, key, onE } from '../../core/hint';
 import { Golfer } from './controller';
-import { DESK_KEYS } from '../../interaction';
+import { DESK_KEYS } from '../../input/interaction';
 import { store } from '../../state';
 import { clip, h, toast } from '../../ui/dom';
 import { BACKSWING_TIME, IMPACT, type Person } from '../../world/character';
 import { GolfBalls, PIN_DISTANCE, TEE_BALL, fly, pinText, type Flight, type Hit, type Shot } from './world';
+import { userStorage } from '../../state/user-storage';
 
 // The kinds of thing you can use that this defines (see InteractKinds in world/types.ts).
 declare module '../../world/types' {
@@ -34,11 +35,11 @@ export function installGolf(ctx: Ctx, deps: GolfDeps) {
   // Everyone's balls, in the air or lying where they stopped.
   const balls = new GolfBalls();
   ctx.scene.add(balls.group);
-  /** Your closest shot to the pin so far (meters) and how many you've holed in one, kept in this browser. */
+  /** Your closest shot to the pin so far (meters) and how many you've holed in one, kept with your account. */
   const GOLF_KEY = 'agent-office.golf';
   function golfRecord(): { best: number | null; holes: number } {
     try {
-      const r = JSON.parse(localStorage.getItem(GOLF_KEY) ?? '{}') as { best?: unknown; holes?: unknown };
+      const r = JSON.parse(userStorage.getItem(GOLF_KEY) ?? '{}') as { best?: unknown; holes?: unknown };
       return { best: typeof r.best === 'number' ? r.best : null, holes: typeof r.holes === 'number' ? r.holes : 0 };
     } catch {
       return { best: null, holes: 0 };
@@ -46,7 +47,7 @@ export function installGolf(ctx: Ctx, deps: GolfDeps) {
   }
   function saveGolfRecord(r: { best: number | null; holes: number }) {
     try {
-      localStorage.setItem(GOLF_KEY, JSON.stringify(r));
+      userStorage.setItem(GOLF_KEY, JSON.stringify(r));
     } catch {
       // private window: it's only for this visit then
     }

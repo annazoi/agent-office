@@ -27,13 +27,14 @@ What `up` does, in about five minutes the first time:
 6. Signs the GitHub CLI in with your local `gh auth token` (kept on the volume), and gives git your name and email.
 7. Opens an SSH tunnel and your browser at `http://localhost:4600`. **The first page shows the office password once. Write it down.** The office then keeps only a hash of it.
 
-The office listens on `127.0.0.1:4600` inside its container, and everyone reaches it through the tunnel. `localhost` counts as a secure origin, so voice and screen sharing work, with no certificates to manage. Your key logs in as `agentoffice`, the user that runs the office (`deploy/railway.sh ssh` gives you its shell). The office starts with no floors: ride the elevator and pick one of the repositories your GitHub token can see.
+The office listens on `127.0.0.1:4600` inside its container, and everyone reaches it through the tunnel. `localhost` counts as a secure origin, so voice and screen sharing work, with no certificates to manage. Your key logs in as `agentoffice`, the user that runs the office (`deploy/railway.sh ssh` gives you its shell). The office starts on its own **Office** floor, which isn't a project: ride the elevator and pick one of the repositories your GitHub token can see to add one.
 
 **What survives a restart.** Railway replaces the container on every restart and redeploy; the volume stays. On it:
 
 | On the volume | What it holds |
 | --- | --- |
-| `/data/home/agent-office` | The office's own data: the password hash, accounts and invites, floors, chat, settings, arcade scores, each account's own Claude and GitHub sign-ins |
+| `/data/postgres` | The office's database: the password hash, accounts and invites, everyone's own settings, floors, chat, arcade scores (unless `DATABASE_URL` names another, such as Neon) |
+| `/data/home/agent-office` | The office's folder: each account's own Claude and GitHub logins, and `.env` with the database's address |
 | `/data/home/workspace` | The projects, cloned as `<owner>/<repo>`, with the workers' worktrees |
 | `/data/home/.local`, `.claude`, `.claude.json` | Claude Code itself, its sign-in, and the sessions workers resume |
 | `/data/home/.config/gh`, `.gitconfig` | The GitHub CLI's sign-in and git's name and email |
@@ -59,7 +60,7 @@ deploy/railway.sh team                 # who's invited
 deploy/railway.sh status               # deployment, SSH address, volume use, office up?, team
 deploy/railway.sh update               # build this checkout again and redeploy it
 deploy/railway.sh restart              # restart the container without rebuilding
-deploy/railway.sh reset-password       # new password, shown once; signs everyone out
+deploy/railway.sh reset-password       # new office password (what people register with), shown once
 deploy/railway.sh ssh | logs           # a shell in the container / follow the office's logs
 ```
 

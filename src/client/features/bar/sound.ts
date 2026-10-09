@@ -1,4 +1,4 @@
-import { DJ_BOOTH } from '../../../shared/layout';
+import { DJ_BOOTH } from '../../../shared/building/layout';
 import { DjPlayer } from '../../dnb';
 import type { AudioCore } from '../../sound/core';
 import { biquad, envelope, rand } from '../../sound/dsp';

@@ -4,7 +4,7 @@
 // never resumes another's conversation. Its spend isn't metered by the office.
 import { mkdirSync } from 'node:fs';
 import path from 'node:path';
-import { normalizePiHook, piArgs, writePiExtension } from '../pi.js';
+import { normalizePiHook, piArgs, writePiExtension } from '../agents/pi.js';
 import { reduceStatus, type StatusState } from './opencode.js';
 import type { ProviderAdapter } from './types.js';
 

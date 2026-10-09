@@ -1,6 +1,6 @@
 import { WebSocket } from 'ws';
-import type { GhAs } from '../signins.js';
-import type { Floor } from '../floor.js';
+import type { GhAs } from '../accounts/signins.js';
+import type { Floor } from '../floor/floor.js';
 import type { SignInKind } from '../../shared/protocol.js';
 import type { Ctx, Gates } from './context.js';
 import type { Client } from './client.js';

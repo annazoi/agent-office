@@ -4,7 +4,7 @@
  * and the games up there are features/bar's and features/bargames'.
  */
 import type * as THREE from 'three';
-import { roofDrop } from '../../../shared/layout';
+import { roofDrop } from '../../../shared/building/layout';
 import type { Ctx } from '../../core/context';
 import { builtFloors, floorWings } from '../../core/floors';
 import { noOutline } from '../../core/outline';

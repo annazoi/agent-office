@@ -2,7 +2,7 @@
  * The building's floors as the office and its parts see them: which are built, how far each one's
  * back office goes, and which seats are there to sit at.
  */
-import { DESK_BY_ID, FLOOR, WING, deskBuilt, inWing } from '../../shared/layout';
+import { DESK_BY_ID, FLOOR, WING, deskBuilt, inWing } from '../../shared/building/layout';
 import type { FloorInfo } from '../../shared/protocol';
 import { store } from '../state';
 

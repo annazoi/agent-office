@@ -33,8 +33,8 @@ Where the office is:
   https://office.example  tunnel that's running, on a domain, or on your tailnet.
                           The default is http://localhost:4600
 
-It signs in like a browser does. The first time it asks for the office password
-(or your name and your own) and keeps the session for next time.
+It signs in like a browser does. The first time it asks for your account's name
+and password, and keeps the session for next time.
 
 Options:
   -p, --port <n>          With an SSH address: the port the office gets on this
@@ -42,7 +42,7 @@ Options:
       --office-port <n>   With an SSH address: the office's port on its own
                           machine (default ${DEFAULT_PORT})
       --name <name>       Sign in with this account (env AGENT_OFFICE_NAME)
-      --password <pw>     The password, instead of being asked for it
+      --password <pw>     Your account's password, instead of being asked for it
                           (env AGENT_OFFICE_PASSWORD)
       --no-open           With an SSH address: don't open the office in a browser
       --insecure          Accept a certificate nobody vouches for (--self-signed)
@@ -213,7 +213,7 @@ export async function tunnelCommand(argv: string[]): Promise<number> {
         return fail("this office is a version from before it could list its workers' servers. Upgrade it (⬆️ Upgrade the office in its ☰ menu, or the deploy script's update), then run this again.");
       } else if (list === 'signed-out') {
         forget(office, key);
-        say('  … signed out of the office (the password changed, or the session ran out)');
+        say('  … signed out of the office (the account was revoked, or the session ran out)');
         const err = await signIn(office, key, o.credentials, say).catch((e: Error) => e.message);
         if (err) return fail(err);
         continue;

@@ -1,11 +1,11 @@
 // ⚙️ Settings and the building's services: notifications, the machine, upgrades, the sky, holidays, maps, prompts.
 
-import type { CustomMap } from '../maps/index.js';
-import type { PromptId } from '../prompts.js';
+import type { CustomMap } from '../building/maps/index.js';
+import type { PromptId } from '../agents/prompts.js';
 import type { AgentChoice } from './agents.js';
 
 /**
- * The prompts the office writes for workers by itself (shared/prompts.ts) and the worker everyone
+ * The prompts the office writes for workers by itself (shared/agents/prompts.ts) and the worker everyone
  * starts on, as set in ⚙️ Settings: the same on every floor.
  */
 export interface PromptsState {
@@ -21,7 +21,7 @@ export interface PromptsState {
 /** Where a team webhook posts: Slack and Discord get their own message format, anything else plain JSON. */
 export type WebhookKind = 'slack' | 'discord' | 'other';
 
-/** The office's Slack / Discord webhook, pinged when a worker needs input or finishes (see server/webhook.ts). */
+/** The office's Slack / Discord webhook, pinged when a worker needs input or finishes (see server/ops/webhook.ts). */
 export interface NotifyState {
   /** Never the URL itself (it lets anyone post to the channel): just where it goes. */
   webhook?: { kind: WebhookKind; hint: string; by: string; at: number };
@@ -31,7 +31,7 @@ export interface NotifyState {
 }
 
 /**
- * The office's machine (see server/machine.ts): how busy it is, for the wall monitor and a warning
+ * The office's machine (see server/ops/machine.ts): how busy it is, for the wall monitor and a warning
  * before hiring, and the most workers the office runs at once, across every floor.
  */
 export interface MachineState {
@@ -91,7 +91,7 @@ export interface VersionInfo {
   date: string;
 }
 
-/** Self-upgrade of an office installed from git by deploy/aws.sh (see server/upgrade.ts). */
+/** Self-upgrade of an office installed from git by deploy/aws.sh (see server/ops/upgrade.ts). */
 export interface UpgradeState {
   /** False when the office can't upgrade itself (not installed by deploy/aws.sh). */
   available: boolean;
@@ -131,7 +131,7 @@ export interface SkyState {
   realTime?: boolean;
 }
 
-/** A holiday the whole building dresses up for (see shared/theme.ts). */
+/** A holiday the whole building dresses up for (see shared/building/theme.ts). */
 export type Theme = 'halloween' | 'christmas';
 /** What someone picked in ⚙️ Settings: a holiday, none, or whichever the calendar says. */
 export type ThemePick = Theme | 'auto' | 'off';
@@ -148,7 +148,7 @@ export interface ThemeState {
 
 /**
  * The building's map: what every floor looks like inside (the office, the castle, or one of your
- * own), the same for everyone (see shared/maps). Custom maps come from the office's
+ * own), the same for everyone (see shared/building/maps). Custom maps come from the office's
  * .agent-office/maps/ folder, each with its whole config, or why it won't load.
  */
 export interface MapState {

@@ -1,5 +1,5 @@
 import './ui.css';
-import { EMOTES, type EmoteId } from '../../../shared/emotes';
+import { EMOTES, type EmoteId } from '../../../shared/people/emotes';
 import { h } from '../../ui/dom';
 
 /** How far (px) the mouse has to go from the middle of the wheel before it points at an emote. */

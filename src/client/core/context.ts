@@ -4,16 +4,16 @@
  * takes a `Ctx` (`import type { Ctx }`) and never imports main.ts; core/ctx.ts builds the one there is.
  */
 import type * as THREE from 'three';
-import type { MapPlan } from '../../shared/maps';
+import type { MapPlan } from '../../shared/building/maps/index';
 import type { CarriedIssue, GhIssue, ServerMsg } from '../../shared/protocol';
 import type { Grip } from '../features/climbing/controller';
-import type { DeskKey } from '../interaction';
-import type { Net } from '../net';
+import type { DeskKey } from '../input/interaction';
+import type { Net } from '../shared/net';
 import type { PlayerController } from '../player';
 import type { OfficeSound } from '../sound';
 import type { Settings } from '../state';
 import type { Hud } from '../ui/menu';
-import type { Voice } from '../voice';
+import type { Voice } from '../sound/voice';
 import type { Person } from '../world/character';
 import type { Confetti } from '../world/confetti';
 import type { Hands } from '../world/hands';

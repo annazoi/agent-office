@@ -40,7 +40,7 @@ What `up` does, in about five minutes the first time:
 
 Run `up` again at any time: it reuses the project, the application and the volume, and sets the application's settings back to the above.
 
-The office listens on `127.0.0.1:4600` inside its container, and everyone reaches it through the tunnel. `localhost` counts as a secure origin, so voice and screen sharing work, with no certificates to manage. Your key logs in as `agentoffice`, the user that runs the office (`deploy/coolify.sh ssh` gives you its shell). The office starts with no floors: ride the elevator and pick one of the repositories your GitHub token can see.
+The office listens on `127.0.0.1:4600` inside its container, and everyone reaches it through the tunnel. `localhost` counts as a secure origin, so voice and screen sharing work, with no certificates to manage. Your key logs in as `agentoffice`, the user that runs the office (`deploy/coolify.sh ssh` gives you its shell). The office starts on its own **Office** floor, which isn't a project: ride the elevator and pick one of the repositories your GitHub token can see to add one.
 
 **The SSH address.** You and your teammates SSH to the server's IP as Coolify knows it. Coolify knows its own server as `host.docker.internal`, so for that one the script uses your Coolify's address from `--url` instead. If that isn't the address to use (Coolify behind Cloudflare, a DNS name, a server behind NAT), pass `--ssh-host <host>` to `up`. Docker opens published ports past `ufw`, but a firewall in front of the server (Hetzner's, an AWS security group, DigitalOcean's) has to allow TCP on the SSH port. Don't pick a port something else holds: 22 is the server's own SSH, 80, 443 and 8080 are Coolify's proxy, and on Coolify's own server 8000, 6001 and 6002 are Coolify itself.
 
@@ -48,7 +48,8 @@ The office listens on `127.0.0.1:4600` inside its container, and everyone reache
 
 | On the volume | What it holds |
 | --- | --- |
-| `/data/home/agent-office` | The office's own data: the password hash, accounts and invites, floors, chat, settings, arcade scores, each account's own Claude and GitHub sign-ins |
+| `/data/postgres` | The office's database: the password hash, accounts and invites, everyone's own settings, floors, chat, arcade scores (unless `DATABASE_URL` names another, such as Neon) |
+| `/data/home/agent-office` | The office's folder: each account's own Claude and GitHub logins, and `.env` with the database's address |
 | `/data/home/workspace` | The projects, cloned as `<owner>/<repo>`, with the workers' worktrees |
 | `/data/home/.local`, `.claude`, `.claude.json` | Claude Code itself, its sign-in, and the sessions workers resume |
 | `/data/home/.config/gh`, `.gitconfig` | The GitHub CLI's sign-in and git's name and email |
@@ -74,7 +75,7 @@ deploy/coolify.sh team                 # who's invited
 deploy/coolify.sh status               # its page in Coolify, last deployment, SSH address, office up?, team
 deploy/coolify.sh update               # build this checkout's HEAD (pushed) and redeploy it
 deploy/coolify.sh restart              # a new container from the same image, without rebuilding
-deploy/coolify.sh reset-password       # new password, shown once; signs everyone out
+deploy/coolify.sh reset-password       # new office password (what people register with), shown once
 deploy/coolify.sh ssh | logs           # a shell in the container / follow the office's logs
 ```
 

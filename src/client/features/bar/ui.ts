@@ -1,4 +1,4 @@
-import { DRINKS, type Drink } from '../../../shared/rooftop';
+import { DRINKS, type Drink } from '../../../shared/building/rooftop';
 import { h, openModal } from '../../ui/dom';
 
 export interface BarOptions {

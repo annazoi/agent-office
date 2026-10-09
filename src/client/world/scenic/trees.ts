@@ -1,4 +1,4 @@
-import { FARM, LAKE, LOOP_PAVED, MOUNTAINS, shoreX } from '../../../shared/scenic';
+import { FARM, LAKE, LOOP_PAVED, MOUNTAINS, shoreX } from '../../../shared/building/scenic';
 import { neighbourBoxes } from '../outside';
 import { AUTUMN, LEAVES, PINES, boulder, leafy, palm, pine } from './flora';
 import { G, beside, inBox, indexAt, insideLoop, nearest, stretch, type ScenicKit } from './kit';

@@ -1,8 +1,8 @@
 import * as THREE from 'three';
-import { KIOSK, STATION_AGENT, deskSeat, type DeskDef, type StationKind } from '../../../shared/layout';
-import { BENCH_OUT, COUNCIL, type MapPlan } from '../../../shared/maps';
-import { boxFootprint } from '../../../shared/maps/props';
-import { deskPoint } from '../../../shared/nav';
+import { KIOSK, STATION_AGENT, deskSeat, type DeskDef, type StationKind } from '../../../shared/building/layout';
+import { BENCH_OUT, COUNCIL, type MapPlan } from '../../../shared/building/maps/index';
+import { boxFootprint } from '../../../shared/building/maps/props';
+import { deskPoint } from '../../../shared/building/nav';
 import { vacancyMarker } from '../office';
 import type { DeskView, Interactable } from '../types';
 import { mesh, roundedBox, textPlane, toon } from '../toon';

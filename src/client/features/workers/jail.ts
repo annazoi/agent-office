@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { prisonSeat, wasting, type DungeonPlan, type SendHomePlan, type Spot } from '../../../shared/maps';
+import { prisonSeat, wasting, type DungeonPlan, type SendHomePlan, type Spot } from '../../../shared/building/maps/index';
 import type { JailState, Prisoner } from '../../../shared/protocol';
 import { Worker } from '../../world/character';
 import type { DungeonView } from '../../world/dungeon';

@@ -2,7 +2,7 @@
  * The rooftop bar: drinks from the bartender, how they go to your head (a glass in hand, hiccups, the
  * world swaying and the frame drawn through the drunk vision), and the DJ's air horn.
  */
-import { DRINK_BY_ID, type Drink, type DrinkId } from '../../../shared/rooftop';
+import { DRINK_BY_ID, type Drink, type DrinkId } from '../../../shared/building/rooftop';
 import { Booze, type Stage as Feeling } from './booze';
 import type { Ctx } from '../../core/context';
 import { aside, hintTitle, key, onE } from '../../core/hint';

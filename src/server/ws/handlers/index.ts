@@ -10,9 +10,11 @@ import { composioHandlers } from './composio.js';
 import { decorHandlers, decorView } from './decor.js';
 import { dogHandlers, dogView } from './dog.js';
 import { floorHandlers, projectView } from './floors.js';
+import { gameView, gamesHandlers, gamesHooks } from './games.js';
 import { githubHandlers, issuesView, pullsView } from './github.js';
 import { jukeboxHandlers, jukeboxView } from './jukebox.js';
 import { meetingHandlers, meetingView } from './meetings.js';
+import { orgsHandlers } from './orgs.js';
 import { planHandlers, planView } from './plan.js';
 import { presenceHandlers } from './presence.js';
 import { queueHandlers, queueView } from './queue.js';
@@ -36,9 +38,11 @@ export const handlers: HandlerMap<ClientMsg> = {
   ...decorHandlers,
   ...dogHandlers,
   ...floorHandlers,
+  ...gamesHandlers,
   ...githubHandlers,
   ...jukeboxHandlers,
   ...meetingHandlers,
+  ...orgsHandlers,
   ...planHandlers,
   ...presenceHandlers,
   ...queueHandlers,
@@ -55,7 +59,7 @@ export const handlers: HandlerMap<ClientMsg> = {
  * The features that keep something per person on a floor, in the order they let go of it when
  * someone leaves the floor or the office (see FeatureHooks): the order the office has always done it in.
  */
-export const features: readonly FeatureHooks[] = [workerHooks, changesHooks, whiteboardHooks, ballHooks, carHooks, cabinetHooks];
+export const features: readonly FeatureHooks[] = [workerHooks, changesHooks, whiteboardHooks, ballHooks, carHooks, cabinetHooks, gamesHooks];
 
 /** What someone arriving on a floor is sent (see office/views.ts): a piece from each feature, in the order it has always gone out. */
 export const views: ViewPieces = {
@@ -75,4 +79,5 @@ export const views: ViewPieces = {
   whiteboard: whiteboardView,
   meeting: meetingView,
   cabinet: cabinetView,
+  game: gameView,
 };

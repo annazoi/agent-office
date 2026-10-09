@@ -1,5 +1,5 @@
 import type { WebSocket } from 'ws';
-import { EMOTE_EVERY, EmoteBucket } from '../../shared/emotes.js';
+import { EMOTE_EVERY, EmoteBucket } from '../../shared/people/emotes.js';
 import type { PeerInfo } from '../../shared/protocol.js';
 
 /** A viewer with more than this waiting to go out skips terminal output, and gets a fresh snapshot once it catches up. */
@@ -10,7 +10,7 @@ export interface Client {
   id: string;
   ws: WebSocket;
   peer: PeerInfo;
-  /** Signed in with this account; none means the shared office password. */
+  /** The account this connection is signed in with (every session has one). */
   accountId?: string;
   /** Whether this person was last told they're an admin (see `me`). */
   admin: boolean;
@@ -27,6 +27,8 @@ export interface Client {
   typingAt: Map<string, number>;
   /** Cleared at each heartbeat ping and set again by the pong; still clear at the next one means gone. */
   isAlive: boolean;
+  /** The elevator's list as this person was last sent it (everyone sees their own floors). */
+  floorsSent?: string;
 }
 
 /** A client that just connected, with nothing going on yet. */

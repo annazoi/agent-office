@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { HAIR_STYLES } from '../../../shared/avatar';
+import { HAIR_STYLES } from '../../../shared/people/avatar';
 import { mesh } from '../toon';
 
 /** Hair is a set of shapes on the head (whose center is 0,0,0; the face looks down +z), in `style` (of HAIR_STYLES). */

@@ -3,15 +3,16 @@
  * horn, laps of the scenic loop, and a car shoving you out of its way. Placing you anywhere gets you
  * out first: see the driver's activity, and placeAt in core/place.ts.
  */
-import { CARS, SEAT_HIPS, type CarSeat } from '../../../shared/garage';
-import { PLACES, placeAt as loopPlace } from '../../../shared/scenic';
+import { CARS, SEAT_HIPS, type CarSeat } from '../../../shared/toys/garage';
+import { PLACES, placeAt as loopPlace } from '../../../shared/building/scenic';
 import type { Ctx, Hint } from '../../core/context';
 import { aside, hintTitle, key, onE } from '../../core/hint';
 import { Driver } from './controller';
-import { DESK_KEYS } from '../../interaction';
+import { DESK_KEYS } from '../../input/interaction';
 import { LapTimer, lapTime } from './laps';
 import { store } from '../../state';
 import { clip, h, toast } from '../../ui/dom';
+import { userStorage } from '../../state/user-storage';
 
 // The kinds of thing you can use that this defines (see InteractKinds in world/types.ts).
 declare module '../../world/types' {
@@ -145,12 +146,12 @@ export function installCars(ctx: Ctx, deps: CarsDeps) {
     ctx.net.send({ t: 'car.honk' });
   }
 
-  /** Laps of the scenic loop you've driven (see LapTimer), and your fastest, kept in this browser. */
+  /** Laps of the scenic loop you've driven (see LapTimer), and your fastest, kept with your account. */
   const LAP_KEY = 'agent-office.bestLap';
   const laps = new LapTimer(
     (() => {
       try {
-        const best = Number(localStorage.getItem(LAP_KEY));
+        const best = Number(userStorage.getItem(LAP_KEY));
         return best > 0 ? best : null;
       } catch {
         return null;
@@ -161,7 +162,7 @@ export function installCars(ctx: Ctx, deps: CarsDeps) {
     const done = laps.done;
     if (done?.best) {
       try {
-        localStorage.setItem(LAP_KEY, String(time));
+        userStorage.setItem(LAP_KEY, String(time));
       } catch {
         // private window: it's only for this visit then
       }

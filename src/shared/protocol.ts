@@ -8,8 +8,10 @@ import type { AccountsClientMsg, AccountsServerMsg, SignInsClientMsg, TeamClient
 import type { ChangesClientMsg, ChangesServerMsg } from './protocol/changes.js';
 import type { ComposioClientMsg, ComposioServerMsg } from './protocol/composio.js';
 import type { FloorClientMsg, FloorServerMsg, PlanClientMsg } from './protocol/floors.js';
+import type { GamesClientMsg, GamesServerMsg } from './protocol/games.js';
 import type { GitHubClientMsg, GitHubServerMsg } from './protocol/github.js';
 import type { MeetingClientMsg, MeetingServerMsg } from './protocol/meetings.js';
+import type { OrgsClientMsg, OrgsServerMsg } from './protocol/orgs.js';
 import type { PresenceClientMsg, PresenceServerMsg } from './protocol/presence.js';
 import type { QueueClientMsg, QueueServerMsg } from './protocol/queue.js';
 import type { RooftopClientMsg, RooftopServerMsg } from './protocol/rooftop.js';
@@ -23,8 +25,10 @@ export * from './protocol/agents.js';
 export * from './protocol/changes.js';
 export * from './protocol/composio.js';
 export * from './protocol/floors.js';
+export * from './protocol/games.js';
 export * from './protocol/github.js';
 export * from './protocol/meetings.js';
+export * from './protocol/orgs.js';
 export * from './protocol/presence.js';
 export * from './protocol/queue.js';
 export * from './protocol/rooftop.js';
@@ -55,7 +59,9 @@ export type ClientMsg =
   | BallClientMsg
   | CarClientMsg
   | DogClientMsg
-  | ComposioClientMsg;
+  | ComposioClientMsg
+  | GamesClientMsg
+  | OrgsClientMsg;
 
 export type ServerMsg =
   | PresenceServerMsg
@@ -70,4 +76,6 @@ export type ServerMsg =
   | SettingsServerMsg
   | UsageServerMsg
   | ToysServerMsg
-  | ComposioServerMsg;
+  | ComposioServerMsg
+  | GamesServerMsg
+  | OrgsServerMsg;

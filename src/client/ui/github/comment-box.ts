@@ -1,9 +1,10 @@
 import type { GhComment } from '../../../shared/protocol';
-import type { Net } from '../../net';
+import type { Net } from '../../shared/net';
 import { h } from '../dom';
 import { markdown } from '../markdown';
 import { commentWaiters } from './api';
 import { DRAFT_KEY, pref, savePref } from './prefs';
+import { userStorage } from '../../state/user-storage';
 
 // ---- Comment box --------------------------------------------------------------------------------
 
@@ -51,7 +52,7 @@ export function commentBox(kind: 'issue' | 'pull', number: number, itemUrl: stri
     if (ta.value) savePref(draftKey, ta.value);
     else
       try {
-        localStorage.removeItem(draftKey);
+        userStorage.removeItem(draftKey);
       } catch {
         // storage blocked
       }

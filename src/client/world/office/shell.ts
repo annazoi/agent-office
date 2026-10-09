@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BALCONY_DOOR, EXIT_DOOR, FLOOR, WALL_HEIGHT, WALL_T, WINDOWS, WING, type Opening, type Side } from '../../../shared/layout';
+import { BALCONY_DOOR, EXIT_DOOR, FLOOR, WALL_HEIGHT, WALL_T, WINDOWS, WING, type Opening, type Side } from '../../../shared/building/layout';
 import type { NightParts } from '../outside';
 import { mergeByMaterial, mesh, textPlane, toon } from '../toon';
 import type { Collider } from '../types';

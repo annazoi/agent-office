@@ -27,13 +27,14 @@ What `up` does, in a few minutes the first time:
 6. Signs the GitHub CLI in with your local `gh auth token` (kept on the volume), and gives git your name and email.
 7. Opens an SSH tunnel and your browser at `http://localhost:4600`. **The first page shows the office password once. Write it down.** The office then keeps only a hash of it.
 
-The office listens on `127.0.0.1:4600` in its machine, and everyone reaches it through the tunnel. `localhost` counts as a secure origin, so voice and screen sharing work, with no certificates to manage. Your key logs in as `agentoffice`, the user that runs the office (`deploy/fly.sh ssh` gives you its shell). If the office's sshd is ever down, `fly ssh console -a <app>` still gets you a root shell through Fly's own SSH, which keeps port 22 in the machine (the office's sshd listens on 2222 there, and the app's public port leads to it). The office starts with no floors: ride the elevator and pick one of the repositories your GitHub token can see.
+The office listens on `127.0.0.1:4600` in its machine, and everyone reaches it through the tunnel. `localhost` counts as a secure origin, so voice and screen sharing work, with no certificates to manage. Your key logs in as `agentoffice`, the user that runs the office (`deploy/fly.sh ssh` gives you its shell). If the office's sshd is ever down, `fly ssh console -a <app>` still gets you a root shell through Fly's own SSH, which keeps port 22 in the machine (the office's sshd listens on 2222 there, and the app's public port leads to it). The office starts on its own **Office** floor, which isn't a project: ride the elevator and pick one of the repositories your GitHub token can see to add one.
 
 **What survives a restart.** A restart, a redeploy or a resize restarts the machine from a fresh copy of the image; the volume stays. On it:
 
 | On the volume | What it holds |
 | --- | --- |
-| `/data/home/agent-office` | The office's own data: the password hash, accounts and invites, floors, chat, settings, arcade scores, each account's own Claude and GitHub sign-ins |
+| `/data/postgres` | The office's database: the password hash, accounts and invites, everyone's own settings, floors, chat, arcade scores (unless `DATABASE_URL` names another, such as Neon) |
+| `/data/home/agent-office` | The office's folder: each account's own Claude and GitHub logins, and `.env` with the database's address |
 | `/data/home/workspace` | The projects, cloned as `<owner>/<repo>`, with the workers' worktrees |
 | `/data/home/.local`, `.claude`, `.claude.json` | Claude Code itself, its sign-in, and the sessions workers resume |
 | `/data/home/.config/gh`, `.gitconfig` | The GitHub CLI's sign-in and git's name and email |
@@ -62,7 +63,7 @@ deploy/fly.sh restart                 # restart the machine without rebuilding
 deploy/fly.sh resize performance-2x   # another machine size (memory: resize <size> 16gb)
 deploy/fly.sh pause                   # stop the machine, and paying for its CPU and memory
 deploy/fly.sh resume                  # start it again and open it
-deploy/fly.sh reset-password          # new password, shown once; signs everyone out
+deploy/fly.sh reset-password          # new office password (what people register with), shown once
 deploy/fly.sh ssh | logs              # a shell in the machine / follow the office's logs
 ```
 

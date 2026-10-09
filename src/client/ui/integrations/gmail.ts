@@ -1,5 +1,5 @@
 // The mailroom's panel: what's unread in your inbox, a message to read, and a reply (or a fresh email).
-import type { MailMessage, MailSummary } from '../../../shared/composio-api';
+import type { MailMessage, MailSummary } from '../../../shared/integrations/composio-api';
 import { h, toast } from '../dom';
 import { act, get } from './api';
 import { busy, errorRow, field, fmtWhen, footerNote, gate, input, loading, openPanel, row, rows, textarea, type PanelDeps } from './common';

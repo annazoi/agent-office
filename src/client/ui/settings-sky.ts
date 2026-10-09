@@ -1,6 +1,6 @@
 // ⚙️ Settings' Outside, under Building: what the sky's doing, and which clock it keeps, for everyone
-// (see server/sky.ts).
-import type { Net } from '../net';
+// (see server/floor/sky.ts).
+import type { Net } from '../shared/net';
 import { store } from '../state';
 import { h } from './dom';
 import { describeSky } from '../world/sky';

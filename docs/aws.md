@@ -28,7 +28,7 @@ What `up` does, in about 2 minutes:
 4. Runs the same [`deploy/provision.sh`](../deploy/provision.sh) as [any server](self-hosting.md): it installs Node 22, git, the GitHub CLI and **Claude Code**, clones the latest agent-office from GitHub and runs `npm i`. The office keeps its data in `~/agent-office` on the machine and clones projects into `~/workspace/<owner>/<repo>`.
 5. Runs the office under systemd with `Restart=always`, so it comes back after a crash or a reboot, and `KillMode=process`, so restarting it leaves the workers running. It listens on `127.0.0.1:4600` on the machine, so the only way in is an SSH tunnel.
 6. Opens an SSH tunnel and your browser at `http://localhost:4600`. **The first page shows the office password once. Write it down.** The server then keeps only a hash, so nobody can display the password again.
-7. The office opens on its elevator with no floors yet. It lists every repository your GitHub token can see: pick one and it becomes the first floor.
+7. The office opens on its own **Office** floor, which isn't a project. The elevator lists every repository your GitHub token can see: pick one and it becomes a floor of its own.
 
 Everything goes through SSH, so there are no certificate warnings, and `localhost` counts as a secure origin: voice and screen sharing just work. Keep the terminal open while you use the office; Ctrl-C closes the tunnel. Next time, run `deploy/aws.sh open`. If port 4600 is taken on your machine, it picks the next free one.
 
@@ -78,7 +78,7 @@ deploy/aws.sh revoke 203.0.113.7   # …and take it back
 deploy/aws.sh status               # instance, address, office up?, team, allowed IPs
 deploy/aws.sh resize t3.2xlarge    # bigger or smaller machine; same address, ~1-2 min of downtime
 deploy/aws.sh update               # install the latest agent-office and restart
-deploy/aws.sh reset-password       # new password, shown once; signs everyone out
+deploy/aws.sh reset-password       # new office password (what people register with), shown once
 deploy/aws.sh ssh | logs           # get on the box / follow the office logs
 ```
 
@@ -88,7 +88,7 @@ An office created before the SSH tunnel served HTTPS on port 443 with a self-sig
 
 Useful options for `up`:
 
-- `--project owner/repo` also clones that repo as the office's first floor. Without it, you pick projects in the elevator. (Before, the office was started in the GitHub origin of the directory you ran `up` from, which is usually agent-office itself. An office set up that way keeps its data in that checkout after `up`, and you can take agent-office off the building in the elevator.)
+- `--project owner/repo` is no longer used: the office starts with no project, and everyone connects their own GitHub and adds theirs in the elevator. (Before, the office was started in the GitHub origin of the directory you ran `up` from, which is usually agent-office itself. An office set up that way keeps its data in that checkout after `up`, and you can take agent-office off the building in the elevator.)
 - `--instance-type`, `--disk` and `--region` set the machine size, disk size and region.
 - `--allow <ip>` lets more IPs reach SSH from the start.
 - `--name <name>` runs several offices side by side.
@@ -100,7 +100,7 @@ Useful options for `up`:
 
 That's the office's own sign-in, which workers use while you're in on the office password. Once teammates have [accounts](../README.md#add-users), each of them signs in to their own Claude in **☰ → 🔐 Your sign-ins**, and their workers run on their own plan. Admins can pick the office's own there instead.
 
-**GitHub.** By default, your local `gh auth token` is used to sign in the GitHub CLI on the machine. The office uses it to list and clone your repos and to read the issue and PR boards, so it needs access to them. On the office password, commenting, merging, pushing and opening PRs use it too. People with accounts do those as themselves, with the GitHub account they sign in to in **🔐 Your sign-ins**. Every worker runs as the same user on the machine, so anyone who can use the office can get at that token: pass `--github-token <fine-grained token>` or `--no-github-token` if that's too much.
+**GitHub.** By default, your local `gh auth token` is used to sign in the GitHub CLI on the machine. The office uses it to read the issue and PR boards, so it needs access to them (projects are listed and cloned with each person's own GitHub on Composio, not with this token). On the office password, commenting, merging, pushing and opening PRs use it too. People with accounts do those as themselves, with the GitHub account they sign in to in **🔐 Your sign-ins**. Every worker runs as the same user on the machine, so anyone who can use the office can get at that token: pass `--github-token <fine-grained token>` or `--no-github-token` if that's too much.
 
 ## Tailscale
 

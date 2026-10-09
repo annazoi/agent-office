@@ -1,6 +1,6 @@
-// The Composio stations' HTTP calls (/api/composio/…, see src/shared/composio-api.ts), as the
+// The Composio stations' HTTP calls (/api/composio/…, see src/shared/integrations/composio-api.ts), as the
 // signed-in person, on the floor you're on (so what you do floats over your head there).
-import { COMPOSIO_API, type ComposioConnectLink, type ComposioDone, type ComposioStatus } from '../../../shared/composio-api';
+import { COMPOSIO_API, type ComposioConnectLink, type ComposioDone, type ComposioStatus } from '../../../shared/integrations/composio-api';
 import type { ComposioToolkit } from '../../../shared/protocol';
 import { store } from '../../state';
 import { getJson } from '../github/api';

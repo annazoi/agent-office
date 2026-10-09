@@ -7,7 +7,7 @@
 import * as THREE from 'three';
 import type { Ctx } from '../../core/context';
 import type { Parts } from '../../core/parts';
-import { needingYou } from '../../nextup';
+import { needingYou } from '../../shared/nextup';
 import { store } from '../../state';
 import { $ } from '../../ui/dom';
 import { bannerText, Fresh, Reminders, waitKey } from './logic';

@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
-# Starts the office in its container (deploy/container/Dockerfile): sshd on port 22, then the
-# office as agentoffice on 127.0.0.1:4600.
+# Starts the office in its container (deploy/container/Dockerfile): sshd on port 22, its database
+# (PostgreSQL on the volume, unless DATABASE_URL names one), then the office as agentoffice on
+# 127.0.0.1:4600.
 #
 # Everything that has to outlive a restart or a redeploy lives on the volume at /data:
-#   /data/home   agentoffice's home: the office's data in ~/agent-office (password, accounts, floors,
-#                chat, per-account sign-ins), the projects in ~/workspace, Claude Code and its sign-in
-#                (~/.local, ~/.claude, ~/.claude.json), the GitHub CLI's (~/.config/gh), ~/.gitconfig
+#   /data/home   agentoffice's home: the office's folder ~/agent-office (workers' worktrees, each
+#                account's Claude and GitHub logins), the projects in ~/workspace, Claude Code and its
+#                sign-in (~/.local, ~/.claude, ~/.claude.json), the GitHub CLI's (~/.config/gh), ~/.gitconfig
+#   /data/postgres  the office's database (password, accounts and everyone's settings, floors, chat),
+#                when DATABASE_URL doesn't name one somewhere else
 #   /data/ssh    the SSH host key, so ssh keeps trusting the office after a redeploy
 #   /data/team   teammates' keys (office's authorized_keys), from 👥 Invite teammates
 set -euo pipefail
@@ -56,16 +59,35 @@ mkdir -p /run/sshd
 (while :; do /usr/sbin/sshd -D -e -p "$SSHD_PORT"; sleep 2; done) &
 say "sshd is listening on port $SSHD_PORT${AGENT_OFFICE_PUBLIC_HOST:+ (reached at $AGENT_OFFICE_PUBLIC_HOST)}"
 
+# The office's database: the one DATABASE_URL names, or PostgreSQL here, with its data on the volume,
+# which agentoffice signs in to by its Unix socket.
+if [[ -z "${DATABASE_URL:-}" ]]; then
+  PG_BIN=$(ls -d /usr/lib/postgresql/*/bin | sort -V | tail -1)
+  PG_DATA=$DATA/postgres
+  install -d -m 700 -o postgres -g postgres $PG_DATA
+  install -d -m 2775 -o postgres -g postgres /var/run/postgresql
+  if [[ ! -f $PG_DATA/PG_VERSION ]]; then
+    say "making the office's database in $PG_DATA (first start)"
+    setpriv --reuid=postgres --regid=postgres --init-groups "$PG_BIN/initdb" -D $PG_DATA -U postgres -A peer -E UTF8 >/dev/null
+  fi
+  setpriv --reuid=postgres --regid=postgres --init-groups "$PG_BIN/pg_ctl" -D $PG_DATA -w -l $PG_DATA/server.log \
+    -o "-c listen_addresses='' -c unix_socket_directories=/var/run/postgresql" start >/dev/null
+  pg() { setpriv --reuid=postgres --regid=postgres --init-groups psql -h /var/run/postgresql -U postgres -qtAc "$1"; }
+  pg "select 1 from pg_roles where rolname = '$RUN_USER'" | grep -q 1 || pg "create role $RUN_USER login"
+  pg "select 1 from pg_database where datname = 'agent_office'" | grep -q 1 || pg "create database agent_office owner $RUN_USER"
+  export DATABASE_URL="postgresql://$RUN_USER@/agent_office?host=/var/run/postgresql"
+  say "the office's database is PostgreSQL on the volume"
+fi
+# Where `agent-office` run over ssh (accounts, --reset-password) finds the same database.
+"${AS_USER[@]}" sh -c 'umask 077; mkdir -p "$1"; f="$1/.env"; touch "$f"; grep -v "^DATABASE_URL=" "$f" >"$f.new" || true; printf "DATABASE_URL=\"%s\"\n" "$2" >>"$f.new"; mv "$f.new" "$f"' sh $RUN_HOME/agent-office "$DATABASE_URL"
+
 if [[ ! -x $RUN_HOME/.local/bin/claude ]]; then
   say "installing Claude Code in $RUN_HOME/.local (first start)"
   "${AS_USER[@]}" bash -c 'curl -fsSL https://claude.ai/install.sh | bash' >/dev/null ||
     say "couldn't install Claude Code; it's tried again at the next start"
 fi
 "${AS_USER[@]}" mkdir -p $RUN_HOME/workspace
-# Once: after that, the folder is the admins' to move in ⚙️ Settings.
-if [[ ! -f $RUN_HOME/agent-office/.agent-office/projects-folder.json ]]; then
-  "${AS_USER[@]}" node /opt/agent-office/bin/agent-office.js setup --projects $RUN_HOME/workspace </dev/null
-fi
 "${AS_USER[@]}" node /usr/local/lib/agent-office/onboard.js $RUN_HOME/workspace
 
-exec "${AS_USER[@]}" node /opt/agent-office/bin/agent-office.js --host 127.0.0.1 --port 4600 --no-open
+# Until an admin picks another folder in ⚙️ Settings, projects are cloned into the workspace.
+exec "${AS_USER[@]}" node /opt/agent-office/bin/agent-office.js --default-projects $RUN_HOME/workspace --host 127.0.0.1 --port 4600 --no-open

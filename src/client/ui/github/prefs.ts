@@ -1,11 +1,12 @@
 import type { GhMergeMethod } from '../../../shared/protocol';
+import { userStorage } from '../../state/user-storage';
 
-// What the windows remember in this browser: how you last merged, the Files tab's layout, which tab
-// you were on, and the comment you were writing.
+// What the windows remember for you, with your account (see state/user-storage.ts): how you last
+// merged, the Files tab's layout, which tab you were on, and the comment you were writing.
 
 export function pref<T>(key: string, fallback: T): T {
   try {
-    return (JSON.parse(localStorage.getItem(key) ?? 'null') as T) ?? fallback;
+    return (JSON.parse(userStorage.getItem(key) ?? 'null') as T) ?? fallback;
   } catch {
     return fallback;
   }
@@ -13,7 +14,7 @@ export function pref<T>(key: string, fallback: T): T {
 
 export function savePref(key: string, v: unknown) {
   try {
-    localStorage.setItem(key, JSON.stringify(v));
+    userStorage.setItem(key, JSON.stringify(v));
   } catch {
     // storage blocked
   }

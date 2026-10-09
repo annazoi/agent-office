@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { EXIT_DOOR, STOREY, streetBelow } from '../../../shared/layout';
+import { EXIT_DOOR, STOREY, streetBelow } from '../../../shared/building/layout';
 import { buildGarage } from '../outside';
 import { mergeByMaterial } from '../toon';
 import type { Collider } from '../types';

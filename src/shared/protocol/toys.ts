@@ -1,12 +1,12 @@
 // The toys on every floor: pictures, the jukebox, the arcade, the whiteboard, the ball, the cars and the dog.
 
-import type { CabinetFrame, CabinetState } from '../cabinet.js';
-import type { DecorPlacement, Decoration } from '../decor.js';
-import type { DogState } from '../dog.js';
-import type { CarSeat, CarState } from '../garage.js';
-import type { BallState } from '../hoop.js';
-import type { JukeboxState } from '../jukebox.js';
-import type { WbElement, WbPointer } from '../whiteboard.js';
+import type { CabinetFrame, CabinetState } from '../toys/cabinet.js';
+import type { DecorPlacement, Decoration } from '../building/decor.js';
+import type { DogState } from '../toys/dog.js';
+import type { CarSeat, CarState } from '../toys/garage.js';
+import type { BallState } from '../toys/hoop.js';
+import type { JukeboxState } from '../toys/jukebox.js';
+import type { WbElement, WbPointer } from '../toys/whiteboard.js';
 
 export type DecorClientMsg =
   /** Hang a picture on a wall. */

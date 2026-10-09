@@ -1,4 +1,4 @@
-import { FLOOR, inWing } from '../../shared/layout';
+import { FLOOR, inWing } from '../../shared/building/layout';
 import { makeBuffers, type Buffers } from './buffers';
 import { place, rms } from './dsp';
 import { WINDOWS, type Pos } from './places';

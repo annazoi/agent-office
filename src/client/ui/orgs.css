@@ -1,0 +1,11 @@
+/* Organisations: which you're in, their people, and the invites out. */
+.orgs select { font: inherit; font-weight: 800; border: 3px solid var(--ink); border-radius: 12px; padding: 4px 8px; background: #fff; color: var(--ink); }
+.orgs .invite-row > select:only-child { flex: 1; min-width: 0; }
+.orgs .team-list select { padding: 1px 6px; font-size: 13px; border-width: 2px; }
+.orgs .dot { background: #dee2e6; }
+.orgs .dot.on { background: var(--good); }
+.orgs .you { color: var(--muted); font-weight: 600; }
+.orgs .cmd { margin-top: 10px; }
+.orgs li.expired .name { color: var(--muted); text-decoration: line-through; }
+.orgs .role.owner { background: #ffd6e7; }
+.orgs .org-danger { display: flex; gap: 8px; justify-content: flex-end; margin-top: 18px; padding-top: 12px; border-top: 2px dashed var(--line, #dee2e6); }

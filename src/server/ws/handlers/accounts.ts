@@ -1,4 +1,4 @@
-// Inviting, listing and revoking people. Admins only: an admin account, or the shared password.
+// Inviting, listing and revoking people. Admin accounts only.
 import type { AccountsClientMsg } from '../../../shared/protocol.js';
 import type { Ctx } from '../../office/context.js';
 import type { Client } from '../../office/client.js';
@@ -55,15 +55,13 @@ export const accountsHandlers = {
     // Only admins may use the office's own sign-ins: a demoted one is back on their own.
     void ctx.signins.look(a.id, true);
   },
-  'accounts.shared'(ctx, c, msg) {
+  'accounts.registration'(ctx, c, msg) {
     const who = c.peer.name;
     if (!admin(ctx, c)) return;
-    if (msg.on === ctx.accounts.sharedPassword) return;
-    // Only someone who can still get in without it may switch it off.
-    if (!msg.on && !c.accountId) return ctx.warn(c, 'Sign in with an admin account of your own first, or nobody could get back in');
-    ctx.accounts.setSharedPassword(!!msg.on);
-    console.log(`  ${who} switched the shared office password ${msg.on ? 'on' : 'off'}`);
-    ctx.toastAll(msg.on ? `${who} switched the shared office password back on` : `🔑 ${who} switched off the shared office password — everyone signs in with their own account now`);
-    ctx.accountsChanged(); // signs out whoever came in with it
+    if (!!msg.on === ctx.accounts.state(new Set()).openRegistration) return;
+    ctx.accounts.setOpenRegistration(!!msg.on);
+    console.log(`  ${who} switched registering with the office password ${msg.on ? 'on' : 'off'}`);
+    ctx.toastAll(msg.on ? `${who} let people register with the office password again` : `🔑 ${who} closed registration — new people need an invite now`);
+    ctx.accountsChanged();
   },
 } satisfies HandlerMap<AccountsClientMsg>;

@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import { BALCONY, GOLF_HOLE } from '../../../shared/layout';
+import { BALCONY, GOLF_HOLE } from '../../../shared/building/layout';
 import { isTyping, type PlayerController } from '../../player';
 import { $, h, modalOpen } from '../../ui/dom';
 import { IMPACT, type Person } from '../../world/character';

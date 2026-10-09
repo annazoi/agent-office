@@ -81,7 +81,7 @@ deploy/azure.sh service 5173             # open a worker's web server from the ð
 deploy/azure.sh status                   # VM, address, office up?, team, allowed IPs
 deploy/azure.sh resize Standard_D8as_v5  # bigger or smaller VM; same address, a few minutes of downtime
 deploy/azure.sh update                   # install the latest agent-office and restart
-deploy/azure.sh reset-password           # new password, shown once; signs everyone out
+deploy/azure.sh reset-password           # new office password (what people register with), shown once
 deploy/azure.sh ssh | logs               # get on the VM / follow the office logs
 ```
 
@@ -92,14 +92,14 @@ Useful options for `up`:
 - `--location westeurope` picks the region for a new office (`--region` works too). Without it, `up` uses your Azure CLI's default location (`az config set defaults.location=westeurope`), else `eastus`. An office stays in the region it was created in.
 - `--subscription <id or name>` uses another subscription than the Azure CLI's current one. The office's other commands remember it.
 - `--size` and `--disk` set the VM size and disk size.
-- `--project owner/repo` also clones that repo as the office's first floor.
+- `--project owner/repo` is no longer used: everyone adds their projects in the elevator, with their own GitHub (Composio).
 - `--allow <ip>` lets more IPs reach SSH from the start.
 - `--name <name>` runs several offices side by side, each in its own resource group, `agent-office-<name>`. Every other command then takes the same `--name`, before or after the command, and the commands the office itself suggests include it.
 - `--claude-token "$(claude setup-token)"`, `--anthropic-api-key`, `--github-token` and `--no-github-token` work as they do on [AWS](aws.md).
 
 **From a second computer.** The SSH key lives on the computer that ran `up`. On another one, signed in to the same subscription (or with `--subscription`), run `deploy/azure.sh connect`: it makes that computer a key, adds it to the VM with `az vm user update`, and lets its IP through the firewall. It changes nothing else, where `up` would also re-provision the VM with that computer's GitHub token and git name. Copying `~/.config/agent-office/azure/<name>/` across works too.
 
-**Running `up` again** re-provisions the VM, which is how `--size`, `--project` or a new `--claude-token` get applied. Without `--claude-token` or `--anthropic-api-key`, it keeps the Claude sign-in it was given before.
+**Running `up` again** re-provisions the VM, which is how `--size` or a new `--claude-token` get applied. Without `--claude-token` or `--anthropic-api-key`, it keeps the Claude sign-in it was given before.
 
 **Settings.** Like on AWS, office settings go in `/etc/agent-office/env` on the VM (`deploy/azure.sh ssh`, then `sudo nano /etc/agent-office/env` and `sudo systemctl restart agent-office`). The VM's clock is UTC, so set `AGENT_OFFICE_CITY="Portland, Oregon"` there for the office's weather, and its holiday calendar, to be yours.
 

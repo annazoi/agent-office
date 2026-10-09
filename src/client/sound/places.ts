@@ -1,4 +1,4 @@
-import { CABINET, FLOOR, GONG, WINDOWS as OPENINGS } from '../../shared/layout';
+import { CABINET, FLOOR, GONG, WINDOWS as OPENINGS } from '../../shared/building/layout';
 
 /** A point in the office, where a sound comes from or where you hear it. */
 export type Pos = { x: number; y: number; z: number };

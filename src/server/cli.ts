@@ -1,36 +1,49 @@
 import os from 'node:os';
 import path from 'node:path';
-// A .env file next to the project (DATABASE_URL and the like), if there is one; never required.
+import tty from 'node:tty';
+// A .env file where the office starts (DATABASE_URL and the like), if there is one.
 import 'dotenv/config';
-import { loadConfig, ensureSelfSigned } from './config.js';
+import { ConfigDone, loadConfig, ensureSelfSigned, type Config } from './config.js';
+import { openDatabase, takeDatabaseUrl } from './db/postgres.js';
+import { stateDb, useStateDb } from './db/state.js';
 import { startServer } from './server.js';
-import { tildify } from './building.js';
+import { tildify } from './floor/building.js';
 import { openBrowser } from './browser.js';
 
 const argv = process.argv.slice(2);
-if (argv[0] === 'prune') {
-  const { prune } = await import('./prune.js');
-  process.exit(await prune(argv.slice(1)));
-}
-if (argv[0] === 'accounts') {
-  const { accountsCommand } = await import('./accounts.js');
-  process.exit(await accountsCommand(argv.slice(1)));
-}
-if (argv[0] === 'setup') {
-  const { setupCommand } = await import('./setup.js');
-  process.exit(await setupCommand(argv.slice(1)));
-}
 if (argv[0] === 'tunnel') {
+  // On your own computer, for an office somewhere else: it has no database of its own.
   const { tunnelCommand } = await import('./tunnel/index.js');
   process.exit(await tunnelCommand(argv.slice(1)));
 }
+// Everything the office keeps is in its database, so every other command opens it first.
+const url = takeDatabaseUrl(argv);
+if (!argv.includes('-h') && !argv.includes('--help')) useStateDb(await openDatabase(url));
+/** Exits once what the command changed is in the database. */
+const done = async (code: number) => {
+  await stateDb().close().catch(() => {});
+  process.exit(code);
+};
+if (argv[0] === 'prune') {
+  const { prune } = await import('./prune.js');
+  await done(await prune(argv.slice(1)));
+}
+if (argv[0] === 'accounts') {
+  const { accountsCommand } = await import('./accounts/accounts.js');
+  await done(await accountsCommand(argv.slice(1)));
+}
 
-const cfg = loadConfig(argv);
+let cfg: Config;
+try {
+  cfg = loadConfig(argv);
+} catch (err) {
+  if (err instanceof ConfigDone) await done(err.code);
+  throw err;
+}
 await ensureSelfSigned(cfg);
-const { interactive, welcome } = await import('./setup.js');
-const atTerminal = interactive();
-// A new office started in a terminal: where projects go, GitHub, and the first floor, before it opens.
-if (!cfg.project && atTerminal) await welcome(cfg);
+// Someone's at a terminal (asked of the file descriptors, not process.stdin: on Windows, opening stdin
+// when another process is reading it, as `npm run dev` does, blocks forever).
+const atTerminal = tty.isatty(1) && tty.isatty(0) && !process.env.CI;
 
 let office: Awaited<ReturnType<typeof startServer>>;
 try {
@@ -58,24 +71,23 @@ const agent = office.resolvedAgent;
 function floorsLine() {
   const floors = office.floors();
   const where = `new ones are cloned into ${tildify(office.projectsDir())}`;
-  if (!floors.length) return `🛗 no floors yet — ride the elevator in the office to add a project (${where})`;
   return `🛗 ${floors.length} floor${floors.length === 1 ? '' : 's'}: ${floors.map((f) => f.def.name).join(', ')} (${where})`;
 }
 
 function passwordLine() {
-  if (!office.accounts.sharedPassword) return 'off — everyone signs in with their own account (agent-office accounts)';
+  if (office.accounts.any && !office.accounts.openRegistration) return 'not needed — registration is closed, new people come in by invite (agent-office accounts)';
   if (!cfg.passwordGenerated) return '(from --password / AGENT_OFFICE_PASSWORD)';
   if (cfg.claimToken && !cfg.claimed) return 'shown exactly once to whoever opens the claim link (/claim?t=…)';
   if (cfg.claimed || !cfg.password) return '(already claimed — never shown again; reset with --reset-password)';
   return cfg.password;
 }
 
-// Someone started it in a terminal: a link that signs them in once, opened in their browser, so
-// there's no password to copy. Not for an office that's claimed from a link (deploy/provision.sh)
-// or signed in to with accounts only.
+// Someone started it in a terminal: a link that lets them register once, opened in their browser,
+// so there's no password to copy (the first account is the office's admin). Not for an office
+// that's claimed from a link (deploy/provision.sh).
 let signIn = '';
 let opened = false;
-if (atTerminal && office.accounts.sharedPassword && !cfg.claimToken) {
+if (atTerminal && !cfg.claimToken) {
   signIn = here + office.signInLink();
   if (cfg.open) opened = openBrowser(signIn);
 }
@@ -88,7 +100,7 @@ console.log(`
   ${floorsLine()}
 
   ${[...urls].join('\n  ')}${loopback ? '\n  (only this computer can open it: --host 0.0.0.0 lets your network in)' : ''}
-${signIn ? `\n  sign in: ${signIn}\n           ${opened ? 'opened in your browser; ' : ''}the link works once\n` : ''}
+${signIn ? `\n  register: ${signIn}\n            ${opened ? 'opened in your browser; ' : ''}the link works once (or sign in, if you have an account)\n` : ''}
   password: ${passwordLine()}
   default agent: ${[agent ?? `${cfg.agentCmd} (via login shell)`, ...cfg.agentArgs].join(' ')}
   choose a provider (including Pi and Cursor) when hiring or queueing a task
@@ -105,7 +117,10 @@ const stop = (signal: NodeJS.Signals) => {
   const keep = signal === 'SIGTERM';
   console.log(keep ? '\n  closing the office — workers keep running for the next one…' : '\n  closing the office…');
   office.shutdown(keep);
-  setTimeout(() => process.exit(0), 300);
+  // Whatever the office saved on its way out goes to the database before it exits (or gives up after a few seconds).
+  const exit = () => process.exit(0);
+  setTimeout(exit, 5000).unref();
+  void new Promise((r) => setTimeout(r, 300)).then(() => stateDb().close()).finally(exit);
 };
 // Last line of defense: one bad request must never take down every running worker.
 process.on('unhandledRejection', (err) => console.error('agent-office: unhandled rejection', err));

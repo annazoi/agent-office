@@ -21,6 +21,7 @@ Back to the [README](../README.md).
 | Q | Put back the issue card you're carrying, or drop the basketball |
 | H | These controls; in a car, honk the horn |
 | T / Enter | Chat |
+| Left / right mouse | In a match in the [arena](games.md): fire, and hold the right button for the sights (the wheel steps a scope's zoom). **R** reloads, **1–5** and **Q** change gun, **B** opens the buy menu at the start of a round, **F** picks what you throw and **G** throws it, **C** (or Ctrl) crouches, and **Tab** shows the scoreboard. Leaving the match, or the arena, puts you straight back into the office's own controls |
 | G / 1–6 | Emote: hold G for the wheel (point and let go) or press 1–6 to wave, give a thumbs up, clap, dance, point or facepalm; everyone on your floor sees it |
 | / | Search the chat and every terminal on your floor |
 | Ctrl + K (⌘K on a Mac) | Command palette: find a worker, issue, PR, service, board, teammate or action; Enter opens it, Shift+Enter walks you there first |

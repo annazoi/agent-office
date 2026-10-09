@@ -2,7 +2,7 @@
  * The pieces every hint bar is made of (the key to press, the name of what you're facing, what's
  * going on there), for the office's own hints and every feature's (see core/context.ts's Hint).
  */
-import type { DeskKey } from '../interaction';
+import type { DeskKey } from '../input/interaction';
 import { h } from '../ui/dom';
 import type { Interactable } from '../world/types';
 import type { Hint } from './context';

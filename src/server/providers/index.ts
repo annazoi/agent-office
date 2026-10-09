@@ -1,6 +1,6 @@
 // Every agent provider's adapter (see types.ts). Adding a provider: its adapter file, one line here
-// and its entry in shared/providers.ts.
-import type { AgentProvider } from '../../shared/providers.js';
+// and its entry in shared/agents/providers.ts.
+import type { AgentProvider } from '../../shared/agents/providers.js';
 import { claude } from './claude.js';
 import { codex } from './codex.js';
 import { cursor } from './cursor.js';
@@ -36,7 +36,7 @@ export function titleNoise(title: string): boolean {
   return Object.values(PROVIDERS).some((p) => p.titleNoise?.test(title));
 }
 
-/** The adapter of `provider`, when it's one (workers.json and the wire can hold anything). */
+/** The adapter of `provider`, when it's one (the workers document and the wire can hold anything). */
 export function providerAdapter(provider: unknown): SomeAdapter | undefined {
   return typeof provider === 'string' && Object.hasOwn(PROVIDERS, provider) ? PROVIDERS[provider as AgentProvider] : undefined;
 }

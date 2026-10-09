@@ -1,5 +1,5 @@
 // The Composio integrations: Linear, Notion, Slack, Google Calendar and Gmail as stations in the
-// office, each person connecting their own accounts (see src/server/composio.ts).
+// office, each person connecting their own accounts (see src/server/integrations/composio.ts).
 
 /** The toolkits with a station in the office, by Composio's slug for each. */
 export const COMPOSIO_STATION_TOOLKITS = ['linear', 'notion', 'slack', 'googlecalendar', 'gmail'] as const;
@@ -34,7 +34,7 @@ export function isComposioToolkit(x: unknown): x is ComposioToolkit {
  * set, who set it, and which toolkits are switched on.
  */
 export interface ComposioState {
-  /** An API key is set (from setup, --composio-key, or ⚙️ Settings). */
+  /** The server has an API key (COMPOSIO_API_KEY in its environment). */
   configured: boolean;
   /** The SDK could be loaded on this machine (it needs Node 22.22+). */
   available: boolean;
@@ -51,15 +51,13 @@ export type ComposioConnection = 'connected' | 'pending' | 'off';
 /** One person's own connections, sent only to them. */
 export interface ComposioConnections {
   toolkits: Partial<Record<ComposioToolkit, ComposioConnection>>;
-  /** When they can't connect: on the shared password with no account, or the office has no key. */
+  /** When they can't connect: the office has no key, or Composio can't run here. */
   blocked?: string;
 }
 
 export type ComposioClientMsg =
   /** Asks for the office's state and your own connections. */
   | { t: 'composio.get' }
-  /** Admins: set (or '' to remove) the office's Composio API key. */
-  | { t: 'composio.key'; apiKey: string }
   /** Admins: which toolkits the office shows. */
   | { t: 'composio.toolkits'; toolkits: ComposioToolkit[] };
 

@@ -1,13 +1,13 @@
 // A worker's own worktree, or its workspace across repositories: their folder names, what's kept
-// of them in workers.json, making them, keeping each worker's branch up to date, noticing one deleted
+// of them in the workers document, making them, keeping each worker's branch up to date, noticing one deleted
 // from under a worker and putting it back, and what becomes of them when the worker goes home.
 import { execFileSync } from 'node:child_process';
 import { existsSync, readdirSync, rmdirSync, unlinkSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import type { WorkerInfo, WorkerRepo } from '../../shared/protocol.js';
-import { normalizeRepo } from '../../shared/floors.js';
-import { officePrompt } from '../prompts.js';
-import { WORKSPACE_FILES, WORKTREES_DIR, Worktrees, describeWork, workspaceOf, type WorktreeCleanup, type WorktreeRef, type WorktreeState } from '../worktrees.js';
+import { normalizeRepo } from '../../shared/building/floors.js';
+import { officePrompt } from '../floor/prompts.js';
+import { WORKSPACE_FILES, WORKTREES_DIR, Worktrees, describeWork, workspaceOf, type WorktreeCleanup, type WorktreeRef, type WorktreeState } from './worktrees.js';
 import { midTurn } from './lifecycle.js';
 import type { RepoSource, Worker, WorkerContext, Worktree } from './types.js';
 
@@ -37,7 +37,7 @@ export function clearWorkspace(abs: string) {
   }
 }
 
-/** The other repositories of a worker across repositories, as workers.json kept them. */
+/** The other repositories of a worker across repositories, as the workers document kept them. */
 export function validRepos(raw: unknown): WorkerRepo[] | undefined {
   if (!Array.isArray(raw)) return undefined;
   const str = (v: unknown) => (typeof v === 'string' && v ? v : undefined);

@@ -4,12 +4,12 @@
  * (waking it if it's asleep) and its changes, the search over every terminal, and the task queue's window.
  */
 import * as THREE from 'three';
-import { isAsleep } from '../../../shared/status';
+import { isAsleep } from '../../../shared/agents/status';
 import type { Ctx } from '../../core/context';
 import type { CoreState } from '../../core/ctx';
 import type { Parts } from '../../core/parts';
-import { NextUp, waitingInOrder, waitingLabel } from '../../nextup';
-import { waitingOnSomeone } from '../../notify';
+import { NextUp, waitingInOrder, waitingLabel } from '../../shared/nextup';
+import { waitingOnSomeone } from '../../shared/notify';
 import { store } from '../../state';
 import { openChanges } from '../../ui/changes';
 import { Compass, type Bearing } from '../../ui/compass';
