@@ -7,16 +7,18 @@ import { mesh, toon } from '../../world/toon';
 // drawn on the camera itself, so it never clips into a wall.
 
 /** Where the gun sits from the hip, and where it comes to when you aim. */
-const HIP = new THREE.Vector3(0.26, -0.26, -0.52);
-const AIM = new THREE.Vector3(0, -0.14, -0.42);
+const HIP = new THREE.Vector3(0.2, -0.17, -0.62);
+const AIM = new THREE.Vector3(0, -0.1, -0.5);
+/** How big the gun is held: smaller than life, the way a first-person weapon always is. */
+const SCALE = 0.5;
 const RELOAD_DROP = 0.22;
 
 /** How a gun is shaped, by what kind it is: body, barrel and what's on top. */
 function build(w: Weapon): THREE.Group {
   const g = new THREE.Group();
-  const body = toon('#3a3f47');
-  const metal = toon('#787f8a');
-  const wood = toon('#8a5a32');
+  const body = toon('#5c636e');
+  const metal = toon('#a4acb8');
+  const wood = toon('#9c6838');
   const long = w.kind === 'sniper' || w.kind === 'heavy' || w.kind === 'rifle';
   if (w.kind === 'melee') {
     g.add(mesh(new THREE.BoxGeometry(0.03, 0.03, 0.17), body, 0, 0, 0.06, false));
@@ -48,8 +50,14 @@ function build(w: Weapon): THREE.Group {
   return g;
 }
 
-/** The gun you're holding, drawn on the camera. */
+/**
+ * The gun you're holding. Like the office's own hands (world/hands.ts) it lives in a small scene of
+ * its own with its own lights, drawn over the world after it with the depth buffer cleared, so it
+ * never clips into a wall you walk up to.
+ */
 export class ViewModel {
+  readonly scene = new THREE.Scene();
+  readonly camera = new THREE.PerspectiveCamera(55, 1, 0.01, 5);
   readonly group = new THREE.Group();
   private built = new Map<string, THREE.Group>();
   private shown?: THREE.Group;
@@ -66,14 +74,42 @@ export class ViewModel {
     this.flash = new THREE.Mesh(new THREE.SphereGeometry(0.07, 8, 6), new THREE.MeshBasicMaterial({ color: '#ffd166', transparent: true, opacity: 0.95, depthWrite: false }));
     this.flash.visible = false;
     this.group.add(this.flash);
-    this.group.renderOrder = 20;
+    const sun = new THREE.DirectionalLight('#fff1d6', 2.1);
+    sun.position.set(-0.6, 1.4, 0.9);
+    for (const l of [new THREE.HemisphereLight('#fff5e6', '#9aa3b0', 1.4), new THREE.AmbientLight('#ffffff', 0.6), sun]) this.scene.add(l);
+    this.scene.add(this.group);
+  }
+
+  /**
+   * The gun has a narrower lens than the world's, the way a first-person weapon always does: it keeps
+   * its size in the corner whatever the sights are doing to the view.
+   */
+  private setLens(aspect: number) {
+    if (this.camera.aspect === aspect) return;
+    this.camera.aspect = aspect;
+    this.camera.updateProjectionMatrix();
+  }
+
+  /** Draws the gun over the frame just rendered, keeping what's already on the screen. */
+  draw(renderer: THREE.WebGLRenderer, aspect: number) {
+    if (!this.group.visible) return;
+    this.setLens(aspect);
+    const was = renderer.autoClear;
+    renderer.autoClear = false;
+    renderer.clearDepth();
+    renderer.render(this.scene, this.camera);
+    renderer.autoClear = was;
   }
 
   /** Puts gun `id` in your hands. */
   hold(id: string) {
     const w = weaponOf(id);
     let g = this.built.get(w.id);
-    if (!g) this.built.set(w.id, (g = build(w)));
+    if (!g) {
+      g = build(w);
+      g.scale.setScalar(SCALE);
+      this.built.set(w.id, g);
+    }
     if (this.shown === g) return;
     if (this.shown) this.group.remove(this.shown);
     this.shown = g;

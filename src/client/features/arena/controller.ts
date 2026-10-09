@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { ARENA_SITE } from '../../../shared/games/fps/arena';
 import { GEAR, GEAR_BY_ID, type GearId } from '../../../shared/games/fps/gear';
-import { dirOf, type Vec3 } from '../../../shared/games/fps/hit';
+import { CROUCH_EYE, EYE, dirOf, eyeHeight, type Vec3 } from '../../../shared/games/fps/hit';
 import { fireEvery, weaponOf, type Weapon } from '../../../shared/games/fps/weapons';
 import type { Ctx, StopWhy } from '../../core/context';
 import type { Activity } from '../../core/registry';
@@ -15,8 +15,8 @@ import { ViewModel } from './viewmodel';
 
 /** How often where you are goes to the office while you're in a match, in ms. */
 const POSE_EVERY = 66;
-/** How far the camera drops when you crouch, and how fast it gets there. */
-const CROUCH_DROP = 0.52;
+/** How far the camera drops when you crouch, and how fast it gets there (see EYE and CROUCH_EYE). */
+const CROUCH_DROP = EYE - CROUCH_EYE;
 const CROUCH_SPEED = 7;
 /** How quickly the sights climb back down after a shot. */
 const RECOIL_RECOVER = 3.4;
@@ -61,9 +61,7 @@ export class Fighter implements Activity<StopWhy, KeyboardEvent, HTMLElement> {
   constructor(
     private ctx: Ctx,
     private deps: FighterDeps,
-  ) {
-    ctx.camera.add(this.model.group);
-  }
+  ) {}
 
   active(): boolean {
     return this.fighting;
@@ -225,7 +223,7 @@ export class Fighter implements Activity<StopWhy, KeyboardEvent, HTMLElement> {
   /** Where you're looking from, in the arena's own frame (which is what the office works in). */
   private eye(): Vec3 {
     const { player } = this.ctx;
-    return { x: player.pos.x - ARENA_SITE.x, y: player.pos.y + (this.crouch ? 0.92 - CROUCH_DROP * 0.5 : 0.92) + 0.48, z: player.pos.z - ARENA_SITE.z };
+    return { x: player.pos.x - ARENA_SITE.x, y: player.pos.y + eyeHeight(this.crouch), z: player.pos.z - ARENA_SITE.z };
   }
 
   // ---- Each frame ------------------------------------------------------------------------------------
@@ -324,6 +322,13 @@ export class Fighter implements Activity<StopWhy, KeyboardEvent, HTMLElement> {
   /** The gun in your hands changed under you (the office's word on it). */
   holding(id: string) {
     if (id) this.model.hold(id);
+  }
+
+  /** Draws the gun in your hands over the frame, once the world has been drawn. */
+  draw() {
+    const { renderer } = this.ctx;
+    const size = renderer.getSize(new THREE.Vector2());
+    this.model.draw(renderer, size.x / Math.max(1, size.y));
   }
 
   /** Where your eyes are in the world, for sounds. */

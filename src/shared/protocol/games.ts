@@ -42,8 +42,11 @@ export interface YouState {
   money: number;
   /** When you come back, as the office's clock; 0 when you're not waiting. */
   respawnAt: number;
-  /** Where the office put you when the round began, to start from. */
-  spawn?: { x: number; y: number; z: number; rotY: number };
+  /**
+   * Where the office put you, in the arena's own frame, and which placing it was: your page stands
+   * you there whenever `n` changes (a round starting, or coming back mid-round).
+   */
+  spawn?: { x: number; y: number; z: number; rotY: number; n: number };
   /** Blinded until this moment on the office's clock. */
   blindUntil?: number;
 }

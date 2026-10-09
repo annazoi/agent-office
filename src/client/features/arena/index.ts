@@ -73,6 +73,8 @@ export function installArena(ctx: Ctx, deps: ArenaDeps) {
     ctx.activities.stopAll('start');
     deps.placeAt(office.arena.arriveAt);
     player.room = { ...office.arena.bounds, wall: 0.6, enclosed: true };
+    // Sealed and roofed: no sky, no weather and no night out here (see Sky.setIndoors).
+    ctx.sky.setIndoors(true);
     ctx.sound.arenaScope();
     if (store.game.phase === 'idle' && !store.me.admin) toast('🎯 Nobody has opened a match in here yet — an administrator can', 'info');
     else showLobby();
@@ -83,6 +85,7 @@ export function installArena(ctx: Ctx, deps: ArenaDeps) {
     if (store.gameYou.in) ctx.net.send({ t: 'game.leave' });
     effects.clear();
     player.room = officeRoom;
+    ctx.sky.setIndoors(ctx.world().room.enclosed);
     deps.placeAt(office.arena.backAt);
   }
 
@@ -163,7 +166,14 @@ export function installArena(ctx: Ctx, deps: ArenaDeps) {
   // ---- What the office says ------------------------------------------------------------------------
 
   ctx.messages.on('game', () => syncFighting());
+  /** The placing the office last stood you at, so the same spot twice over still moves you. */
+  let stoodAt = 0;
   ctx.messages.on('game.you', () => {
+    const spawn = store.gameYou.spawn;
+    if (spawn && spawn.n !== stoodAt && inArena()) {
+      stoodAt = spawn.n;
+      fighter.placeAt(spawn);
+    }
     syncFighting();
     fighter.holding(store.gameYou.weapon);
   });
@@ -198,7 +208,7 @@ export function installArena(ctx: Ctx, deps: ArenaDeps) {
         ctx.shake(Math.min(0.5, event.damage / 90));
         break;
       case 'hitmark':
-        hud.hitmark(performance.now());
+        hud.hitmark(Date.now());
         ctx.sound.arenaHit(event.part === 'head');
         break;
       case 'throw':
@@ -234,8 +244,12 @@ export function installArena(ctx: Ctx, deps: ArenaDeps) {
   function syncFighting() {
     const you = store.gameYou;
     const live = store.game.phase === 'live';
-    if (you.in && you.alive && live && inArena()) fighter.begin();
-    else fighter.end();
+    if (you.in && you.alive && live && inArena()) {
+      // The round is yours now: the lobby window gets out of the way (Tab brings it back).
+      lobbyWindow?.close();
+      buyWindow?.close();
+      fighter.begin();
+    } else fighter.end();
   }
 
   // ---- Each frame -------------------------------------------------------------------------------------
@@ -244,6 +258,9 @@ export function installArena(ctx: Ctx, deps: ArenaDeps) {
     fighter.tick(dt, now);
     effects.update(dt);
   });
+
+  // After the office has drawn the frame (installLoop registers its own render tick first).
+  ctx.ticks.add('render', () => fighter.draw());
 
   ctx.ticks.add('others', () => {
     // Anybody down is out of sight until the round brings them back.
@@ -257,7 +274,7 @@ export function installArena(ctx: Ctx, deps: ArenaDeps) {
     }
   });
 
-  ctx.ticks.add('hud', ({ now }) => {
+  ctx.ticks.add('hud', () => {
     const you = store.gameYou;
     const show = inArena() && store.game.phase !== 'idle';
     hud.show(show);
@@ -265,7 +282,8 @@ export function installArena(ctx: Ctx, deps: ArenaDeps) {
     const w = weaponOf(you.weapon);
     const speed = player.moving ? (player.running ? 7.5 : 4.6) : 0;
     hud.sync(store.game, you, {
-      now,
+      // The match's clocks are the office's: its own `now`, not the page's.
+      now: Date.now(),
       spread: spreadFor(w, speed, false, fighter.aimed),
       scoped: fighter.scoped,
       crosshair: fighter.active(),
@@ -278,6 +296,7 @@ export function installArena(ctx: Ctx, deps: ArenaDeps) {
     fighter.end();
     effects.clear();
     player.room = officeRoom;
+    ctx.sky.setIndoors(ctx.world().room.enclosed);
   });
 
   return {

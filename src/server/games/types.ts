@@ -34,6 +34,8 @@ export interface Seat {
   nextThrow: number;
   /** When they come back, 0 when they aren't waiting to. */
   respawnAt: number;
+  /** Where the office last stood them, and which placing it was (see YouState.spawn). */
+  spawnAt?: { x: number; y: number; z: number; rotY: number; n: number };
   /** Blinded by a flash until this moment. */
   blindUntil: number;
   /** Where they last said they were, and when: what shots are worked out against. */

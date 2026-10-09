@@ -82,6 +82,7 @@ export class FpsRules implements GameRules {
   /** On their feet at their side's spot, whole again. */
   private place(room: Room, seat: Seat, n: number) {
     const at = this.spawnOf(seat.team === 'b' ? 'b' : 'a', n);
+    seat.spawnAt = { ...at, n: (seat.spawnAt?.n ?? 0) + 1 };
     seat.alive = true;
     seat.health = 100;
     seat.respawnAt = 0;
@@ -432,6 +433,7 @@ export class FpsRules implements GameRules {
       gear: Object.fromEntries(seat.gear),
       money: seat.money,
       respawnAt: seat.respawnAt,
+      ...(seat.spawnAt ? { spawn: seat.spawnAt } : {}),
       ...(seat.blindUntil ? { blindUntil: seat.blindUntil } : {}),
     };
   }

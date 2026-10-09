@@ -11,10 +11,15 @@ export interface Vec3 {
   z: number;
 }
 
-/** How tall someone is standing and crouched, where their eyes are, and how wide they are. */
+/**
+ * How tall someone is standing and crouched, where their eyes are, and how wide they are. The eye
+ * heights are the office's own camera height (EYE_HEIGHT in client/player/camera.ts) and that less
+ * the crouch, so a shot leaves the barrel exactly where the crosshair is.
+ */
 export const STAND_H = 1.8;
 export const CROUCH_H = 1.25;
-export const EYE = 0.92;
+export const EYE = 1.4;
+export const CROUCH_EYE = 0.88;
 export const BODY_R = 0.38;
 /** The top of this much of them is a leg hit; above the shoulders is a head hit. */
 export const LEGS_H = 0.42;
@@ -30,7 +35,7 @@ export interface Target {
 }
 
 /** How high someone's eyes are above their feet. */
-export const eyeHeight = (crouching?: boolean): number => (crouching ? CROUCH_H : STAND_H) - (STAND_H - EYE) * (crouching ? 0.55 : 1);
+export const eyeHeight = (crouching?: boolean): number => (crouching ? CROUCH_EYE : EYE);
 
 /** Where someone is looking from. */
 export const eyeOf = (t: Target): Vec3 => ({ x: t.x, y: t.y + eyeHeight(t.crouching), z: t.z });
@@ -112,7 +117,7 @@ export function rayBody(from: Vec3, dir: Vec3, who: Target, max: number): BodyHi
   if (t < 0 || t > max) return null;
   const y = from.y + dir.y * t - who.y;
   if (y < 0 || y > h) return null;
-  const part: HitPart = y >= h - HEAD_H * (who.crouching ? 1 : 1) ? 'head' : y <= LEGS_H ? 'legs' : 'body';
+  const part: HitPart = y >= h - HEAD_H ? 'head' : y <= LEGS_H ? 'legs' : 'body';
   return { t, part };
 }
 

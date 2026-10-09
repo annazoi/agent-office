@@ -24,8 +24,11 @@ export interface Box {
 
 /** The arena floor, in the site's own frame. */
 export const PITCH = { minX: -22, maxX: 22, minZ: -16, maxZ: 16 } as const;
-/** The lobby you arrive in, at the far end behind the glass: nobody is shot at in here. */
-export const LOBBY = { minX: -10, maxX: 10, minZ: 18.4, maxZ: 28 } as const;
+/**
+ * The lobby you arrive in, behind the glass at the pitch's south end: nobody is shot at in here, and
+ * whoever isn't playing watches the match through it. It shares that wall with the pitch.
+ */
+export const LOBBY = { minX: -10, maxX: 10, minZ: PITCH.maxZ, maxZ: 28 } as const;
 /** How high the arena's walls are, and the lobby's. */
 export const WALL_H = 7;
 const T = 0.6;
@@ -52,8 +55,9 @@ const mirrored = (b: Box): Box => ({ ...b, minX: -b.maxX, maxX: -b.minX });
 
 /** The cover in one half of the arena (the -x half): crates, pillars and a long centre block. */
 const HALF: readonly Box[] = [
-  crate(-16, -9, 2.4, 2.4, 1.3),
-  crate(-16, -6.6, 2.4, 2.4, 2.4),
+  // Clear of the spawn spots, which look straight down the arena.
+  crate(-15.4, -12.1, 2.6, 1.6, 1.3),
+  crate(-15.4, -6.6, 2.2, 2.2, 2.4),
   crate(-13.4, 2.8, 3.2, 2.2, 1.3),
   crate(-13.4, 2.8, 1.4, 1.4, 2.2),
   crate(-9, -12.2, 4.4, 2.2, 2.6),
@@ -61,14 +65,19 @@ const HALF: readonly Box[] = [
   crate(-6, -3.4, 1.1, 1.1, 3.4, 0, 'pillar'),
   crate(-6, 3.4, 1.1, 1.1, 3.4, 0, 'pillar'),
   crate(-4.4, 12.6, 3.6, 2.2, 1.3),
-  wall(-11.6, -5.2, -11.6, 5.2, 3.2),
+  // Two stretches of wall across the half, with a gap down the middle to push through.
+  wall(-11.6, -7.4, -11.6, -2.4, 3),
+  wall(-11.6, 2.4, -11.6, 7.4, 3),
 ];
 
 /** Everything solid in the arena, both halves and the shell round them. */
 export const ARENA_BOXES: readonly Box[] = [
-  // The shell: four walls round the pitch, head height and more.
+  // The shell: four walls round the pitch, head height and more. The south one is in three pieces,
+  // with the lobby's glass down the middle of it: it stops a bullet like the rest, and you see through it.
   wall(PITCH.minX, PITCH.minZ, PITCH.maxX, PITCH.minZ),
-  wall(PITCH.minX, PITCH.maxZ, PITCH.maxX, PITCH.maxZ),
+  wall(PITCH.minX, PITCH.maxZ, LOBBY.minX, PITCH.maxZ),
+  wall(LOBBY.maxX, PITCH.maxZ, PITCH.maxX, PITCH.maxZ),
+  wall(LOBBY.minX, PITCH.maxZ, LOBBY.maxX, PITCH.maxZ, WALL_H, 'glass'),
   wall(PITCH.minX, PITCH.minZ, PITCH.minX, PITCH.maxZ),
   wall(PITCH.maxX, PITCH.minZ, PITCH.maxX, PITCH.maxZ),
   // The middle block, which both halves fight round.
@@ -77,8 +86,7 @@ export const ARENA_BOXES: readonly Box[] = [
   crate(0, 8.4, 2.2, 2.2, 1.4),
   ...HALF,
   ...HALF.map(mirrored),
-  // The lobby at the far end: its walls, and the glass it watches the match through.
-  wall(LOBBY.minX, LOBBY.minZ, LOBBY.maxX, LOBBY.minZ, 3.2, 'glass'),
+  // The lobby behind it: its own three walls (the glass above is its fourth).
   wall(LOBBY.minX, LOBBY.maxZ, LOBBY.maxX, LOBBY.maxZ),
   wall(LOBBY.minX, LOBBY.minZ, LOBBY.minX, LOBBY.maxZ),
   wall(LOBBY.maxX, LOBBY.minZ, LOBBY.maxX, LOBBY.maxZ),

@@ -13,8 +13,12 @@ import type { Fixture } from '../../world/office/fixture';
 // The boxes are the ones in shared/games/fps/arena.ts, which is also what the office shoots its rays
 // through: what you bump into here and what stops a bullet there are the same numbers.
 
-/** Where the shutter stands on the office's north wall. */
-export const DOOR = { x: -14.5, z: FLOOR.minZ + 0.06, width: 2.4, height: 2.8 } as const;
+/**
+ * Where the shutter stands: the stretch of the lounge's east wall between the Services board (which
+ * ends at z -5.2) and the TV (which starts at -3.2), across from the arcade corner. It faces into the
+ * room (-x), so you walk up to it from the lounge.
+ */
+export const DOOR = { x: FLOOR.maxX - 0.06, z: -4.2, width: 1.6, height: 2.4 } as const;
 
 export interface ArenaWorld {
   group: THREE.Group;
@@ -48,6 +52,12 @@ const CONCRETE = '#6f7378';
 const DARK = '#3b3f45';
 const CRATE = '#b5793a';
 const LINE = '#f4c95d';
+
+/**
+ * The arena is sealed and lit by its own strip lights, so its surfaces carry their own light: the
+ * office's sun and lamps never reach out here, and a match at midnight has to play like one at noon.
+ */
+const lit = (color: string, amount = 0.62) => toon(color, { emissive: new THREE.Color(color).multiplyScalar(amount) });
 
 /** A box of the arena, in the site's own frame, as something to look at. */
 function boxMesh(b: Box, mats: Record<string, THREE.Material>): THREE.Mesh {
@@ -93,19 +103,19 @@ function buildArena(): { group: THREE.Group; setLive(live: boolean): void } {
   const group = new THREE.Group();
   group.position.set(ARENA_SITE.x, ARENA_SITE.y, ARENA_SITE.z);
   const mats: Record<string, THREE.Material> = {
-    wall: toon(CONCRETE),
-    crate: toon(CRATE),
-    pillar: toon(DARK),
-    glass: toon('#9fd8ff', { transparent: true, opacity: 0.22 }),
-    floor: toon('#55595e'),
+    wall: lit(CONCRETE, 0.66),
+    crate: lit(CRATE, 0.66),
+    pillar: lit(DARK, 0.7),
+    glass: toon('#9fd8ff', { emissive: '#2c4257', transparent: true, opacity: 0.22 }),
+    floor: lit('#55595e', 0.6),
   };
 
   // The ground, under the pitch and the lobby both, and a dark ceiling over each.
   const slab = (a: { minX: number; maxX: number; minZ: number; maxZ: number }, y: number, mat: THREE.Material) =>
     mesh(new THREE.BoxGeometry(a.maxX - a.minX + 1.2, 0.2, a.maxZ - a.minZ + 1.2), mat, (a.minX + a.maxX) / 2, y, (a.minZ + a.maxZ) / 2, false);
-  const concrete = toon('#4b4f55');
+  const concrete = lit('#4b4f55', 0.62);
   group.add(slab(PITCH, -0.1, concrete), slab(LOBBY, -0.1, concrete));
-  group.add(slab(PITCH, WALL_H + 0.1, toon('#2a2d31')), slab(LOBBY, WALL_H * 0.6, toon('#2a2d31')));
+  group.add(slab(PITCH, WALL_H + 0.1, lit('#2a2d31', 0.5)), slab(LOBBY, WALL_H + 0.1, lit('#2a2d31', 0.5)));
 
   // Everything solid, merged down to one draw per material.
   const solids = new THREE.Group();
@@ -123,16 +133,16 @@ function buildArena(): { group: THREE.Group; setLive(live: boolean): void } {
   }
 
   // The strip lights over the pitch: low while nothing is on, up while a round is live.
-  const lit = toon('#ffffff', { emissive: '#bcd4ff' });
+  const tube = toon('#ffffff', { emissive: '#bcd4ff' });
   const strips: THREE.Mesh[] = [];
   for (const x of [-15, -5, 5, 15]) {
-    const strip = mesh(new THREE.BoxGeometry(0.4, 0.12, PITCH.maxZ - PITCH.minZ - 4), lit, x, WALL_H - 0.3, 0, false);
+    const strip = mesh(new THREE.BoxGeometry(0.4, 0.12, PITCH.maxZ - PITCH.minZ - 4), tube, x, WALL_H - 0.3, 0, false);
     strips.push(strip);
     group.add(strip);
   }
 
   // The lobby: a board on the back wall, and the way out beside it.
-  const board = mesh(new THREE.BoxGeometry(LOBBY_BOARD.width, LOBBY_BOARD.height, 0.1), toon('#1b1f26'), LOBBY_BOARD.x, LOBBY_BOARD.y, LOBBY_BOARD.z - 0.3);
+  const board = mesh(new THREE.BoxGeometry(LOBBY_BOARD.width, LOBBY_BOARD.height, 0.1), lit('#1b1f26', 0.8), LOBBY_BOARD.x, LOBBY_BOARD.y, LOBBY_BOARD.z - 0.3);
   group.add(board);
   const title = textPlane(`${FPS.emoji} ${FPS.name}`, { color: LINE, size: 72 });
   title.position.set(LOBBY_BOARD.x, LOBBY_BOARD.y + 0.5, LOBBY_BOARD.z - 0.24);
@@ -142,7 +152,7 @@ function buildArena(): { group: THREE.Group; setLive(live: boolean): void } {
   blurb.position.set(LOBBY_BOARD.x, LOBBY_BOARD.y - 0.35, LOBBY_BOARD.z - 0.24);
   blurb.rotation.y = Math.PI;
   group.add(blurb);
-  const out = mesh(new THREE.BoxGeometry(EXIT_DOOR.width, EXIT_DOOR.height, 0.12), toon('#2f7d55'), EXIT_DOOR.x, EXIT_DOOR.height / 2, EXIT_DOOR.z - 0.34);
+  const out = mesh(new THREE.BoxGeometry(EXIT_DOOR.width, EXIT_DOOR.height, 0.12), lit('#2f7d55', 0.6), EXIT_DOOR.x, EXIT_DOOR.height / 2, EXIT_DOOR.z - 0.34);
   group.add(out);
   const outSign = textPlane('← Back to the office', { color: '#eafff3', size: 40 });
   outSign.position.set(EXIT_DOOR.x, EXIT_DOOR.height + 0.3, EXIT_DOOR.z - 0.3);
@@ -161,8 +171,9 @@ export const arena: Fixture<'arena'> = (site) => {
   const group = new THREE.Group();
   const door = shutter();
   door.position.set(DOOR.x, 0, DOOR.z);
+  door.rotation.y = -Math.PI / 2;
   group.add(door);
-  site.wall('north', DOOR.x, DOOR.height / 2, DOOR.width + 0.4, DOOR.height + 0.3);
+  site.wall('east', DOOR.z, DOOR.height / 2, DOOR.width + 0.4, DOOR.height + 0.3);
 
   const built = buildArena();
   group.add(built.group);
@@ -174,7 +185,7 @@ export const arena: Fixture<'arena'> = (site) => {
   ];
 
   const interactables: Interactable[] = [
-    { kind: 'arena', x: DOOR.x, z: DOOR.z + 0.3, radius: 1.1 },
+    { kind: 'arena', x: DOOR.x - 0.5, z: DOOR.z, radius: 1.4 },
     { kind: 'arenaExit', x: EXIT_DOOR.x + ARENA_SITE.x, z: EXIT_DOOR.z + ARENA_SITE.z - 0.5, radius: 1.2 },
     { kind: 'arenaBoard', x: LOBBY_BOARD.x + ARENA_SITE.x, z: LOBBY_BOARD.z + ARENA_SITE.z - 0.5, radius: 1.6 },
   ];
@@ -183,7 +194,7 @@ export const arena: Fixture<'arena'> = (site) => {
   const handle: ArenaWorld = {
     group: built.group,
     arriveAt: { x: ARRIVE.x + ARENA_SITE.x, y: 0, z: ARRIVE.z + ARENA_SITE.z, rotY: ARRIVE.rotY },
-    backAt: { x: DOOR.x, y: 0, z: DOOR.z + 1.4, rotY: 0 },
+    backAt: { x: DOOR.x - 1.6, y: 0, z: DOOR.z, rotY: -Math.PI / 2 },
     inside: (x, z) => x > bounds.minX - 2 && x < bounds.maxX + 2 && z > bounds.minZ - 2 && z < bounds.maxZ + 2,
     bounds,
     setLive: built.setLive,
